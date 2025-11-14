@@ -1,0 +1,27 @@
+@using MicroSocialPlatform.ViewComponents
+@model UserTypeViewModel
+
+@if (Model.UserType == "Visitor")
+{
+    <div class="alert alert-info">
+        <h3>Bun venit, Vizitator!</h3>
+        <p>Poți vizualiza conținutul public. <a asp-area="Identity" asp-page="/Account/Register">Înregistrează-te</a> sau <a asp-area="Identity" asp-page="/Account/Login">Loghează-te</a> pentru a accesa funcționalități suplimentare.</p>
+    </div>
+}
+else if (Model.UserType == "User")
+{
+    <div class="alert alert-success">
+        <h3>Bun venit, @Model.User?.FullName!</h3>
+        <p>Ești logat ca utilizator înregistrat. Poți accesa funcționalitățile disponibile pentru utilizatori.</p>
+    </div>
+}
+else if (Model.UserType == "Administrator")
+{
+    <div class="alert alert-warning">
+        <h3>Bun venit, Administrator @Model.User?.FullName!</h3>
+        <p>Ai acces complet la toate funcționalitățile aplicației.</p>
+    </div>
+}
+
+<p>Tipul tău de utilizator: <strong>@Model.UserType</strong></p>
+
