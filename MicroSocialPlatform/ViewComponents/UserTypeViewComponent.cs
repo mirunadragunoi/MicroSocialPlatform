@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MicroSocialPlatform.Models;
-using MicroSocialPlatform.Helpers;
 
 namespace MicroSocialPlatform.ViewComponents
 {
@@ -19,12 +18,20 @@ namespace MicroSocialPlatform.ViewComponents
         public async Task<IViewComponentResult> InvokeAsync()
         {
             ApplicationUser? currentUser = null;
-            string userType = "Visitor";
+            string userType = "Visitor"; // default
 
             if (_signInManager.IsSignedIn(UserClaimsPrincipal))
             {
                 currentUser = await _userManager.GetUserAsync(UserClaimsPrincipal);
-                userType = await UserHelper.GetUserTypeAsync(_userManager, currentUser, UserClaimsPrincipal);
+                userType = "User"; // daca e logat, implicit este "User"
+                if (currentUser != null)
+                {
+                    // determinam daca e Admin
+                    if (await _userManager.IsInRoleAsync(currentUser, "Admin"))
+                    {
+                        userType = "Admin";
+                    }
+                }
             }
 
             var model = new UserTypeViewModel

@@ -50,7 +50,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        await SeedRolesAndAdmin(services);
+        await SeedData.Initialize(services);
     }
     catch (Exception ex) 
     {
@@ -88,65 +88,3 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
-
-// metoda pentru roluri
-async Task SeedRolesAndAdmin(IServiceProvider serviceProvider)
-{
-    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-    // creez cele 2 roluri principale
-    string[] roleNames = { "Administrator", "User" };
-
-    foreach (var roleName in roleNames)
-    {
-        // verific daca rolul exista deja, altfel il creez
-        var roleExists = await roleManager.RoleExistsAsync(roleName);
-        if (!roleExists)
-        {
-            await roleManager.CreateAsync(new IdentityRole(roleName));
-        }
-    }
-
-    // creez utilizatorul administrator implicit
-    var adminEmail = "admin@microsocial.com";
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
-    if (adminUser == null)
-    {
-        // creez adminul
-        adminUser = new ApplicationUser
-        {
-            UserName = adminEmail, // folosesc email-ul ca username pentru consistență
-            Email = adminEmail,
-            FullName = "Administrator",
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        // creez userul cu parola
-        var createResult = await userManager.CreateAsync(adminUser, "Admin@123");
-
-        if (createResult.Succeeded)
-        {
-            // adaug rolul de administrator
-            await userManager.AddToRoleAsync(adminUser, "Administrator");
-        }
-    }
-    else
-    {
-        // daca administratorul exista deja, actualizez username-ul la email pentru consistenta
-        if (adminUser.UserName != adminEmail)
-        {
-            adminUser.UserName = adminEmail;
-            await userManager.UpdateAsync(adminUser);
-        }
-        
-        // ma asigur ca are rolul de administrator
-        var isInRole = await userManager.IsInRoleAsync(adminUser, "Administrator");
-        if (!isInRole)
-        {
-            await userManager.AddToRoleAsync(adminUser, "Administrator");
-        }
-    }
-}

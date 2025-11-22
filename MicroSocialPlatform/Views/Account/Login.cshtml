@@ -1,0 +1,51 @@
+﻿@model MicroSocialPlatform.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Logare";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="bi bi-box-arrow-in-right"></i> Autentificare</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-route-returnUrl="@ViewData["ReturnUrl"]">
+                        <div asp-validation-summary="ModelOnly" class="text-danger text-center mb-3"></div>
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" placeholder="nume@exemplu.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">Parolă</label>
+                            <input asp-for="Password" class="form-control" placeholder="******" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label">Ține-mă minte</label>
+                        </div>
+
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-primary">Logare</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    Nu ai cont? <a asp-controller="Account" asp-action="Register" class="text-primary fw-bold">Înregistrează-te aici</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

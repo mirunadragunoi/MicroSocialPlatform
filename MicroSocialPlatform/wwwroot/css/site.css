@@ -1,31 +1,106 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
-  margin-bottom: 60px;
+    background: linear-gradient(135deg, #e0c3fc 0%, #ff9a9e 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #4a4a4a;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.navbar {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255,255,255,0.5);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.navbar-brand {
+    color: #8e44ad !important;
+    font-weight: 700;
 }
+
+.nav-link {
+    color: #666 !important;
+    font-weight: 500;
+}
+
+    .nav-link:hover {
+        color: #d63384 !important;
+    }
+
+.bg-primary, .bg-success, .alert-info {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    color: #555 !important;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.5));
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 25px;
+    text-align: center;
+}
+
+    .card-header h4, .card-header h3 {
+        color: #8e44ad; 
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+
+.btn-primary, .btn-success {
+    background: linear-gradient(to right, #a18cd1, #fbc2eb) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 12px 25px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(161, 140, 209, 0.4);
+    transition: all 0.3s ease;
+}
+
+    .btn-primary:hover, .btn-success:hover {
+        background: linear-gradient(to right, #8e44ad, #e056fd) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(142, 68, 173, 0.4);
+    }
+
+.alert-info {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-left: 5px solid #a18cd1 !important;
+    color: #555 !important;
+}
+
+.alert-heading {
+    color: #8e44ad !important;
+}
+
+.form-control {
+    background-color: rgba(255,255,255,0.7);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 15px;
+}
+
+    .form-control:focus {
+        background-color: white;
+        border-color: #fbc2eb;
+        box-shadow: 0 0 0 4px rgba(251, 194, 235, 0.3);
+    }
+
+.text-primary, .text-success, a {
+    color: #d63384 !important; 
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
