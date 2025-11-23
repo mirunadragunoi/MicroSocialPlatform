@@ -3,25 +3,78 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index" title="Manage">Hello @User.Identity?.Name!</a>
-    </li>
-    <li class="nav-item">
-        <form  class="form-inline" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-            <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
-        </form>
-    </li>
+    <!-- utilizator autentificat -->
+    <div class="user-menu-wrapper">
+        <div class="dropdown">
+            <button class="user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="user-avatar-small">
+                    @{
+                        var user = await UserManager.GetUserAsync(User);
+                        var initials = user?.FullName?.Split(' ').Take(2).Select(n => n[0]).ToArray();
+                        var initialsString = initials != null ? new string(initials) : "U";
+                    }
+                    <span>@initialsString</span>
+                </div>
+                <span class="user-name d-none d-md-inline">@user?.FullName</span>
+                <i class="bi bi-chevron-down"></i>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown" style="position: absolute;">
+                <li class="user-menu-header">
+                    <div class="user-menu-name">@user?.FullName</div>
+                    <div class="user-menu-email">@User.Identity?.Name</div>
+                </li>
+
+                <li class="user-menu-divider"></li>
+
+                <li>
+                    <a class="user-menu-item" asp-controller="Profile" asp-action="Index">
+                        <i class="bi bi-person"></i> Profil
+                    </a>
+                </li>
+
+                <li>
+                    <a class="user-menu-item" asp-controller="Settings" asp-action="Index">
+                        <i class="bi bi-gear"></i> Setări
+                    </a>
+                </li>
+
+                @if (User.IsInRole("Administrator"))
+                {
+                    <li class="user-menu-divider"></li>
+                    <li>
+                        <a class="user-menu-item" asp-controller="Admin" asp-action="Index">
+                            <i class="bi bi-shield-fill-check"></i> Admin Panel
+                        </a>
+                    </li>
+                }
+
+                <li class="user-menu-divider"></li>
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="user-menu-item user-menu-logout w-100 text-start border-0 bg-transparent">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
 }
 else
 {
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
-    </li>
+    <!-- utilizator neautentificat -->
+    <div class="auth-buttons">
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span class="d-none d-md-inline">Login</span>
+        </a>
+
+        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm">
+            <i class="bi bi-person-plus"></i>
+            <span class="d-none d-md-inline">Sign Up</span>
+        </a>
+    </div>
 }
-</ul>

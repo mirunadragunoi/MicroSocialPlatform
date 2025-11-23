@@ -3,46 +3,118 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MicroSocialPlatform</title>
+    <title>@ViewData["Title"] - Agora</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MicroSocialPlatform.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">MicroSocialPlatform</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
+    <!-- top navbar orizontal-->
+    <nav class="top-navbar">
+        <div class="top-navbar-content">
+            <!-- logo agora pe stanga -->
+            <div class="navbar-logo">
+                <a asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>Agora</span>
+                </a>
+            </div>
+
+            <!-- searh bar pe centru -->
+            <div class="navbar-search">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" placeholder="Cauta..."/>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted text-white">
-        <div class="container">
-            &copy; 2025 - MicroSocialPlatform - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <!-- user menu pe dreapta -->
+            <div class="navbar-user">
+                <partial name="_LoginPartial" />
+            </div>
         </div>
-    </footer>
+    </nav>
+
+
+    <!-- sidebar vertical pe stanga -->
+    <aside class="sidebar">
+        <nav class="sidebar-nav">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <!-- menu pentru utilizatorii autentificati -->
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
+                    <i class="bi bi-house-door-fill"></i>
+                    <span>Acasa</span>
+                </a>
+
+                <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Grupuri</span>
+                </a>
+
+                <a asp-area="" asp-controller="Notifications" asp-action="Index" class="sidebar-link">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>Notificări</span>
+                    <span class="notification-badge">3</span>
+                </a>
+
+                <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
+                    <i class="bi bi-person-circle"></i>
+                    <span>Profil</span>
+                </a>
+
+                <hr class="sidebar-divider">
+
+                <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Postare nouă</span>
+                </a>
+            }
+            else
+            {
+                <!-- menu pentru vizitatori -->
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
+                    <i class="bi bi-house-door-fill"></i>
+                    <span>Acasă</span>
+                </a>
+
+                <a asp-area="" asp-controller="Home" asp-action="About" class="sidebar-link">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Despre</span>
+                </a>
+
+                <a asp-area="Identity" asp-page="/Account/Register" class="sidebar-link sidebar-highlight">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Înregistrare</span>
+                </a>
+
+                <a asp-area="Identity" asp-page="/Account/Login" class="sidebar-link">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Autentificare</span>
+                </a>
+            }
+        </nav>
+
+        <!-- fotter sidebar -->
+        <div class="sidebar-footer">
+            <small>&copy; 2025 Agora</small>
+        </div>
+    </aside>
+
+    <!-- main content area -->
+    <main class="main-content">
+        <div class="content-wrapper">
+            @RenderBody()
+        </div>
+    </main>
+
+    @using Microsoft.AspNetCore.Identity
+    @using MicroSocialPlatform.Models
+    @inject SignInManager<ApplicationUser> SignInManager
+    @inject UserManager<ApplicationUser> UserManager
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

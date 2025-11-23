@@ -1,19 +1,287 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Acasă";
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+<div class="home-page">
+    <!-- hero section pentru vizitatori -->
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="hero-section card mb-4">
+            <div class="card-body text-center py-5">
+                <h1 class="display-4 mb-3">
+                    <i class="bi bi-chat-dots-fill text-primary"></i>
+                    Bine ai venit pe Agora
+                </h1>
+                <p class="lead text-muted mb-4">
+                    Platforma unde împărtășești idei, te conectezi cu oameni și construiești comunități.
+                </p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-plus"></i> Înregistrează-te
+                    </a>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Autentifică-te
+                    </a>
+                </div>
+            </div>
+        </div>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    
-    @await Component.InvokeAsync("UserType")
-    
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+        <!-- features pentru vizitatori -->
+        <div class="features-grid">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon mb-3">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <h5 class="card-title">Creează Grupuri</h5>
+                            <p class="card-text text-muted">
+                                Găsește oameni cu aceleași interese și construiește comunități.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon mb-3">
+                                <i class="bi bi-image-fill"></i>
+                            </div>
+                            <h5 class="card-title">Împărtășește Postări</h5>
+                            <p class="card-text text-muted">
+                                Postează text, imagini și video pentru a-ți exprima ideile.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon mb-3">
+                                <i class="bi bi-chat-heart-fill"></i>
+                            </div>
+                            <h5 class="card-title">Conversații</h5>
+                            <p class="card-text text-muted">
+                                Discută în timp real și construiește relații autentice.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- feed pentru utilizatori autentificati -->
+        <div class="feed-section">
+            <!-- create post box -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex gap-3">
+                        <div class="user-avatar-large">
+                            @{
+                                var initials = User.Identity?.Name?.Substring(0, 2).ToUpper() ?? "U";
+                            }
+                            <span>@initials</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <a asp-controller="Post" asp-action="Create" class="form-control text-start text-muted create-post-trigger">
+                                Ce ai pe suflet, @User.Identity?.Name?
+                            </a>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="d-flex gap-3 justify-content-around">
+                        <a asp-controller="Post" asp-action="Create" class="btn btn-light flex-fill">
+                            <i class="bi bi-image text-success"></i> Foto
+                        </a>
+                        <a asp-controller="Post" asp-action="Create" class="btn btn-light flex-fill">
+                            <i class="bi bi-camera-video text-danger"></i> Video
+                        </a>
+                        <a asp-controller="Post" asp-action="Create" class="btn btn-light flex-fill">
+                            <i class="bi bi-emoji-smile text-warning"></i> Emoție
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- posts feed -->
+            <div class="posts-feed">
+                <h5 class="mb-3">
+                    <i class="bi bi-newspaper"></i> Feed-ul tău
+                </h5>
+
+                <!-- example post 1 -->
+                <div class="card mb-3 post-card">
+                    <div class="card-body">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="user-avatar">
+                                <span>JD</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">John Doe</h6>
+                                <small class="text-muted">Acum 2 ore</small>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark"></i> Salvează</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-flag"></i> Raportează</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="card-text">
+                            Tocmai am lansat un proiect nou pe care lucrez de luni de zile!
+                            Ce părere aveți despre noile tehnologii în dezvoltare web? 🚀
+                        </p>
+                        <div class="post-actions d-flex gap-3 pt-2 border-top">
+                            <button class="btn btn-link text-muted">
+                                <i class="bi bi-heart"></i> Like <span class="badge bg-light text-dark">12</span>
+                            </button>
+                            <button class="btn btn-link text-muted">
+                                <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">5</span>
+                            </button>
+                            <button class="btn btn-link text-muted">
+                                <i class="bi bi-share"></i> Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- example post 2 -->
+                <div class="card mb-3 post-card">
+                    <div class="card-body">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="user-avatar">
+                                <span>MP</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">Maria Popescu</h6>
+                                <small class="text-muted">Acum 5 ore</small>
+                            </div>
+                        </div>
+                        <p class="card-text">
+                            Am vizitat muntele azi și am făcut această fotografie minunată! ⛰️
+                        </p>
+                        <img src="https://via.placeholder.com/600x400/4F46E5/FFFFFF?text=Fotografie+Munte"
+                             class="img-fluid rounded mb-2" alt="Post image">
+                        <div class="post-actions d-flex gap-3 pt-2 border-top">
+                            <button class="btn btn-link text-muted">
+                                <i class="bi bi-heart"></i> Like <span class="badge bg-light text-dark">28</span>
+                            </button>
+                            <button class="btn btn-link text-muted">
+                                <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">8</span>
+                            </button>
+                            <button class="btn btn-link text-muted">
+                                <i class="bi bi-share"></i> Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- load More -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-down-circle"></i> Încarcă mai multe postări
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    /* hero section */
+    .hero-section {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(16, 185, 129, 0.1));
+        border: none;
+    }
+
+    /* features */
+    .feature-icon i {
+        font-size: 3rem;
+        color: var(--primary-color);
+    }
+
+    /* user avatar large */
+    .user-avatar-large {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    /* create post trigger */
+    .create-post-trigger {
+        cursor: pointer;
+        background: var(--background-color);
+        border-radius: 50px;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .create-post-trigger:hover {
+        background: var(--hover-bg);
+    }
+
+    /* post card */
+    .post-card {
+        transition: var(--transition);
+    }
+
+    .post-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .post-actions .btn-link {
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    .post-actions .btn-link:hover {
+        background: var(--hover-bg);
+    }
+
+    .post-actions .badge {
+        font-weight: 500;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // add interactivity for like/comment buttons
+        document.querySelectorAll('.post-actions .btn-link').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // add your logic here
+                console.log('Button clicked:', this.textContent.trim());
+            });
+        });
+    </script>
+}
