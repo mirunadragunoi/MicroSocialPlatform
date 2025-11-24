@@ -19,6 +19,10 @@ namespace MicroSocialPlatform.Models
         [StringLength(500, ErrorMessage = "Biografia nu poate depăși 500 de caractere!")]
         public string? Bio { get; set; }
 
+        // status cu text
+        [StringLength(60)]
+        public string? Status { get; set; }
+
         // status cu emoji
         [StringLength(10)]
         public string? StatusEmoji { get; set; }

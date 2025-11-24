@@ -1,46 +1,73 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using MicroSocialPlatform.Models
+@using MicroSocialPlatform.Helpers
+
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
 @if (SignInManager.IsSignedIn(User))
 {
+    var user = await UserManager.GetUserAsync(User);
+    var initials = AvatarHelper.GetInitials(user?.FullName);
+    var hasProfilePicture = !string.IsNullOrEmpty(user?.ProfilePicture);
+
     <!-- utilizator autentificat -->
     <div class="user-menu-wrapper">
         <div class="dropdown">
             <button class="user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <div class="user-avatar-small">
-                    @{
-                        var user = await UserManager.GetUserAsync(User);
-                        var initials = user?.FullName?.Split(' ').Take(2).Select(n => n[0]).ToArray();
-                        var initialsString = initials != null ? new string(initials) : "U";
+                    @if (hasProfilePicture)
+                    {
+                        <img src="@user.ProfilePicture"
+                             alt="@user.FullName"
+                             class="avatar-img" />
                     }
-                    <span>@initialsString</span>
+                    else
+                    {
+                        <span class="avatar-initials">@initials</span>
+                    }
                 </div>
                 <span class="user-name d-none d-md-inline">@user?.FullName</span>
                 <i class="bi bi-chevron-down"></i>
             </button>
-
-            <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown" style="position: absolute;">
+            <!-- restul dropdown-ului -->
+            <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown">
                 <li class="user-menu-header">
-                    <div class="user-menu-name">@user?.FullName</div>
-                    <div class="user-menu-email">@User.Identity?.Name</div>
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar-large me-3">
+                            @if (hasProfilePicture)
+                            {
+                                <img src="@user.ProfilePicture"
+                                     alt="@user.FullName"
+                                     class="avatar-img" />
+                            }
+                            else
+                            {
+                                <span class="avatar-initials">@initials</span>
+                            }
+                        </div>
+                        <div>
+                            <div class="user-menu-name">@user?.FullName</div>
+                            <div class="user-menu-email">@User.Identity?.Name</div>
+                        </div>
+                    </div>
                 </li>
-
                 <li class="user-menu-divider"></li>
-
                 <li>
                     <a class="user-menu-item" asp-controller="Profile" asp-action="Index">
                         <i class="bi bi-person"></i> Profil
                     </a>
                 </li>
-
+                <li>
+                    <a class="user-menu-item" asp-controller="Profile" asp-action="Edit">
+                        <i class="bi bi-pencil-square"></i> Editează Profilul
+                    </a>
+                </li>
                 <li>
                     <a class="user-menu-item" asp-controller="Settings" asp-action="Index">
                         <i class="bi bi-gear"></i> Setări
                     </a>
                 </li>
-
                 @if (User.IsInRole("Administrator"))
                 {
                     <li class="user-menu-divider"></li>
@@ -50,7 +77,6 @@
                         </a>
                     </li>
                 }
-
                 <li class="user-menu-divider"></li>
                 <li>
                     <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
@@ -71,7 +97,6 @@ else
             <i class="bi bi-box-arrow-in-right"></i>
             <span class="d-none d-md-inline">Login</span>
         </a>
-
         <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm">
             <i class="bi bi-person-plus"></i>
             <span class="d-none d-md-inline">Sign Up</span>

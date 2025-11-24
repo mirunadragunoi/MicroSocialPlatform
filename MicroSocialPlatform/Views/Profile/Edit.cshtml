@@ -1,0 +1,154 @@
+﻿@model MicroSocialPlatform.Models.EditProfileViewModel
+
+@{
+    ViewData["Title"] = "Editează Profilul";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Editează Profilul
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- poza de cover -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-image me-2"></i>Poză de Cover
+                            </label>
+                            @if (!string.IsNullOrEmpty(Model.CurrentCoverPhoto))
+                            {
+                                <div class="mb-2">
+                                    <img src="@Model.CurrentCoverPhoto" class="img-fluid rounded" style="max-height: 200px; width: 100%; object-fit: cover;" alt="Cover actual">
+                                </div>
+                            }
+                            <input type="file" class="form-control" asp-for="CoverPhotoFile" accept="image/*">
+                            <small class="form-text text-muted">Dimensiune maximă: 5MB. Formate acceptate: JPG, PNG, GIF, WEBP</small>
+                            <span asp-validation-for="CoverPhotoFile" class="text-danger"></span>
+                        </div>
+
+                        <!-- poza de profil -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-person-badge me-2"></i>Poză de Profil
+                            </label>
+                            @if (!string.IsNullOrEmpty(Model.CurrentProfilePicture))
+                            {
+                                <div class="mb-2 text-center">
+                                    <img src="@Model.CurrentProfilePicture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" alt="Profil actual">
+                                </div>
+                            }
+                            <input type="file" class="form-control" asp-for="ProfilePictureFile" accept="image/*">
+                            <small class="form-text text-muted">Dimensiune maximă: 5MB. Formate acceptate: JPG, PNG, GIF, WEBP</small>
+                            <span asp-validation-for="ProfilePictureFile" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- nume complet -->
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label fw-bold"></label>
+                            <input asp-for="FullName" class="form-control" placeholder="Exemplu: Maria Popescu">
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <!-- username personalizat -->
+                        <div class="mb-3">
+                            <label asp-for="CustomUsername" class="form-label fw-bold"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">@@</span>
+                                <input asp-for="CustomUsername" class="form-control" placeholder="username">
+                            </div>
+                            <small class="form-text text-muted">Poate conține doar litere, cifre, punct (.) și underscore (_)</small>
+                            <span asp-validation-for="CustomUsername" class="text-danger"></span>
+                        </div>
+
+                        <!-- biografie -->
+                        <div class="mb-3">
+                            <label asp-for="Bio" class="form-label fw-bold"></label>
+                            <textarea asp-for="Bio" class="form-control" rows="4" placeholder="Spune ceva despre tine..."></textarea>
+                            <span asp-validation-for="Bio" class="text-danger"></span>
+                        </div>
+
+                        <!-- status & emoji -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label asp-for="Status" class="form-label fw-bold"></label>
+                                <input asp-for="Status" class="form-control" placeholder="Ce mai faci astăzi?">
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="StatusEmoji" class="form-label fw-bold"></label>
+                                <input asp-for="StatusEmoji" class="form-control" placeholder="😊" maxlength="10">
+                                <small class="form-text text-muted">Ex: 😊 🎉 ❤️</small>
+                            </div>
+                        </div>
+
+                        <!-- website -->
+                        <div class="mb-3">
+                            <label asp-for="Website" class="form-label fw-bold"></label>
+                            <input asp-for="Website" class="form-control" placeholder="https://example.com">
+                            <span asp-validation-for="Website" class="text-danger"></span>
+                        </div>
+
+                        <!-- locatie -->
+                        <div class="mb-3">
+                            <label asp-for="Location" class="form-label fw-bold"></label>
+                            <input asp-for="Location" class="form-control" placeholder="București, România">
+                            <span asp-validation-for="Location" class="text-danger"></span>
+                        </div>
+
+                        <!-- data nasterii -->
+                        <div class="mb-3">
+                            <label asp-for="DateOfBirth" class="form-label fw-bold"></label>
+                            <input asp-for="DateOfBirth" class="form-control" type="date">
+                            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                        </div>
+
+                        <!-- profil public/privat -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsPublic" class="form-check-input" type="checkbox" id="isPublicSwitch">
+                                <label class="form-check-label fw-bold" for="isPublicSwitch">
+                                    <i class="bi bi-globe me-2"></i>Profil Public
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Când profilul este public, toată lumea îți poate vedea postările.
+                                Când este privat, doar urmăritorii aprobați pot vedea conținutul tău.
+                            </small>
+                        </div>
+
+                        <!-- butoane -->
+                        <div class="d-flex gap-2 justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Înapoi
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-circle me-2"></i>Salvează Modificările
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
