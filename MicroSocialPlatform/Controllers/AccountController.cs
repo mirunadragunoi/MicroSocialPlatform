@@ -141,7 +141,7 @@ namespace MicroSocialPlatform.Controllers
                     _logger.LogInformation("User created a new account with password.");
 
                     // Adaugă rolul "User" pentru utilizatorii noi
-                    await _userManager.AddToRoleAsync(user, "User");
+                    await _userManager.AddToRoleAsync(user, "RegisteredUser");
 
                      // Autentificare automată după înregistrare
                     await _signInManager.SignInAsync(user, isPersistent: false);

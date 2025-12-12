@@ -1,0 +1,179 @@
+﻿@model MicroSocialPlatform.Models.ViewModels.CreatePostViewModel
+
+@{
+    ViewData["Title"] = "Creează Postare";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <h4 class="mb-4 fw-bold" style="color: #6c5ce7;">Creează o postare nouă</h4>
+
+        <div class="card border-0 shadow-sm rounded-4 p-4" style="background-color: #fff;">
+            <div class="card-body">
+
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="mb-4">
+                        <div class="d-flex align-items-start mb-2">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; color: #8e44ad;">
+                                <i class="bi bi-person-fill fs-5"></i>
+                            </div>
+                            <div class="w-100">
+                                <label asp-for="Content" class="form-label fw-bold text-muted small ms-1">Textul postării</label>
+
+                                <textarea asp-for="Content" id="postContent" class="form-control border-0 bg-light rounded-3 p-3" rows="5" maxlength="1000" placeholder="Ce ai pe suflet, @User.Identity.Name?"></textarea>
+
+                                <div class="d-flex justify-content-between mt-1">
+                                    <span asp-validation-for="Content" class="text-danger small"></span>
+                                    <small id="charCounter" class="text-muted fw-bold">0 / 1000</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="previewContainer" class="row g-2 mb-4 d-none">
+                        <h6 class="text-muted small fw-bold w-100 mb-2">Fișiere selectate:</h6>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded-3 text-center bg-light position-relative hover-effect">
+                                <i class="bi bi-image fs-4 text-success mb-2 d-block"></i>
+                                <span class="text-muted small fw-bold">Adaugă Fotografii</span>
+                                <input asp-for="Images" id="imageInput" type="file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 pointer-event" accept="image/*" multiple style="cursor: pointer;" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded-3 text-center bg-light position-relative hover-effect">
+                                <i class="bi bi-camera-reels fs-4 text-danger mb-2 d-block"></i>
+                                <span class="text-muted small fw-bold">Adaugă Video-uri</span>
+                                <input asp-for="Videos" id="videoInput" type="file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 pointer-event" accept="video/*" multiple style="cursor: pointer;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-light rounded-pill px-4 text-muted fw-bold">
+                            Anulează
+                        </a>
+                        <button type="submit" class="btn text-white rounded-pill px-5 fw-bold shadow-sm"
+                                style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none;">
+                            Publică <i class="bi bi-send-fill ms-2"></i>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        const contentInput = document.getElementById('postContent');
+        const charCounter = document.getElementById('charCounter');
+        const maxChars = 1000;
+
+        contentInput.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            charCounter.textContent = `${currentLength} / ${maxChars}`;
+
+            if (currentLength >= maxChars) {
+                charCounter.classList.add('text-danger');
+            } else {
+                charCounter.classList.remove('text-danger');
+            }
+        });
+
+        const imageInput = document.getElementById('imageInput');
+        const videoInput = document.getElementById('videoInput');
+        const previewContainer = document.getElementById('previewContainer');
+
+        function removeFile(inputId, indexToRemove) {
+            const inputElement = document.getElementById(inputId);
+            const dt = new DataTransfer();
+            const { files } = inputElement;
+
+            for (let i = 0; i < files.length; i++) {
+                if (i !== indexToRemove) {
+                    dt.items.add(files[i]);
+                }
+            }
+
+            inputElement.files = dt.files;
+
+            updatePreview();
+        }
+
+        function updatePreview() {
+            previewContainer.innerHTML = '<h6 class="text-muted small fw-bold w-100 mb-2">Fișiere selectate:</h6>';
+
+            let hasFiles = false;
+
+            if (imageInput.files) {
+                Array.from(imageInput.files).forEach((file, index) => {
+                    hasFiles = true;
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        const colDiv = document.createElement('div');
+                        colDiv.className = 'col-4 col-md-3 position-relative';
+
+                        colDiv.innerHTML = `
+                            <div class="position-relative">
+                                <img src="${e.target.result}" class="img-thumbnail w-100 shadow-sm" style="height: 100px; object-fit: cover; border-radius: 10px;">
+                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center shadow"
+                                        style="width: 22px; height: 22px;"
+                                        onclick="removeFile('imageInput', ${index})">
+                                    <i class="bi bi-x" style="font-size: 16px;"></i>
+                                </button>
+                            </div>
+                        `;
+                        previewContainer.appendChild(colDiv);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (videoInput.files) {
+                Array.from(videoInput.files).forEach((file, index) => {
+                    hasFiles = true;
+                    const colDiv = document.createElement('div');
+                    colDiv.className = 'col-4 col-md-3 position-relative';
+
+                    colDiv.innerHTML = `
+                        <div class="position-relative">
+                            <div class="img-thumbnail w-100 shadow-sm d-flex flex-column align-items-center justify-content-center bg-dark text-white" style="height: 100px; border-radius: 10px;">
+                                <i class="bi bi-play-circle fs-2"></i>
+                                <small class="text-truncate w-75 text-center" style="font-size: 10px;">${file.name}</small>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center shadow"
+                                    style="width: 22px; height: 22px;"
+                                    onclick="removeFile('videoInput', ${index})">
+                                <i class="bi bi-x" style="font-size: 16px;"></i>
+                            </button>
+                        </div>
+                    `;
+                    previewContainer.appendChild(colDiv);
+                });
+            }
+
+            if (hasFiles) {
+                previewContainer.classList.remove('d-none');
+            } else {
+                previewContainer.classList.add('d-none');
+            }
+        }
+
+        imageInput.addEventListener('change', updatePreview);
+        videoInput.addEventListener('change', updatePreview);
+
+    </script>
+}

@@ -1,0 +1,105 @@
+﻿@model MicroSocialPlatform.Models.Post
+
+<div class="card mb-3 post-card border-0 shadow-sm rounded-4" style="overflow: visible;">
+    <div class="card-body">
+        <div class="d-flex gap-3 mb-3">
+            <div class="user-avatar">
+                @{
+                    var postUserInitials = Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+                }
+                <span>@postUserInitials</span>
+            </div>
+
+            <div class="flex-grow-1">
+                <h6 class="mb-0">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</h6>
+                    <small class="text-muted" style="font-size: 0.8rem;">
+                        @Model.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")
+
+                        @if (Model.UpdatedAt != null && Model.UpdatedAt != Model.CreatedAt)
+                        {
+                            <span class="fst-italic ms-1" title="Editat la @Model.UpdatedAt.Value.ToLocalTime().ToString("g")">
+                                (editat)
+                            </span>
+                        }
+                    </small>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-flag me-2"></i> Raportează</a></li>
+
+                    @{
+                        var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
+                        var isAdmin = User.IsInRole("Admin");
+                    }
+
+                    @if (isOwner || isAdmin)
+                    {
+                        <li><hr class="dropdown-divider"></li>
+                    }
+
+                    @if (isOwner)
+                    {
+                        <li>
+                            <a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item">
+                                <i class="bi bi-pencil-square me-2"></i> Editeaza Postarea
+                            </a>
+                        </li>
+                    }
+
+                    @if (isOwner || isAdmin)
+                    {
+                        <li>
+                            <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ești sigur că vrei să ștergi această postare?');">
+                                    <i class="bi bi-trash3-fill me-2"></i> Șterge Postarea
+                                </button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <p class="card-text">
+            @Model.Content
+        </p>
+
+        @if (Model.PostMedias != null && Model.PostMedias.Any())
+        {
+            <div class="row g-2 mb-3">
+                @foreach (var media in Model.PostMedias)
+                {
+                    <div class="col-md-6">
+                        @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
+                        {
+                            <img src="@media.Url" class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover;" alt="Post image">
+                        }
+                        else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
+                        {
+                            <video controls class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover;">
+                                <source src="@media.Url" type="video/mp4">
+                            </video>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="post-actions d-flex gap-3 pt-2 border-top">
+            <button class="btn btn-link text-muted">
+                <i class="bi bi-heart"></i> Like <span class="badge bg-light text-dark">@Model.LikesCount</span>
+            </button>
+            <button class="btn btn-link text-muted">
+                <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">@Model.CommentsCount</span>
+            </button>
+            <button class="btn btn-link text-muted">
+                <i class="bi bi-share"></i> Share
+            </button>
+        </div>
+    </div>
+</div>

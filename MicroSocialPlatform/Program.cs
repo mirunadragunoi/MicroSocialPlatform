@@ -1,5 +1,6 @@
 using MicroSocialPlatform.Data;
 using MicroSocialPlatform.Models;
+using MicroSocialPlatform.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 
 // Configurare autorizare pentru diferite tipuri de utilizatori
 builder.Services.AddAuthorization(options =>

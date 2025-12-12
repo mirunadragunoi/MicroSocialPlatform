@@ -13,6 +13,7 @@ namespace MicroSocialPlatform.Data
 
         // DbSets pentru tabelele noi
         public DbSet<Post> Posts { get; set; }
+        public DbSet<PostMedia> PostMedias { get; set; }
         public DbSet<Follow> Follows { get; set; }
 
         public DbSet<Comment> Comments { get; set; }

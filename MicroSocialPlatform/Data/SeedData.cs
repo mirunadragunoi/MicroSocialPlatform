@@ -46,6 +46,29 @@ namespace MicroSocialPlatform.Data
                     await userManager.AddToRoleAsync(admin, "Admin");
                 }
             }
+
+            // creez utilizatorul de test
+            var testUserEmail = "user@test.com";
+            var testUser = await userManager.FindByEmailAsync(testUserEmail);
+            if (testUser == null)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = testUserEmail,
+                    Email = testUserEmail,
+                    FullName = "Utilizator Test",
+                    EmailConfirmed = true,
+                    IsPublic = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                string userPassword = "User@12345"; // Parola puternica pentru utilizatorul de test
+                var createUser = await userManager.CreateAsync(user, userPassword);
+                if (createUser.Succeeded)
+                {
+                    // atribui rolul de RegisteredUser utilizatorului creat
+                    await userManager.AddToRoleAsync(user, "RegisteredUser");
+                }
+            }
         }
     }
 }

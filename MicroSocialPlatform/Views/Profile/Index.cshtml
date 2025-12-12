@@ -177,19 +177,23 @@
                 {
                     <div class="col-md-4 col-sm-6">
                         <div class="post-card" style="cursor: pointer;" data-post-id="@post.Id">
-                            @if (!string.IsNullOrEmpty(post.ImageUrl))
+                            @if (post.PostMedias != null && post.PostMedias.Any())
                             {
-                                <div class="position-relative" style="padding-top: 100%; overflow: hidden;">
-                                    <img src="@post.ImageUrl" alt="Post" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;">
-                                    <div class="post-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                                         style="background: rgba(0,0,0,0); transition: all 0.3s;">
-                                        <div class="text-white text-center" style="opacity: 0; transition: opacity 0.3s;">
-                                            <div class="mb-2">
-                                                <i class="bi bi-heart-fill me-2"></i>@post.LikesCount
-                                                <i class="bi bi-chat-fill ms-3 me-2"></i>@post.CommentsCount
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="post-media mt-3">
+                                    @foreach (var media in post.PostMedias)
+                                    {
+                                        @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
+                                        {
+                                            <img src="@media.Url" alt="Post Image" class="img-fluid rounded mb-2" style="max-height: 400px; width: 100%; object-fit: cover;">
+                                        }
+                                        else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
+                                        {
+                                            <video controls class="img-fluid rounded mb-2" style="width: 100%;">
+                                                <source src="@media.Url" type="video/mp4">
+                                                Browserul tău nu suportă elementul video.
+                                            </video>
+                                        }
+                                    }
                                 </div>
                             }
                             else

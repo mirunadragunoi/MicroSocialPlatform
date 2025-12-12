@@ -12,11 +12,11 @@ namespace MicroSocialPlatform.Models
         [StringLength(2000, ErrorMessage = "Postarea nu poate depăși 2000 de caractere!")]
         public string? Content { get; set; }
 
-        // imaginea postarii
-        public string? ImageUrl { get; set; }
-
         // data crearii postarii
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // data ultimei modificari a postarii
+        public DateTime? UpdatedAt { get; set; }
 
         // numar like uri
         public int LikesCount { get; set; } = 0;
@@ -40,6 +40,9 @@ namespace MicroSocialPlatform.Models
         
         // like urile de la postare
         public virtual ICollection<Like>? Likes { get; set; }
+
+        // colectia de fisiere media atasate postarii (0, 1 sau 10 poze)
+        public virtual ICollection<PostMedia>? PostMedias { get; set; } = new List<PostMedia>();
     }
 
     public enum PostVisibility
