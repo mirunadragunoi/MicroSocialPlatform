@@ -11,8 +11,8 @@ namespace MicroSocialPlatform.Data
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            // definirea rolurilor -> Admin, RegisteredUser, UnregisteredVisitor
-            string[] roleNames = { "Admin", "RegisteredUser", "UnregisteredVisitor" };
+            // definirea rolurilor -> Administrator, RegisteredUser, UnregisteredVisitor
+            string[] roleNames = { "Administrator", "RegisteredUser", "UnregisteredVisitor" };
             foreach (var roleName in roleNames)
             {
                 // verific daca rolul exista deja
@@ -25,25 +25,25 @@ namespace MicroSocialPlatform.Data
             }
 
             // creez administratorul
-            var adminEmail = "admin@platform.com";
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
-            if (adminUser == null)
+            var administratorEmail = "administrator@platform.com";
+            var administratorUser = await userManager.FindByEmailAsync(administratorEmail);
+            if (administratorUser == null)
             {
-                var admin = new ApplicationUser
+                var administrator = new ApplicationUser
                 {
-                    UserName = adminEmail,
-                    Email = adminEmail,
+                    UserName = administratorEmail,
+                    Email = administratorEmail,
                     FullName = "Administrator Platforma",
                     EmailConfirmed = true,
                     IsPublic = true,
                     CreatedAt = DateTime.UtcNow
                 };
-                string adminPassword = "Admin@12345"; // Parola puternica pentru admin
-                var createAdmin = await userManager.CreateAsync(admin, adminPassword);
-                if (createAdmin.Succeeded)
+                string administratorPassword = "Admin@12345"; // Parola puternica pentru admin
+                var createAdministrator = await userManager.CreateAsync(administrator, administratorPassword);
+                if (createAdministrator.Succeeded)
                 {
                     // atribui rolul de Admin utilizatorului creat
-                    await userManager.AddToRoleAsync(admin, "Admin");
+                    await userManager.AddToRoleAsync(administrator, "Administrator");
                 }
             }
 

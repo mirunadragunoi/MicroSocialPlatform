@@ -32,7 +32,7 @@ namespace MicroSocialPlatform.Controllers
         {
             ApplicationUser? user;
 
-            // daca nu e specificat username, afisez profilul utiliatorului
+            // daca nu e specificat username, afisez profilul utilizatorului curent
             if (string.IsNullOrEmpty(username))
             {
                 if (!User.Identity?.IsAuthenticated ?? true)
@@ -57,18 +57,15 @@ namespace MicroSocialPlatform.Controllers
                 return NotFound("Utilizatorul nu a fost gasit!");
             }
 
-            // verific daca profilul este private si utilizatorul curent nu este prorietarul
+            // obtin utilizatorul curent (poate fi null daca nu e autentificat)
             var currentUser = await _userManager.GetUserAsync(User);
-            bool isOwnProfile = currentUser?.Id == user.Id;
-            bool canViewProfile = user.IsPublic || isOwnProfile;
+            var currentUserId = currentUser?.Id;
 
-            if (!canViewProfile && currentUser != null)
-            {
-                // verific daca utilizatorul curent urmareste profilul respectiv
-                var isFollowing = await _context.Follows
-                    .AnyAsync(f => f.FollowerId == currentUser.Id && f.FollowingId == user.Id);
-                canViewProfile = isFollowing;
-            }
+            // verific daca e propriul profil
+            bool isOwnProfile = currentUserId == user.Id;
+
+            // verific daca profilul poate fi vazut
+            bool canViewProfile = await CanViewProfile(user, currentUserId);
 
             // calculez statistici pt afisarea profilului
             var postsCount = await _context.Posts.CountAsync(p => p.UserId == user.Id);
@@ -77,10 +74,10 @@ namespace MicroSocialPlatform.Controllers
 
             // verific daca utilizatorul curent urmareste acest profil
             bool isFollowingUser = false;
-            if (currentUser != null && !isOwnProfile) 
+            if (currentUser != null && !isOwnProfile)
             {
                 isFollowingUser = await _context.Follows
-                    .AnyAsync(f => f.FollowerId == currentUser.Id && f.FollowerId == user.Id);
+                    .AnyAsync(f => f.FollowerId == currentUser.Id && f.FollowingId == user.Id);
             }
 
             // obtin postarile doar daca e vizibil
@@ -101,11 +98,42 @@ namespace MicroSocialPlatform.Controllers
             ViewBag.FollowingCount = followingCount;
             ViewBag.IsFollowing = isFollowingUser;
             ViewBag.Posts = posts;
+            ViewBag.IsAuthenticated = User.Identity?.IsAuthenticated ?? false; // ADĂUGAT
 
             return View(user);
         }
 
+        // metoda helper: verific daca cineva poate vedea un profil
+        private async Task<bool> CanViewProfile(ApplicationUser profileUser, string? currentUserId)
+        {
+            // daca profilul este public, oricine poate vedea
+            if (profileUser.IsPublic)
+            {
+                return true;
+            }
+
+            // daca profilul este privat
+            // 1. proprietarul poate vedea mereu propriul profil
+            if (currentUserId == profileUser.Id)
+            {
+                return true;
+            }
+
+            // 2. utilizatorii neautentificati NU pot vedea profiluri private
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return false;
+            }
+
+            // 3. verific dacă utilizatorul curent urmareste profilul privat
+            var isFollowing = await _context.Follows
+                .AnyAsync(f => f.FollowerId == currentUserId && f.FollowingId == profileUser.Id);
+
+            return isFollowing;
+        }
+
         // GET -> EDITARE PROFIL
+        [Authorize]
         public async Task<IActionResult> Edit()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -133,6 +161,7 @@ namespace MicroSocialPlatform.Controllers
         }
 
         // POST -> EDITARE PROFIL
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditProfileViewModel model)
@@ -143,18 +172,18 @@ namespace MicroSocialPlatform.Controllers
             }
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) 
-            { 
+            if (user == null)
+            {
                 return NotFound();
             }
 
             // verific daca username ul e disponibil - daca nu cumva s a schimbat
-            if (!string.IsNullOrEmpty(model.CustomUsername) && model.CustomUsername != user.CustomUsername) 
+            if (!string.IsNullOrEmpty(model.CustomUsername) && model.CustomUsername != user.CustomUsername)
             {
                 var existingUser = await _context.Users
                     .FirstOrDefaultAsync(u => u.CustomUsername == model.CustomUsername);
 
-                if (existingUser != null) 
+                if (existingUser != null)
                 {
                     ModelState.AddModelError("CustomUsername", "Acest username este deja folosit!!");
                     return View(model);
@@ -219,7 +248,8 @@ namespace MicroSocialPlatform.Controllers
         }
 
 
-        // POST ->> FOLLOW / UNFOLLOW UTILIZATOR
+        // POST -> FOLLOW / UNFOLLOW UTILIZATOR
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleFollow(string userId)
@@ -285,7 +315,7 @@ namespace MicroSocialPlatform.Controllers
             }
         }
 
-        // HELPER =>> SALVARE POZA DE PROFIL SAU COVER
+        // HELPER -> SALVARE POZA DE PROFIL SAU COVER
         private async Task<string?> SaveProfilePicture(IFormFile file, string type)
         {
             if (file == null || file.Length == 0)
@@ -320,7 +350,7 @@ namespace MicroSocialPlatform.Controllers
             return $"/uploads/{type}/{uniqueFileName}";
         }
 
-        // helper: stergere poza veche
+        // HELPER -> STERGERE POZA VECHE
         private void DeleteOldPicture(string? picturePath)
         {
             if (string.IsNullOrEmpty(picturePath))

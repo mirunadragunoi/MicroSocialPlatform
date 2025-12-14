@@ -16,6 +16,9 @@ namespace MicroSocialPlatform.Models
         // data crearii
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // data ultimei modificari
+        public DateTime? UpdatedAt { get; set; }
+
         // foreign keys
         [Required]
         public int PostId { get; set; }

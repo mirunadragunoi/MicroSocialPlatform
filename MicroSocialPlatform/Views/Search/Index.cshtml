@@ -1,0 +1,147 @@
+@using Microsoft.AspNetCore.Identity
+@using MicroSocialPlatform.Models
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    ViewData["Title"] = "Căutare";
+    var query = ViewBag.Query as string ?? "";
+    var type = ViewBag.Type as string ?? "all";
+    var profiles = ViewBag.Profiles as List<ApplicationUser> ?? new List<ApplicationUser>();
+    var posts = ViewBag.Posts as List<Post> ?? new List<Post>();
+    var currentUser = ViewBag.CurrentUser as ApplicationUser;
+}
+
+<div class="search-page">
+    <!-- Search Header -->
+    <div class="search-header mb-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <form method="get" action="@Url.Action("Index", "Search")" class="d-flex gap-3 align-items-center">
+                    <div class="flex-grow-1 position-relative">
+                        <i class="bi bi-search position-absolute" style="left: 1rem; top: 50%; transform: translateY(-50%); color: #8e44ad;"></i>
+                        <input type="text" 
+                               name="q" 
+                               value="@query" 
+                               placeholder="Caută profiluri sau postări..." 
+                               class="form-control ps-5 py-3 rounded-pill border-2"
+                               style="border-color: rgba(142, 68, 173, 0.3);"
+                               autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-search me-2"></i>Caută
+                    </button>
+                </form>
+
+                <!-- filter tabs -->
+                @if (!string.IsNullOrEmpty(query))
+                {
+                    <div class="d-flex gap-2 mt-3">
+                        <a asp-action="Index" asp-route-q="@query" asp-route-type="all" 
+                           class="btn @(type == "all" ? "btn-primary" : "btn-outline-primary") rounded-pill px-4">
+                            Toate
+                        </a>
+                        <a asp-action="Index" asp-route-q="@query" asp-route-type="profiles" 
+                           class="btn @(type == "profiles" ? "btn-primary" : "btn-outline-primary") rounded-pill px-4">
+                            <i class="bi bi-people me-2"></i>Profiluri (@profiles.Count)
+                        </a>
+                        <a asp-action="Index" asp-route-q="@query" asp-route-type="posts" 
+                           class="btn @(type == "posts" ? "btn-primary" : "btn-outline-primary") rounded-pill px-4">
+                            <i class="bi bi-file-post me-2"></i>Postări (@posts.Count)
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (string.IsNullOrEmpty(query))
+    {
+        <!-- empty state -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-search" style="font-size: 4rem; color: #8e44ad; opacity: 0.5;"></i>
+            </div>
+            <h3 class="mb-3">Caută profiluri și postări</h3>
+            <p class="text-muted">Introdu un termen de căutare pentru a începe</p>
+        </div>
+    }
+    else
+    {
+        <!-- results -->
+        <div class="search-results">
+            @if (type == "all" || type == "profiles")
+            {
+                <!-- profiles section -->
+                <div class="profiles-section mb-5">
+                    <h4 class="mb-4 fw-bold">
+                        <i class="bi bi-people-fill me-2 text-primary"></i>
+                        Profiluri (@profiles.Count)
+                    </h4>
+
+                    @if (profiles.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var profile in profiles)
+                            {
+                                <div class="col-md-6 col-lg-4">
+                                    <partial name="_ProfileSearchCard" model="profile" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 bg-white rounded-4 shadow-sm border">
+                            <i class="bi bi-person-x" style="font-size: 3rem; color: #ccc;"></i>
+                            <p class="text-muted mt-3 mb-0">Nu s-au găsit profiluri pentru "@query"</p>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (type == "all" || type == "posts")
+            {
+                <!-- posts section -->
+                <div class="posts-section">
+                    <h4 class="mb-4 fw-bold">
+                        <i class="bi bi-file-post-fill me-2 text-primary"></i>
+                        Postări (@posts.Count)
+                    </h4>
+
+                    @if (posts.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var post in posts)
+                            {
+                                <div class="col-md-6 col-lg-4">
+                                    <partial name="_PostSearchCard" model="post" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 bg-white rounded-4 shadow-sm border">
+                            <i class="bi bi-file-x" style="font-size: 3rem; color: #ccc;"></i>
+                            <p class="text-muted mt-3 mb-0">Nu s-au găsit postări pentru "@query"</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .search-page {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .search-header .form-control:focus {
+        border-color: #8e44ad;
+        box-shadow: 0 0 0 0.2rem rgba(142, 68, 173, 0.25);
+    }
+</style>
+

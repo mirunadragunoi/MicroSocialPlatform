@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MicroSocialPlatform.Controllers
 {
-    [Authorize] // doar utilizatorii logati pot posta
     public class PostController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -23,6 +22,7 @@ namespace MicroSocialPlatform.Controllers
         }
 
         // afisez formularul pentru creare postare
+        [Authorize]
         [HttpGet]
         public IActionResult Create()
         {
@@ -30,6 +30,7 @@ namespace MicroSocialPlatform.Controllers
         }
 
         // procesez formularul de creare postare
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(CreatePostViewModel model)
         {
@@ -103,6 +104,7 @@ namespace MicroSocialPlatform.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -118,7 +120,7 @@ namespace MicroSocialPlatform.Controllers
             // aflu cine este userul curent
             var user = await _userManager.GetUserAsync(User);
 
-            if (!User.IsInRole("Admin") && post.UserId != user.Id)
+            if (!User.IsInRole("Administrator") && post.UserId != user.Id)
             {
                 return Forbid(); // doar adminul sau proprietarul postarii poate sterge
             }
@@ -143,6 +145,7 @@ namespace MicroSocialPlatform.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -173,6 +176,7 @@ namespace MicroSocialPlatform.Controllers
             return View(model);
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditPostViewModel model)
@@ -267,6 +271,127 @@ namespace MicroSocialPlatform.Controllers
             TempData["MessageType"] = "success"; 
 
             return RedirectToAction("Index", "Home");
+        }
+
+        // GET - feed/pagina de acasa cu toate postarile publice
+        [Authorize]
+        public async Task<IActionResult> Feed()
+        {
+            var publicPosts = await _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .Where(p => p.User.IsPublic)   // filtru - doar utilizatorii cu profilul public
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(50)
+                .ToListAsync();
+            return View(publicPosts);
+        }
+
+        // GET -  following feed (doar postari de la cei pe care ii urmaresti)
+        [Authorize]
+        public async Task<IActionResult> FollowingFeed()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // obtine ID-urile utilizatorilor pe care ii urmaresti
+            var followingIds = await _context.Follows
+                .Where(f => f.FollowerId == currentUser.Id)
+                .Select(f => f.FollowingId)
+                .ToListAsync();
+
+            // obtine postarile de la utilizatorii urmariti
+            // NU mai verificam IsPublic pentru ca follow = ai acces
+            var followingPosts = await _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .Where(p => followingIds.Contains(p.UserId))
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            return View(followingPosts);
+        }
+
+        // GET - detalii postare individuală (ca Instagram/Facebook)
+        [AllowAnonymous]
+        public async Task<IActionResult> Details(int id)
+        {
+            var post = await _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                    .ThenInclude(l => l.User)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .Include(p => p.PostMedias)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            // verific daca utilizatorul poate vedea postarea
+            var currentUser = await _userManager.GetUserAsync(User);
+            var canView = await CanViewPost(post, currentUser);
+
+            if (!canView)
+            {
+                return Forbid();
+            }
+
+            // verific daca utilizatorul curent a dat like
+            bool hasLiked = false;
+            if (currentUser != null)
+            {
+                hasLiked = await _context.Likes
+                    .AnyAsync(l => l.PostId == post.Id && l.UserId == currentUser.Id);
+            }
+
+            ViewBag.HasLiked = hasLiked;
+            ViewBag.CurrentUser = currentUser;
+
+            return View(post);
+        }
+
+        // helper -->> verific daca utilizatorul poate vedea postarea
+        private async Task<bool> CanViewPost(Post post, ApplicationUser? currentUser)
+        {
+            // daca utilizatorul care a postat are profil public, oricine poate vedea
+            if (post.User?.IsPublic == true)
+            {
+                return true;
+            }
+
+            // daca nu e autentificat, nu poate vedea postarile de la profiluri private
+            if (currentUser == null)
+            {
+                return false;
+            }
+
+            // daca e proprietarul postarii, poate vedea
+            if (post.UserId == currentUser.Id)
+            {
+                return true;
+            }
+
+            // daca e administrator, poate vedea tot
+            if (User.IsInRole("Administrator"))
+            {
+                return true;
+            }
+
+            // verific daca utilizatorul curent urmareste pe cel care a postat
+            var isFollowing = await _context.Follows
+                .AnyAsync(f => f.FollowerId == currentUser.Id && f.FollowingId == post.UserId);
+
+            return isFollowing;
         }
     }
 }

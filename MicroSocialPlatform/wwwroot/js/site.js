@@ -57,17 +57,20 @@
 
     // search functionality
     function initSearch() {
+        const searchForm = document.querySelector('.navbar-search form');
         const searchInput = document.querySelector('.search-box input');
 
-        if (!searchInput) return;
+        if (!searchInput || !searchForm) return;
 
+        // Allow form to submit naturally on Enter
         searchInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 const query = this.value.trim();
-                if (query) {
-                    // redirect to search page
-                    window.location.href = `/Search?q=${encodeURIComponent(query)}`;
+                if (!query) {
+                    e.preventDefault();
+                    return false;
                 }
+                // Form will submit naturally
             }
         });
     }

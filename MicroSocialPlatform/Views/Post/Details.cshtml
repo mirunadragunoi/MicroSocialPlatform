@@ -1,0 +1,648 @@
+@model MicroSocialPlatform.Models.Post
+@using Microsoft.AspNetCore.Identity
+@using MicroSocialPlatform.Models
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Postare";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var hasLiked = ViewBag.HasLiked as bool? ?? false;
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <!-- header postare -->
+                <div class="card-header bg-white border-0 pb-0 pt-3 px-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+                           class="text-decoration-none">
+                            <div class="user-avatar">
+                                @{
+                                    var userInitials = Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+                                }
+                                <span>@userInitials</span>
+                            </div>
+                        </a>
+                        <div class="flex-grow-1">
+                            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+                               class="text-decoration-none text-dark">
+                                <h6 class="mb-0 fw-bold">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</h6>
+                            </a>
+                            <small class="text-muted">
+                                @Model.CreatedAt.ToLocalTime().ToString("dd MMMM yyyy, HH:mm")
+                                @if (Model.UpdatedAt != null && Model.UpdatedAt != Model.CreatedAt)
+                                {
+                                    <span class="fst-italic ms-1" title="Editat la @Model.UpdatedAt.Value.ToLocalTime().ToString("g")">
+                                        (editat)
+                                    </span>
+                                }
+                            </small>
+                        </div>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots fs-5"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    @{
+                                        var isOwner = currentUser != null && Model.UserId == currentUser.Id;
+                                        var isAdmin = User.IsInRole("Administrator");
+                                    }
+
+                                    @if (isOwner || isAdmin)
+                                    {
+                                        @if (isOwner)
+                                        {
+                                            <li>
+                                                <a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item">
+                                                    <i class="bi bi-pencil-square me-2"></i> Editează Postarea
+                                                </a>
+                                            </li>
+                                        }
+
+                                        <li>
+                                            <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ești sigur că vrei să ștergi această postare?');">
+                                                    <i class="bi bi-trash3-fill me-2"></i> Șterge Postarea
+                                                </button>
+                                            </form>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-flag me-2"></i> Raportează</a></li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- media -->
+                @if (Model.PostMedias != null && Model.PostMedias.Any())
+                {
+                    <div class="post-media-container">
+                        @foreach (var media in Model.PostMedias)
+                        {
+                            @if (media.MediaType == MediaType.Image)
+                            {
+                                <img src="@media.Url" alt="Post Image" class="img-fluid w-100" style="max-height: 600px; object-fit: contain; background: #000;">
+                            }
+                            else if (media.MediaType == MediaType.Video)
+                            {
+                                <video controls class="w-100" style="max-height: 600px;">
+                                    <source src="@media.Url" type="video/mp4">
+                                    Browserul tău nu suportă elementul video.
+                                </video>
+                            }
+                        }
+                    </div>
+                }
+
+                <!-- content si actiuni -->
+                <div class="card-body px-4">
+                    <!-- actiuni (Like, Comment) -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="post-actions d-flex gap-3 mb-3 pb-2 border-bottom">
+                            <button class="btn btn-link text-muted p-0 like-btn" data-post-id="@Model.Id" style="text-decoration: none;">
+                                <i class="bi @(hasLiked ? "bi-heart-fill text-danger" : "bi-heart") fs-5"></i>
+                            </button>
+                            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted p-0" style="text-decoration: none;">
+                                <i class="bi bi-chat fs-5"></i>
+                            </a>
+                            <button class="btn btn-link text-muted p-0" style="text-decoration: none;">
+                                <i class="bi bi-share fs-5"></i>
+                            </button>
+                        </div>
+                    }
+
+                    <!-- like count -->
+                    <div class="mb-2">
+                        <strong>@Model.LikesCount @(Model.LikesCount == 1 ? "like" : "like-uri")</strong>
+                    </div>
+
+                    <!-- content -->
+                    <div class="mb-3">
+                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+                           class="text-decoration-none text-dark fw-bold me-2">
+                            @(Model.User?.CustomUsername ?? Model.User?.UserName)
+                        </a>
+                        <span>@Model.Content</span>
+                    </div>
+
+                    <!-- comments count -->
+                    @if (Model.CommentsCount > 0)
+                    {
+                        <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-muted mb-3 d-block">
+                            Vezi toate cele @Model.CommentsCount @(Model.CommentsCount == 1 ? "comentariu" : "comentarii")
+                        </a>
+                    }
+
+                    <!-- comments section -->
+                    <div class="comments-section mt-3" id="comments-container-@Model.Id">
+                        @if (Model.Comments != null && Model.Comments.Any())
+                        {
+                            @foreach (var comment in Model.Comments.OrderBy(c => c.CreatedAt))
+                            {
+                                <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="@comment.Id">
+                                    <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)" 
+                                       class="text-decoration-none">
+                                        <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            @{
+                                                var commentUserInitials = comment.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+                                            }
+                                            <span>@commentUserInitials</span>
+                                        </div>
+                                    </a>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)" 
+                                               class="text-decoration-none text-dark fw-bold">
+                                                @(comment.User?.CustomUsername ?? comment.User?.UserName)
+                                            </a>
+                                            <span class="text-dark comment-content" data-comment-id="@comment.Id">@comment.Content</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">
+                                                @comment.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")
+                                                @if (comment.UpdatedAt != null && comment.UpdatedAt != comment.CreatedAt)
+                                                {
+                                                    <span class="fst-italic ms-1" title="Editat la @comment.UpdatedAt.Value.ToLocalTime().ToString("g")">
+                                                        (editat)
+                                                    </span>
+                                                }
+                                            </small>
+                                            @if (User.Identity?.IsAuthenticated == true)
+                                            {
+                                                var isCommentOwner = currentUser != null && comment.UserId == currentUser.Id;
+                                                var isPostOwner = currentUser != null && Model.UserId == currentUser.Id;
+                                                var isAdmin = User.IsInRole("Administrator");
+                                                
+                                                @if (isCommentOwner)
+                                                {
+                                                    <button class="btn btn-link text-primary p-0 edit-comment-btn" 
+                                                            data-comment-id="@comment.Id"
+                                                            data-comment-content="@comment.Content"
+                                                            style="text-decoration: none; font-size: 0.85rem;"
+                                                            title="Editează comentariul">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                }
+                                                
+                                                @if (isCommentOwner || isPostOwner || isAdmin)
+                                                {
+                                                    <button class="btn btn-link text-danger p-0 delete-comment-btn" 
+                                                            data-comment-id="@comment.Id" 
+                                                            style="text-decoration: none; font-size: 0.85rem;"
+                                                            title="Șterge comentariul">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted small mb-0">Nu există comentarii. Fii primul care comentează!</p>
+                        }
+                    </div>
+
+                    <!-- add comment form -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form class="mt-3 pt-3 border-top comment-form" data-post-id="@Model.Id">
+                            @Html.AntiForgeryToken()
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control border-0 bg-light rounded-pill ps-3" 
+                                       placeholder="Adaugă un comentariu..." 
+                                       id="comment-input-@Model.Id"
+                                       maxlength="500"
+                                       required>
+                                <button class="btn btn-link text-primary px-3" type="submit" style="text-decoration: none;">
+                                    Postează
+                                </button>
+                            </div>
+                            <small class="text-muted ms-3" id="char-count-@Model.Id">0/500</small>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- mesaj pentru utilizatori neinregistrati -->
+                        <div class="alert alert-info mt-3 rounded-pill border-0" style="background: rgba(142, 68, 173, 0.1);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-info-circle"></i>
+                                <span class="small">
+                                    Pentru a adăuga comentarii, <a asp-area="Identity" asp-page="/Account/Register" class="text-decoration-none fw-bold">creează un cont</a> sau 
+                                    <a asp-area="Identity" asp-page="/Account/Login" class="text-decoration-none fw-bold">autentifică-te</a>.
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Back button -->
+            <div class="mt-3">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Înapoi
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const postId = @Model.Id;
+        const commentInput = document.getElementById('comment-input-' + postId);
+        const commentForm = document.querySelector('.comment-form[data-post-id="' + postId + '"]');
+        const commentsContainer = document.getElementById('comments-container-@Model.Id');
+        const charCount = document.getElementById('char-count-' + postId);
+
+        // character counter
+        if (commentInput && charCount) {
+            commentInput.addEventListener('input', function() {
+                charCount.textContent = this.value.length + '/500';
+            });
+        }
+
+        // submit comment
+        if (commentForm) {
+            commentForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const content = commentInput.value.trim();
+                if (!content) {
+                    alert('Comentariul nu poate fi gol!');
+                    return;
+                }
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                try {
+                    const response = await fetch('@Url.Action("Create", "Comment")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: new URLSearchParams({
+                            postId: postId,
+                            content: content,
+                            __RequestVerificationToken: token
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // clear input
+                        commentInput.value = '';
+                        if (charCount) charCount.textContent = '0/500';
+
+                        // format date
+                        const commentDate = new Date(result.comment.createdAt);
+                        const formattedDate = commentDate.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' + 
+                                             commentDate.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+
+                        // add comment to DOM
+                        const commentHtml = `
+                            <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="${result.comment.id}">
+                                <a href="@Url.Action("Index", "Profile")?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none">
+                                    <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                        <span>${result.comment.user.userName.substring(0, 2).toUpperCase()}</span>
+                                    </div>
+                                </a>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <a href="@Url.Action("Index", "Profile")?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none text-dark fw-bold">
+                                            ${result.comment.user.customUsername}
+                                        </a>
+                                        <span class="text-dark comment-content" data-comment-id="${result.comment.id}">${escapeHtml(result.comment.content)}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted">${formattedDate}</small>
+                                        <button class="btn btn-link text-primary p-0 edit-comment-btn" 
+                                                data-comment-id="${result.comment.id}"
+                                                data-comment-content="${escapeHtml(result.comment.content)}"
+                                                style="text-decoration: none; font-size: 0.85rem;"
+                                                title="Editează comentariul">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-link text-danger p-0 delete-comment-btn" 
+                                                data-comment-id="${result.comment.id}" 
+                                                style="text-decoration: none; font-size: 0.85rem;"
+                                                title="Șterge comentariul">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // remove "no comments" message if exists
+                        const noCommentsMsg = commentsContainer.querySelector('p.text-muted');
+                        if (noCommentsMsg) {
+                            noCommentsMsg.remove();
+                        }
+
+                        commentsContainer.insertAdjacentHTML('beforeend', commentHtml);
+
+                        // update comments count
+                        const commentsCountLink = document.querySelector('a[href*="Details"]');
+                        if (commentsCountLink && result.commentsCount > 0) {
+                            commentsCountLink.textContent = `Vezi toate cele ${result.commentsCount} ${result.commentsCount === 1 ? 'comentariu' : 'comentarii'}`;
+                        }
+
+                        // attach handlers to new comment
+                        attachEditHandlers();
+                        attachDeleteHandlers();
+                    } else {
+                        alert(result.message || 'A apărut o eroare. Te rugăm să încerci din nou.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('A apărut o eroare. Te rugăm să încerci din nou.');
+                }
+            });
+        }
+
+        // edit comment handlers
+        function attachEditHandlers() {
+            document.querySelectorAll('.edit-comment-btn').forEach(btn => {
+                if (btn.dataset.listenerAttached) return;
+                btn.dataset.listenerAttached = 'true';
+                
+                btn.addEventListener('click', function() {
+                    const commentId = this.dataset.commentId;
+                    const currentContent = this.dataset.commentContent;
+                    const commentContentSpan = document.querySelector(`.comment-content[data-comment-id="${commentId}"]`);
+                    
+                    if (!commentContentSpan) return;
+                    
+                    // create input field
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-control form-control-sm d-inline-block';
+                    input.value = currentContent;
+                    input.style.width = '300px';
+                    input.maxLength = 500;
+                    
+                    // create save and cancel buttons
+                    const saveBtn = document.createElement('button');
+                    saveBtn.className = 'btn btn-sm btn-primary ms-2';
+                    saveBtn.innerHTML = '<i class="bi bi-check"></i>';
+                    saveBtn.title = 'Salvează';
+                    
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'btn btn-sm btn-secondary ms-1';
+                    cancelBtn.innerHTML = '<i class="bi bi-x"></i>';
+                    cancelBtn.title = 'Anulează';
+                    
+                    // replace content with input
+                    const parent = commentContentSpan.parentElement;
+                    parent.replaceChild(input, commentContentSpan);
+                    parent.appendChild(saveBtn);
+                    parent.appendChild(cancelBtn);
+                    
+                    input.focus();
+                    input.select();
+                    
+                    // save handler
+                    const saveHandler = async () => {
+                        const newContent = input.value.trim();
+                        if (!newContent) {
+                            alert('Comentariul nu poate fi gol!');
+                            return;
+                        }
+                        
+                        if (newContent.length > 500) {
+                            alert('Comentariul nu poate depăși 500 de caractere!');
+                            return;
+                        }
+                        
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        
+                        try {
+                            const response = await fetch('@Url.Action("Edit", "Comment")', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'RequestVerificationToken': token
+                                },
+                                body: new URLSearchParams({
+                                    id: commentId,
+                                    content: newContent,
+                                    __RequestVerificationToken: token
+                                })
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                // restore content span
+                                const newSpan = document.createElement('span');
+                                newSpan.className = 'text-dark comment-content';
+                                newSpan.setAttribute('data-comment-id', commentId);
+                                newSpan.textContent = result.comment.content;
+                                
+                                // update edit button data
+                                btn.dataset.commentContent = result.comment.content;
+                                
+                                // format date
+                                const commentDate = new Date(result.comment.createdAt);
+                                const formattedDate = commentDate.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' + 
+                                                     commentDate.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+                                
+                                let dateHtml = formattedDate;
+                                if (result.comment.updatedAt) {
+                                    const updatedDate = new Date(result.comment.updatedAt);
+                                    const formattedUpdatedDate = updatedDate.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' + 
+                                                                 updatedDate.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+                                    dateHtml += ` <span class="fst-italic ms-1" title="Editat la ${formattedUpdatedDate}">(editat)</span>`;
+                                }
+                                
+                                // get username from existing link
+                                const usernameLink = parent.querySelector('a');
+                                const username = usernameLink ? usernameLink.textContent.trim() : result.comment.user.customUsername;
+                                
+                                // replace input and buttons with content
+                                parent.innerHTML = `
+                                    <a href="@Url.Action("Index", "Profile")?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none text-dark fw-bold">
+                                        ${result.comment.user.customUsername}
+                                    </a>
+                                    ${newSpan.outerHTML}
+                                `;
+                                
+                                // restore actions
+                                const actionsDiv = parent.parentElement.querySelector('.d-flex.align-items-center.gap-2');
+                                if (actionsDiv) {
+                                    actionsDiv.innerHTML = `
+                                        <small class="text-muted">${dateHtml}</small>
+                                        <button class="btn btn-link text-primary p-0 edit-comment-btn" 
+                                                data-comment-id="${result.comment.id}"
+                                                data-comment-content="${escapeHtml(result.comment.content)}"
+                                                style="text-decoration: none; font-size: 0.85rem;"
+                                                title="Editează comentariul">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-link text-danger p-0 delete-comment-btn" 
+                                                data-comment-id="${result.comment.id}" 
+                                                style="text-decoration: none; font-size: 0.85rem;"
+                                                title="Șterge comentariul">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    `;
+                                    
+                                    // reattach handlers
+                                    attachEditHandlers();
+                                    attachDeleteHandlers();
+                                }
+                            } else {
+                                alert(result.message || 'A apărut o eroare. Te rugăm să încerci din nou.');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('A apărut o eroare. Te rugăm să încerci din nou.');
+                        }
+                    };
+                    
+                    // cancel handler
+                    const cancelHandler = () => {
+                        const newSpan = document.createElement('span');
+                        newSpan.className = 'text-dark comment-content';
+                        newSpan.setAttribute('data-comment-id', commentId);
+                        newSpan.textContent = currentContent;
+                        
+                        parent.replaceChild(newSpan, input);
+                        saveBtn.remove();
+                        cancelBtn.remove();
+                    };
+                    
+                    saveBtn.addEventListener('click', saveHandler);
+                    cancelBtn.addEventListener('click', cancelHandler);
+                    
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            saveHandler();
+                        } else if (e.key === 'Escape') {
+                            cancelHandler();
+                        }
+                    });
+                });
+            });
+        }
+
+        // delete comment handlers
+        function attachDeleteHandlers() {
+            document.querySelectorAll('.delete-comment-btn').forEach(btn => {
+                if (btn.dataset.listenerAttached) return;
+                btn.dataset.listenerAttached = 'true';
+                
+                btn.addEventListener('click', async function() {
+                    if (!confirm('Ești sigur că vrei să ștergi acest comentariu?')) {
+                        return;
+                    }
+
+                    const commentId = this.dataset.commentId;
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                    try {
+                        const response = await fetch('@Url.Action("Delete", "Comment")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'RequestVerificationToken': token
+                            },
+                            body: new URLSearchParams({
+                                id: commentId,
+                                __RequestVerificationToken: token
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            // remove comment from DOM
+                            const commentItem = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
+                            if (commentItem) {
+                                commentItem.remove();
+                            }
+
+                            // update comments count
+                            const commentsCountLink = document.querySelector('a[href*="Details"]');
+                            if (commentsCountLink) {
+                                if (result.commentsCount > 0) {
+                                    commentsCountLink.textContent = `Vezi toate cele ${result.commentsCount} ${result.commentsCount === 1 ? 'comentariu' : 'comentarii'}`;
+                                } else {
+                                    commentsCountLink.remove();
+                                    commentsContainer.innerHTML = '<p class="text-muted small mb-0">Nu există comentarii. Fii primul care comentează!</p>';
+                                }
+                            }
+                        } else {
+                            alert(result.message || 'A apărut o eroare. Te rugăm să încerci din nou.');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('A apărut o eroare. Te rugăm să încerci din nou.');
+                    }
+                });
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        attachEditHandlers();
+        attachDeleteHandlers();
+    });
+</script>
+}
+
+<style>
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        transition: transform 0.2s;
+    }
+
+    .user-avatar:hover {
+        transform: scale(1.1);
+    }
+
+    .post-media-container {
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .like-btn:hover {
+        transform: scale(1.2);
+        transition: transform 0.2s;
+    }
+</style>
+

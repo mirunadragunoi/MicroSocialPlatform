@@ -22,12 +22,14 @@
                 </a>
             </div>
 
-            <!-- searh bar pe centru -->
+            <!-- search bar pe centru -->
             <div class="navbar-search">
-                <div class="search-box">
-                    <i class="bi bi-search"></i>
-                    <input type="text" placeholder="Cauta..."/>
-                </div>
+                <form method="get" action="@Url.Action("Index", "Search")" class="w-100">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" name="q" placeholder="Cauta profiluri sau postari..." value="@(ViewBag.SearchQuery ?? "")"/>
+                    </div>
+                </form>
             </div>
 
             <!-- user menu pe dreapta -->

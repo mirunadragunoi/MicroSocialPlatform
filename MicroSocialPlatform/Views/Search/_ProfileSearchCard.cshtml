@@ -1,0 +1,104 @@
+@model MicroSocialPlatform.Models.ApplicationUser
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var isOwnProfile = currentUser != null && currentUser.Id == Model.Id;
+    var username = Model.CustomUsername ?? Model.UserName;
+    var userInitials = Model.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+}
+
+<a asp-controller="Profile" asp-action="Index" asp-route-username="@username" class="text-decoration-none">
+    <div class="card border-0 shadow-sm rounded-4 profile-search-card h-100" 
+         style="transition: all 0.3s; cursor: pointer;"
+         onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.1)'">
+        
+        <!-- Cover Photo (mini) -->
+        <div class="profile-cover-mini" style="height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative;">
+            @if (!string.IsNullOrEmpty(Model.CoverPhoto))
+            {
+                <img src="@Model.CoverPhoto" alt="Cover" style="width: 100%; height: 100%; object-fit: cover;">
+            }
+        </div>
+
+        <div class="card-body text-center pb-2">
+            <!-- Profile Picture (mini) -->
+            <div class="position-relative d-inline-block mb-2" style="margin-top: -40px;">
+                <div class="profile-picture-mini" style="width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; background: linear-gradient(135deg, #a18cd1, #fbc2eb); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePicture))
+                    {
+                        <img src="@Model.ProfilePicture" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <span>@userInitials</span>
+                    }
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <h5 class="mb-1 text-dark fw-bold">@(Model.FullName ?? Model.UserName)</h5>
+            <p class="text-muted mb-2 small">@@@username</p>
+
+            @if (!string.IsNullOrEmpty(Model.Bio))
+            {
+                <p class="text-muted small mb-2" style="font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                    @Model.Bio
+                </p>
+            }
+
+            <!-- Stats -->
+            <div class="d-flex justify-content-center gap-3 mt-3 pt-2 border-top">
+                <div class="text-center">
+                    <div class="fw-bold text-dark">@(Model.Posts?.Count ?? 0)</div>
+                    <small class="text-muted">Postări</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold text-dark">@(Model.Followers?.Count ?? 0)</div>
+                    <small class="text-muted">Urmăritori</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold text-dark">@(Model.Following?.Count ?? 0)</div>
+                    <small class="text-muted">Urmărește</small>
+                </div>
+            </div>
+
+            <!-- Status Badge -->
+            @if (!string.IsNullOrEmpty(Model.Status) || !string.IsNullOrEmpty(Model.StatusEmoji))
+            {
+                <div class="mt-2">
+                    <span class="badge bg-light text-dark">
+                        @if (!string.IsNullOrEmpty(Model.StatusEmoji))
+                        {
+                            <span>@Model.StatusEmoji</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Status))
+                        {
+                            <span>@Model.Status</span>
+                        }
+                    </span>
+                </div>
+            }
+
+            <!-- Privacy Badge -->
+            <div class="mt-2">
+                @if (Model.IsPublic)
+                {
+                    <span class="badge bg-success">
+                        <i class="bi bi-globe me-1"></i>Public
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning">
+                        <i class="bi bi-lock me-1"></i>Privat
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+</a>
+

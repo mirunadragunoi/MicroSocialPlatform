@@ -1,0 +1,93 @@
+@model MicroSocialPlatform.Models.Post
+
+@{
+    var username = Model.User?.CustomUsername ?? Model.User?.UserName ?? "anonim";
+    var userInitials = Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+    var hasMedia = Model.PostMedias != null && Model.PostMedias.Any();
+    var firstMedia = hasMedia ? Model.PostMedias.First() : null;
+}
+
+<a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none">
+    <div class="card border-0 shadow-sm rounded-4 post-search-card h-100" 
+         style="transition: all 0.3s; cursor: pointer; overflow: hidden;"
+         onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.1)'">
+        
+        @if (hasMedia && firstMedia != null)
+        {
+            <!-- post with media -->
+            <div class="position-relative" style="aspect-ratio: 1; overflow: hidden;">
+                @if (firstMedia.MediaType == MicroSocialPlatform.Models.MediaType.Image)
+                {
+                    <img src="@firstMedia.Url" alt="Post" class="w-100 h-100" style="object-fit: cover;">
+                }
+                else if (firstMedia.MediaType == MicroSocialPlatform.Models.MediaType.Video)
+                {
+                    <video class="w-100 h-100" style="object-fit: cover;" muted>
+                        <source src="@firstMedia.Url" type="video/mp4">
+                    </video>
+                }
+
+                <!-- overlay with stats -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                     style="background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s;"
+                     onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                    <div class="text-white text-center">
+                        <div class="mb-2">
+                            <i class="bi bi-heart-fill fs-4 me-2"></i>
+                            <span class="fs-5 fw-bold">@Model.LikesCount</span>
+                        </div>
+                        <div>
+                            <i class="bi bi-chat-fill fs-4 me-2"></i>
+                            <span class="fs-5 fw-bold">@Model.CommentsCount</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- post without media -->
+            <div class="card-body p-3" style="min-height: 200px; display: flex; flex-direction: column;">
+                <!-- User Info -->
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="user-avatar-mini" style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #a18cd1, #fbc2eb); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.8rem;">
+                        <span>@userInitials</span>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-dark small">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">@@@username</div>
+                    </div>
+                </div>
+
+                <!-- content -->
+                @if (!string.IsNullOrEmpty(Model.Content))
+                {
+                    <p class="text-dark mb-2" style="font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; flex-grow: 1;">
+                        @Model.Content
+                    </p>
+                }
+
+                <!-- stats -->
+                <div class="d-flex gap-3 mt-auto pt-2 border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-heart me-1"></i>@Model.LikesCount
+                    </small>
+                    <small class="text-muted">
+                        <i class="bi bi-chat me-1"></i>@Model.CommentsCount
+                    </small>
+                    <small class="text-muted ms-auto">
+                        @Model.CreatedAt.ToLocalTime().ToString("dd MMM")
+                    </small>
+                </div>
+            </div>
+        }
+    </div>
+</a>
+
+<style>
+    .post-search-card video {
+        pointer-events: none;
+    }
+</style>
+
