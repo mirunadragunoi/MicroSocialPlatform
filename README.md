@@ -1,4 +1,4 @@
-# 🌐 MicroSocialPlatform
+# 🌐 MicroSocialPlatform - Agora
 
 <div align="center">
 
@@ -9,8 +9,6 @@
 ![C#](https://img.shields.io/badge/C%23-10.0-239120?style=for-the-badge&logo=c-sharp)
 
 **O platformă socială modernă construită cu ASP.NET Core MVC**
-
-[Features](#-features) • [Tehnologii](#-tehnologii-utilizate) • [Instalare](#-instalare) • [Documentație](#-documentație) • [Contributors](#-contributors)
 
 </div>
 
