@@ -5,6 +5,7 @@ using MicroSocialPlatform.Models;
 using MicroSocialPlatform.Data;
 using MicroSocialPlatform.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using MicroSocialPlatform.Models.ViewModels;
 
 namespace MicroSocialPlatform.Controllers
 {
@@ -45,7 +46,7 @@ namespace MicroSocialPlatform.Controllers
             var currentUserId = currentUser?.Id;
 
             // cautare profil
-            List<ApplicationUser> profiles = new List<ApplicationUser>();
+            List<SearchResultViewModel> profiles = new List<SearchResultViewModel>();
             if (type == null || type == "all" || type == "profiles")
             {
                 var profilesQuery = _context.Users.AsQueryable();
@@ -59,10 +60,16 @@ namespace MicroSocialPlatform.Controllers
                 );
 
                 profiles = await profilesQuery
-                    .Include(u => u.Posts)
-                    .Include(u => u.Followers)
-                    .Include(u => u.Following)
                     .OrderByDescending(u => u.CreatedAt)
+                    .Select(u => new SearchResultViewModel
+                    {
+                        UserId = u.Id,
+                        FullName = u.FullName ?? "Utilizator",
+                        Username = u.CustomUsername ?? u.UserName,
+                        Bio = u.Bio,
+                        ProfilePicture = u.ProfilePicture,
+                        IsPublic = u.IsPublic
+                    })
                     .Take(20)
                     .ToListAsync();
             }

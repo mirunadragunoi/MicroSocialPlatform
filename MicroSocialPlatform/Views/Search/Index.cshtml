@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Identity
 @using MicroSocialPlatform.Models
+@using MicroSocialPlatform.Models.ViewModels
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 
@@ -7,7 +8,7 @@
     ViewData["Title"] = "Căutare";
     var query = ViewBag.Query as string ?? "";
     var type = ViewBag.Type as string ?? "all";
-    var profiles = ViewBag.Profiles as List<ApplicationUser> ?? new List<ApplicationUser>();
+    var profiles = ViewBag.Profiles as List<SearchResultViewModel> ?? new List<SearchResultViewModel>();
     var posts = ViewBag.Posts as List<Post> ?? new List<Post>();
     var currentUser = ViewBag.CurrentUser as ApplicationUser;
 }
