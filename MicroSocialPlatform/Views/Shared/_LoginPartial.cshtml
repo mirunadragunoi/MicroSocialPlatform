@@ -30,62 +30,49 @@
                 <span class="user-name d-none d-md-inline">@user?.FullName</span>
                 <i class="bi bi-chevron-down"></i>
             </button>
+
             <!-- restul dropdown-ului -->
-            <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown">
-                <li class="user-menu-header">
-                    <div class="d-flex align-items-center">
-                        <div class="user-avatar-large me-3">
-                            @if (hasProfilePicture)
-                            {
-                                <img src="@user.ProfilePicture"
-                                     alt="@user.FullName"
-                                     class="avatar-img" />
-                            }
-                            else
-                            {
-                                <span class="avatar-initials">@initials</span>
-                            }
-                        </div>
-                        <div>
-                            <div class="user-menu-name">@user?.FullName</div>
-                            <div class="user-menu-email">@User.Identity?.Name</div>
-                        </div>
-                    </div>
+            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2"
+                style="background-color: #fff; min-width: 200px;">
+
+                <li class="px-3 py-2 border-bottom mb-2">
+                    <div class="fw-bold text-dark">@User.Identity?.Name</div>
+                    <small class="text-muted" style="font-size: 0.8rem;">Contul tău</small>
                 </li>
-                <li class="user-menu-divider"></li>
+
                 <li>
-                    <a class="user-menu-item" asp-controller="Profile" asp-action="Index">
-                        <i class="bi bi-person"></i> Profil
+                    <a class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2"
+                       asp-area="" asp-controller="Profile" asp-action="Index"
+                       style="color: #6c757d; transition: all 0.2s;">
+                        <i class="bi bi-person fs-5" style="color: #8e44ad;"></i> Profil
                     </a>
                 </li>
+
                 <li>
-                    <a class="user-menu-item" asp-controller="Profile" asp-action="Edit">
-                        <i class="bi bi-pencil-square"></i> Editează Profilul
+                    <a class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2"
+                       asp-area="Identity" asp-page="/Account/Manage/Index"
+                       style="color: #6c757d; transition: all 0.2s;">
+                        <i class="bi bi-gear fs-5" style="color: #8e44ad;"></i> Setări
                     </a>
                 </li>
+
+                <li><hr class="dropdown-divider my-2"></li>
+
                 <li>
-                    <a class="user-menu-item" asp-controller="Settings" asp-action="Index">
-                        <i class="bi bi-gear"></i> Setări
-                    </a>
-                </li>
-                @if (User.IsInRole("Administrator"))
-                {
-                    <li class="user-menu-divider"></li>
-                    <li>
-                        <a class="user-menu-item" asp-controller="Admin" asp-action="Index">
-                            <i class="bi bi-shield-fill-check"></i> Admin Panel
-                        </a>
-                    </li>
-                }
-                <li class="user-menu-divider"></li>
-                <li>
-                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                        <button type="submit" class="user-menu-item user-menu-logout w-100 text-start border-0 bg-transparent">
-                            <i class="bi bi-box-arrow-right"></i> Logout
+                    <form class="form-inline" asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                        <button type="submit" class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2 text-danger w-100 border-0 bg-transparent">
+                            <i class="bi bi-box-arrow-right fs-5"></i> Deconectare
                         </button>
                     </form>
                 </li>
             </ul>
+
+            <style>
+                .dropdown-item:hover {
+                    background-color: #f3e5f5 !important; 
+                    color: #8e44ad !important; 
+                }
+            </style>
         </div>
     </div>
 }

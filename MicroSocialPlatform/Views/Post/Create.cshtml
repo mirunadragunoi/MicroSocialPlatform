@@ -1,7 +1,11 @@
 ﻿@model MicroSocialPlatform.Models.ViewModels.CreatePostViewModel
+@using Microsoft.AspNetCore.Identity
+@using MicroSocialPlatform.Models
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     ViewData["Title"] = "Creează Postare";
+    var currentUser = await UserManager.GetUserAsync(User);
 }
 
 <div class="row justify-content-center">
@@ -17,8 +21,21 @@
 
                     <div class="mb-4">
                         <div class="d-flex align-items-start mb-2">
-                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; color: #8e44ad;">
-                                <i class="bi bi-person-fill fs-5"></i>
+                            <div class="me-3">
+                                @if (!string.IsNullOrEmpty(currentUser?.ProfilePicture))
+                                {
+                                    <img src="@currentUser.ProfilePicture"
+                                         alt="Profile"
+                                         class="rounded-circle border shadow-sm"
+                                         style="width: 45px; height: 45px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                                         style="width: 45px; height: 45px; background: linear-gradient(135deg, #a18cd1, #fbc2eb);">
+                                        @(currentUser?.UserName?.Substring(0, 2).ToUpper() ?? "EU")
+                                    </div>
+                                }
                             </div>
                             <div class="w-100">
                                 <label asp-for="Content" class="form-label fw-bold text-muted small ms-1">Textul postării</label>

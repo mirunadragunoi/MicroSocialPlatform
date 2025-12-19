@@ -95,7 +95,8 @@ namespace MicroSocialPlatform.Controllers
                         id = commentWithUser.User?.Id,
                         userName = commentWithUser.User?.UserName,
                         customUsername = commentWithUser.User?.CustomUsername ?? commentWithUser.User?.UserName,
-                        fullName = commentWithUser.User?.FullName ?? commentWithUser.User?.UserName
+                        fullName = commentWithUser.User?.FullName ?? commentWithUser.User?.UserName,
+                        profilePicture = commentWithUser.User?.ProfilePicture
                     }
                 },
                 commentsCount = post.CommentsCount

@@ -126,9 +126,33 @@ namespace MicroSocialPlatform.Controllers
                     .ToListAsync();
             }
 
+            // cautare grupuri
+            List<Group> groups = new List<Group>();
+
+            // cautam doar daca filtrul este "all" sau "groups"
+            if (type == null || type == "all" || type == "groups")
+            {
+                var groupsQuery = _context.Groups
+                    .Include(g => g.Members)
+                    .Include(g => g.Owner)
+                    .AsQueryable();
+
+                // cautare dupa nume si descriere
+                groupsQuery = groupsQuery.Where(g =>
+                    (g.Name != null && g.Name.ToLower().Contains(query)) ||
+                    (g.Description != null && g.Description.ToLower().Contains(query))
+                );
+                groups = await groupsQuery
+                    .OrderByDescending(g => g.CreatedAt)
+                    .Take(20)
+                    .ToListAsync();
+            }
+
             ViewBag.Profiles = profiles;
             ViewBag.Posts = posts;
+            ViewBag.Groups = groups;
             ViewBag.CurrentUser = currentUser;
+            ViewBag.CurrentUserId = currentUser?.Id;
 
             return View();
         }

@@ -5,12 +5,23 @@
         <div class="d-flex gap-3 mb-3">
             <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
                class="text-decoration-none" style="text-decoration: none !important;">
-                <div class="user-avatar">
-                    @{
-                        var postUserInitials = Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User.CustomUsername ?? Model.User.UserName)" class="text-decoration-none">
+                    @if (!string.IsNullOrEmpty(Model.User.ProfilePicture))
+                    {
+                        <img src="@Model.User.ProfilePicture"
+                             alt="Profile Picture"
+                             class="rounded-circle border"
+                             style="width: 40px; height: 40px; object-fit: cover;">
                     }
-                    <span>@postUserInitials</span>
-                </div>
+                    else
+                    {
+                        <div class="user-avatar" style="width: 40px; height:40px; ... (stilurile tale existente) ...">
+                            <span>
+                                @(Model.User.UserName?.Substring(0, 2).ToUpper() ?? "AN")
+                            </span>
+                        </div>        
+                    }
+                </a>
             </a>
 
             <div class="flex-grow-1">

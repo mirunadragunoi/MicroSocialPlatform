@@ -1,0 +1,44 @@
+﻿@model MicroSocialPlatform.Models.Group
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4 fw-bold" style="color: #8e44ad;">Editează Grupul</h2>
+
+                    <form asp-action="Edit" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="OwnerId" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-bold">Nume Grup</label>
+                            <input asp-for="Name" class="form-control rounded-pill" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Descriere</label>
+                            <textarea asp-for="Description" class="form-control rounded-4" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Schimbă Fotografia</label>
+                            <input type="file" name="groupImage" class="form-control rounded-pill" accept="image/*" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary rounded-pill fw-bold py-2" style="background-color: #8e44ad; border: none;">
+                                Salvează Modificările
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light rounded-pill text-muted">Renunță</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

@@ -1,6 +1,10 @@
 ﻿@model IEnumerable<MicroSocialPlatform.Models.Post>
+@using MicroSocialPlatform.Models;
+@using Microsoft.AspNetCore.Identity;
+@inject UserManager<ApplicationUser> UserManager;
 @{
     ViewData["Title"] = "Acasă";
+    var currentUser = await UserManager.GetUserAsync(User);
 }
 
 <div class="home-page">
@@ -126,11 +130,21 @@
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-body">
                     <div class="d-flex gap-3">
-                        <div class="user-avatar-large">
-                            @{
-                                var myInitials = User.Identity?.Name?.Substring(0, 2).ToUpper() ?? "U";
+                        <div class="me-2">
+                            @if (!string.IsNullOrEmpty(currentUser?.ProfilePicture))
+                            {
+                                <img src="@currentUser.ProfilePicture"
+                                     alt="Profile"
+                                     class="rounded-circle border"
+                                     style="width: 45px; height: 45px; object-fit: cover;">
                             }
-                            <span>@myInitials</span>
+                            else
+                            {
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                                     style="width: 45px; height: 45px; background: linear-gradient(135deg, #a18cd1, #fbc2eb);">
+                                    @(currentUser?.UserName?.Substring(0, 2).ToUpper() ?? "EU")
+                                </div>
+                            }
                         </div>
                         <div class="flex-grow-1">
                             <a asp-controller="Post" asp-action="Create" class="form-control text-start text-muted create-post-trigger bg-light border-0">

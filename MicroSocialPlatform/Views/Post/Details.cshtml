@@ -18,12 +18,22 @@
                     <div class="d-flex align-items-center gap-3">
                         <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
                            class="text-decoration-none">
-                            <div class="user-avatar">
-                                @{
-                                    var userInitials = Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
-                                }
-                                <span>@userInitials</span>
-                            </div>
+                            @if (!string.IsNullOrEmpty(Model.User?.ProfilePicture))
+                            {
+                                <img src="@Model.User.ProfilePicture"
+                                     alt="@(Model.User.UserName)"
+                                     class="rounded-circle border"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="user-avatar">
+                                    @{
+                                        var userInitials = Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+                                    }
+                                    <span>@userInitials</span>
+                                </div>
+                            }
                         </a>
                         <div class="flex-grow-1">
                             <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
@@ -157,12 +167,22 @@
                                 <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="@comment.Id">
                                     <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)" 
                                        class="text-decoration-none">
-                                        <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                            @{
-                                                var commentUserInitials = comment.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
-                                            }
-                                            <span>@commentUserInitials</span>
-                                        </div>
+                                        @if (!string.IsNullOrEmpty(comment.User?.ProfilePicture))
+                                        {
+                                            <img src="@comment.User.ProfilePicture"
+                                                 alt="@comment.User.UserName" 
+                                                 class="rounded-circle border" 
+                                                 style="width: 32px; height: 32px; object-fit: cover;">
+                                        }
+                                        else
+                                        {
+                                            <div class="user-avatar" style="width:32px; height:32px; font-size: 0.8rem;">
+                                                @{
+                                                    var commentUserInitials = comment.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
+                                                }
+                                                <span>@commentUserInitials</span>
+                                            </div>    
+                                        }
                                     </a>
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center gap-2 mb-1">
@@ -281,7 +301,7 @@
                 });
             }
 
-            // adaugare comentariu (create)
+            // adaugare comentariu
             if (commentForm) {
                 commentForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
@@ -289,7 +309,7 @@
                     const content = commentInput.value.trim();
                     if (!content) { alert('Comentariul nu poate fi gol!'); return; }
 
-                    // luam token-ul CSRF pentru securitate
+                    // token CSRF pentru securitate
                     const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
                     const token = tokenInput ? tokenInput.value : '';
 
@@ -310,62 +330,70 @@
                         const result = await response.json();
 
                         if (result.success) {
-                            // resetam formularul
-                            commentInput.value = '';
-                            if (charCount) charCount.textContent = '0/500';
+                        // resetam formularul
+                        commentInput.value = '';
+                        if (charCount) charCount.textContent = '0/500';
 
-                            // formatam data
-                            const d = new Date(result.comment.createdAt);
-                            const dateStr = d.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' +
-                                          d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+                        // formatam data
+                        const d = new Date(result.comment.createdAt);
+                        const dateStr = d.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' +
+                                      d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
 
-                            // folosim escapeHtml pentru a preveni XSS 
-                            const html = `
-                                <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="${result.comment.id}">
-                                    <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none">
-                                        <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                            <span>${result.comment.user.userName.substring(0, 2).toUpperCase()}</span>
-                                        </div>
-                                    </a>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none text-dark fw-bold">
-                                                ${result.comment.user.customUsername}
-                                            </a>
-                                            <span class="text-dark comment-content" data-comment-id="${result.comment.id}">${escapeHtml(result.comment.content)}</span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <small class="text-muted date-container">${dateStr}</small>
-
-                                            <button class="btn btn-link text-primary p-0 edit-comment-btn"
-                                                    data-comment-id="${result.comment.id}"
-                                                    title="Editează">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-link text-danger p-0 delete-comment-btn"
-                                                    data-comment-id="${result.comment.id}"
-                                                    title="Șterge">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>`;
-
-                            // scoatem mesajul "Nu exista comentarii"
-                            const noComm = commentsContainer.querySelector('p.text-muted');
-                            if (noComm) noComm.remove();
-
-                            // adaugam la final
-                            commentsContainer.insertAdjacentHTML('beforeend', html);
-
-                            // actualizam contorul ("Vezi toate cele X comentarii")
-                            updateCount(result.commentsCount);
-
-                            // reactivam butoanele noi
-                            attachHandlers();
+                        let avatarHtml = '';
+                        if (result.comment.user.profilePicture) {
+                            // daca serverul a trimis o poza, construim tag-ul img
+                            avatarHtml = `
+                                <img src="${result.comment.user.profilePicture}"
+                                     class="rounded-circle border"
+                                     style="width: 32px; height: 32px; object-fit: cover;"
+                                     alt="${result.comment.user.userName}">`;
                         } else {
-                            alert(result.message || 'Eroare la adăugare.');
+                            // daca nu, construim div-ul cu initialele userului
+                            const initials = result.comment.user.userName.substring(0, 2).toUpperCase();
+                            avatarHtml = `
+                                <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                    <span>${initials}</span>
+                                </div>`;
                         }
+
+                        const html = `
+                            <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="${result.comment.id}">
+                                <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none">
+                                    ${avatarHtml}  </a>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none text-dark fw-bold">
+                                            ${result.comment.user.customUsername}
+                                        </a>
+                                        <span class="text-dark comment-content" data-comment-id="${result.comment.id}">${escapeHtml(result.comment.content)}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted date-container">${dateStr}</small>
+
+                                        <button class="btn btn-link text-primary p-0 edit-comment-btn"
+                                                data-comment-id="${result.comment.id}"
+                                                title="Editează">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-link text-danger p-0 delete-comment-btn"
+                                                data-comment-id="${result.comment.id}"
+                                                title="Șterge">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>`;
+
+                        // scoatem mesajul "nu exista comentarii"
+                        const noComm = commentsContainer.querySelector('p.text-muted');
+                        if (noComm) noComm.remove();
+
+                        // adaugam la final
+                        commentsContainer.insertAdjacentHTML('beforeend', html);
+
+                        updateCount(result.commentsCount);
+                        attachHandlers();
+                    }
                     } catch (err) {
                         console.error(err);
                         alert('Eroare de comunicare cu serverul.');
@@ -373,21 +401,19 @@
                 });
             }
 
-            // editare si stergere
+            // functii pentru editare si stergere
             function attachHandlers() {
-                // editare
-                // folosim clasa 'bound' ca sa nu atasam evenimentul de 2 ori pe acelasi buton
+                // editare - abordare non-distructiva (Toggle)
                 document.querySelectorAll('.edit-comment-btn:not(.bound)').forEach(btn => {
-                    btn.classList.add('bound');
+                    btn.classList.add('bound'); // marcare ca atasat
                     btn.addEventListener('click', function() {
                         const id = this.dataset.commentId;
                         const span = document.querySelector(`.comment-content[data-comment-id="${id}"]`);
                         if (!span) return;
 
-                        // salvam textul curent
-                        const currentText = span.innerText; 
+                        const currentText = span.innerText;
 
-                        // cream input-ul
+                        // creare input editare
                         const input = document.createElement('input');
                         input.type = 'text';
                         input.className = 'form-control form-control-sm d-inline-block ms-2';
@@ -395,28 +421,31 @@
                         input.style.minWidth = '200px';
                         input.value = currentText;
 
-                        // butoane save/cancel
                         const btnGroup = document.createElement('span');
                         btnGroup.className = 'ms-2';
                         btnGroup.innerHTML = `
-                            <button class="btn btn-sm text-white save-btn" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb); border: none;"><i class="bi bi-check"></i></button>
-                            <button class="btn btn-sm btn-light cancel-btn ms-1" style="color: #6c757d; border: 1px solid #dee2e6;"><i class="bi bi-x"></i></button>
+                            <button class="btn btn-sm text-white save-btn shadow-sm" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb); border: none;" title="Salvează">
+                                <i class="bi bi-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light cancel-btn ms-1 shadow-sm" style="color: #6c757d;" title="Anulează">
+                                <i class="bi bi-x"></i>
+                            </button>
                         `;
 
-                        // ascundem span-ul original, inseram inputul
+                        // ascundem textul, aratam inputul
                         span.style.display = 'none';
                         span.parentNode.insertBefore(input, span.nextSibling);
                         input.parentNode.insertBefore(btnGroup, input.nextSibling);
                         input.focus();
 
-                        // functia de curatare (cancel)
+                        // cancel
                         const cleanup = () => {
                             input.remove();
                             btnGroup.remove();
-                            span.style.display = 'inline'; // reafișsam textul
+                            span.style.display = 'inline';
                         };
 
-                        // functia de salvare
+                        // save
                         const save = async () => {
                             const newTxt = input.value.trim();
                             if (!newTxt) { alert('Nu poate fi gol!'); return; }
@@ -432,15 +461,12 @@
                                 const res = await resp.json();
 
                                 if (res.success) {
-                                    // actualizam textul in pagina
                                     span.textContent = res.comment.content;
-
-                                    // adaugam eticheta (editat) daca nu exista deja
                                     const dateBox = span.closest('.flex-grow-1').querySelector('.date-container');
                                     if (dateBox && !dateBox.innerHTML.includes('(editat)')) {
                                         dateBox.innerHTML += ' <span class="fst-italic text-muted ms-1">(editat)</span>';
                                     }
-                                    cleanup(); // revenim la modul de vizualizare
+                                    cleanup();
                                 } else {
                                     alert(res.message);
                                 }
@@ -468,7 +494,6 @@
                             });
                             const res = await resp.json();
                             if (res.success) {
-                                // stergem elementul din pagina
                                 const item = document.querySelector(`.comment-item[data-comment-id="${id}"]`);
                                 if (item) item.remove();
                                 updateCount(res.commentsCount);
@@ -480,9 +505,9 @@
                 });
             }
 
+            // helper pentru actualizare numar comentarii
             function updateCount(count) {
-                const link = document.querySelector('a[href*="Details"]'); // cautam link-ul de contor
-                // daca suntem deja in pagina details, e posibil ca acest link sa nu existe sau sa fie diferit
+                const link = document.querySelector('a[href*="Details"]');
                 if (!link) return;
 
                 if (count > 0) {
@@ -493,6 +518,7 @@
                 }
             }
 
+            // helper xss protection
             function escapeHtml(text) {
                 if (!text) return text;
                 return text

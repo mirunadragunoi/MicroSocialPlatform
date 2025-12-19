@@ -15,15 +15,55 @@ namespace MicroSocialPlatform.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<PostMedia> PostMedias { get; set; }
         public DbSet<Follow> Follows { get; set; }
-
         public DbSet<Comment> Comments { get; set; }
-
         public DbSet<Like> Likes { get; set; }
+
+        // DbSet pentru grupuri, membri si mesaje
+        public DbSet<Group> Groups { get; set; }
+        public DbSet<GroupMember> GroupMembers { get; set; }
+        public DbSet<GroupMessage> GroupMessages { get; set; }
 
         // IMPLEMENTAREA RELATIILOR SI ETC
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            // configurare grupuri
+            // relatie membru - grup (stergi grupul => stergi membrii)
+            builder.Entity<GroupMember>()
+                .HasOne(gm => gm.Group)
+                .WithMany(g => g.Members)
+                .HasForeignKey(gm => gm.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // relatie membru - user (stergi user => stergi din grupuri - nu stergi grupul)
+            builder.Entity<GroupMember>()
+                .HasOne(gm => gm.User)
+                .WithMany()
+                .HasForeignKey(gm => gm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // relatie owner - user 
+            builder.Entity<Group>()
+                .HasOne(g => g.Owner)
+                .WithMany()
+                .HasForeignKey(g => g.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // configurare mesaje grupuri
+            // relatie mesaj - grup (stergi grup => stergi mesajele)
+            builder.Entity<GroupMessage>()
+                .HasOne(m => m.Group)
+                .WithMany(g => g.Messages)
+                .HasForeignKey(m => m.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // relatie mesaj - user (stergi user => stergi mesajele)
+            builder.Entity<GroupMessage>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // configurare relatie de follow (many-to-many)
             builder.Entity<Follow>()
