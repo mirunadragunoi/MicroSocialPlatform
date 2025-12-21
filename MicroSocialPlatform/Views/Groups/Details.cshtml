@@ -8,6 +8,8 @@
     // permisiuni
     bool amIAdmin = false;
     bool amIStaff = false;
+    bool isGlobalAdmin = User.IsInRole("Administrator"); // rol global de admin al platformei
+    bool hasFullControl = false; // am control total daca sunt admin global sau admin de grup
 
     if (currentUserId != null)
     {
@@ -19,6 +21,7 @@
             {
                 amIAdmin = true;
                 amIStaff = true;
+                hasFullControl = true;
             }
             else if (myMembership.Role == MicroSocialPlatform.Models.GroupRole.Moderator)
             {
@@ -26,18 +29,32 @@
             }
         }
     }
-    bool isAdmin = amIAdmin;
+    if (isGlobalAdmin)
+    {
+        amIStaff = true;
+        hasFullControl = true;
+    }
+    bool isAdmin = amIAdmin || isGlobalAdmin;
 }
 
 <div class="container py-4">
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div style="height: 120px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); position: relative;">
-            <a asp-action="Index" class="btn btn-sm btn-light position-absolute top-0 start-0 m-3 rounded-pill opacity-75 fw-bold text-decoration-none">
-                <i class="bi bi-arrow-left"></i> Înapoi
-            </a>
+            @if (!string.IsNullOrEmpty(ViewBag.ReturnUrl))
+            {
+                <a href="@ViewBag.ReturnUrl" class="btn btn-sm btn-light position-absolute top-0 start-0 m-3 rounded-pill opacity-75 fw-bold text-decoration-none">
+                    <i class="bi bi-arrow-left"></i> Înapoi la Căutare
+                </a>
+            }
+            else
+            {
+                <a asp-action="Index" class="btn btn-sm btn-light position-absolute top-0 start-0 m-3 rounded-pill opacity-75 fw-bold text-decoration-none">
+                    <i class="bi bi-arrow-left"></i> Înapoi
+                </a>
+            }
 
-            @if (isAdmin)
+            @if (hasFullControl)
             {
                 <div class="position-absolute top-0 end-0 m-3 d-flex gap-2">
                     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-light rounded-pill opacity-75 fw-bold text-decoration-none">
@@ -399,7 +416,7 @@
                         // golim inputul
                         messageInput.value = '';
 
-                        // Construim html-ul mesajului 
+                        // construim html-ul mesajului 
                         const newMsgHtml = `
                             <div class="d-flex mb-3 justify-content-end">
                                 <div class="d-flex flex-column align-items-end" style="max-width: 75%;">
@@ -408,11 +425,11 @@
                                                 border-bottom-right-radius: 2px;
                                                 background: linear-gradient(135deg, #a18cd1, #fbc2eb);
                                                 color: white;">
-                                        ${data.content}
+                                            ${data.content}
                                     </div>
                                     <div class="d-flex align-items-center mt-1 me-1">
                                         <small class="text-muted" style="font-size: 0.65rem;">
-                                            ${data.time}
+                                            ${data.sentAt}
                                         </small>
                                         <form action="/Groups/DeleteMessage" method="post" class="ms-2">
                                             <input type="hidden" name="messageId" value="${data.messageId}" />

@@ -77,23 +77,24 @@
 
                 @if (isOwner)
                 {
-                    // adminul are doar buton de view (nu poate da Leave direct)
                     <a asp-controller="Groups" asp-action="Details" asp-route-id="@Model.Id"
+                       asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
                        class="btn btn-outline-primary rounded-pill w-100 fw-bold">
                         Vezi Grupul Meu
                     </a>
                 }
                 else if (isMember)
                 {
-                    // membru: buton view + buton leave 
                     <a asp-controller="Groups" asp-action="Details" asp-route-id="@Model.Id"
+                       asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
                        class="btn btn-primary rounded-pill w-100 fw-bold bg-gradient border-0"
                        style="background-color: #8e44ad;">
                         Deschide
                     </a>
 
-                    // formular pentru leave 
-                    <form asp-controller="Groups" asp-action="Leave" asp-route-id="@Model.Id" method="post"
+                    <form asp-controller="Groups" asp-action="Leave" asp-route-id="@Model.Id"
+                          asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                          method="post"
                           onsubmit="return confirm('Sigur vrei să părăsești acest grup?');">
                         <button type="submit" class="btn btn-sm btn-link text-danger text-decoration-none opacity-75 hover-opacity-100">
                             <i class="bi bi-box-arrow-right me-1"></i>Ieși din grup
@@ -102,10 +103,20 @@
                 }
                 else
                 {
-                    // vizitator: buton join
-                    <form asp-controller="Groups" asp-action="Join" asp-route-id="@Model.Id" method="post">
-                        <button type="submit" class="btn btn-outline-primary rounded-pill w-100 fw-bold"
-                                style="border-color: #8e44ad; color: #8e44ad;">
+                    // vezi grup
+                    <a asp-controller="Groups" asp-action="Details" asp-route-id="@Model.Id"
+                       asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                       class="btn btn-outline-primary rounded-pill w-100 fw-bold"
+                       style="border-color: #8e44ad; color: #8e44ad;">
+                        Vezi Grup
+                    </a>
+
+                    // intra in grup
+                    <form asp-controller="Groups" asp-action="Join" asp-route-id="@Model.Id"
+                          asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                          method="post">
+                        <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold bg-gradient border-0"
+                                style="background-color: #8e44ad;">
                             <i class="bi bi-plus-lg me-1"></i>Intră în Grup
                         </button>
                     </form>

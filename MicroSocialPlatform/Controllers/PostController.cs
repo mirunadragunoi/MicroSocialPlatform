@@ -139,8 +139,8 @@ namespace MicroSocialPlatform.Controllers
             await _context.SaveChangesAsync();
 
             // mesaj de succes
-            TempData["Message"] = "Postarea a fost ștearsă definitiv. 🗑️";
-            TempData["MessageType"] = "danger"; 
+            TempData["SuccessMessage"] = "Postarea a fost ștearsă cu succes. 🗑️";
+            // TempData["MessageType"] = "danger"; 
 
             return RedirectToAction("Index", "Home");
         }
@@ -267,8 +267,8 @@ namespace MicroSocialPlatform.Controllers
             await _context.SaveChangesAsync();
 
             // mesaj de succes
-            TempData["Message"] = "Postarea a fost actualizată cu succes! ✨";
-            TempData["MessageType"] = "success"; 
+            TempData["SuccessMessage"] = "Postarea a fost actualizată cu succes! ✨";
+            // TempData["MessageType"] = "success"; 
 
             return RedirectToAction("Index", "Home");
         }

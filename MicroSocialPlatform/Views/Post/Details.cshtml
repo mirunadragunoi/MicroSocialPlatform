@@ -208,6 +208,7 @@
                                                 var isPostOwner = currentUser != null && Model.UserId == currentUser.Id;
                                                 var isAdmin = User.IsInRole("Administrator");
                                                 
+                                                // doar autorul comentariului poate edita comentariul
                                                 @if (isCommentOwner)
                                                 {
                                                     <button class="btn btn-link text-primary p-0 edit-comment-btn" 
@@ -219,7 +220,8 @@
                                                     </button>
                                                 }
                                                 
-                                                @if (isCommentOwner || isPostOwner || isAdmin)
+                                                // autorul postarii poate sterge orice comentariu, mai putin daca acesta apartine adminului platformei
+                                                @if (isCommentOwner || isAdmin || (isPostOwner && !(comment.User != null && UserManager.IsInRoleAsync(comment.User, "Administrator").Result)))
                                                 {
                                                     <button class="btn btn-link text-danger p-0 delete-comment-btn" 
                                                             data-comment-id="@comment.Id" 

@@ -104,8 +104,8 @@ namespace MicroSocialPlatform.Controllers
                 _context.GroupMembers.Add(member);
                 await _context.SaveChangesAsync();
 
-                TempData["Message"] = "Grupul a fost creat cu succes!";
-                TempData["MessageType"] = "success";
+                TempData["SuccessMessage"] = "Grupul a fost creat cu succes!";
+                // TempData["MessageType"] = "success";
 
                 // redirect la pagina grupului
                 return RedirectToAction(nameof(Index));
@@ -115,7 +115,7 @@ namespace MicroSocialPlatform.Controllers
 
         // detalii grup
         [AllowAnonymous] // oricine poate vedea detaliile unui grup
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int? id, string? returnUrl = null)
         {
             if (id == null)
             {
@@ -155,6 +155,7 @@ namespace MicroSocialPlatform.Controllers
             ViewBag.IsMember = isMember;
             ViewBag.IsAdmin = isAdmin;
             ViewBag.CurrentUserId = user?.Id;
+            ViewBag.ReturnUrl = returnUrl;
 
             return View(group);
         }
@@ -162,7 +163,7 @@ namespace MicroSocialPlatform.Controllers
         // join grup
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Join(int id)
+        public async Task<IActionResult> Join(int id, string? returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -181,9 +182,8 @@ namespace MicroSocialPlatform.Controllers
             // verificam daca userul este deja membru
             if (group.Members.Any(m => m.UserId == user.Id))
             {
-                TempData["Message"] = "Esti deja membru al acestui grup.";
-                TempData["MessageType"] = "info";
-                return RedirectToAction(nameof(Details), new { id = id });
+                TempData["InfoMessage"] = "Esti deja membru al acestui grup.";
+                // TempData["MessageType"] = "info";
             }
             var member = new GroupMember
             {
@@ -194,9 +194,10 @@ namespace MicroSocialPlatform.Controllers
             };
             _context.GroupMembers.Add(member);
             await _context.SaveChangesAsync();
-            TempData["Message"] = "Te-ai alaturat grupului cu succes!";
-            TempData["MessageType"] = "success";
-            return RedirectToAction(nameof(Details), new { id = id });
+            TempData["SuccessMessage"] = "Te-ai alaturat grupului cu succes!";
+            // TempData["MessageType"] = "success";
+
+            return RedirectToAction(nameof(Details), new { id = id, returnUrl = returnUrl });
         }
 
         // trimite mesaj in grup (PostMessage)
@@ -213,7 +214,7 @@ namespace MicroSocialPlatform.Controllers
             // verific daca userul e membru al grupului
             var isMember = await _context.GroupMembers
                 .AnyAsync(gm => gm.GroupId == groupId && gm.UserId == user.Id);
-            if (!isMember)
+            if (!isMember && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -240,41 +241,32 @@ namespace MicroSocialPlatform.Controllers
                 content = message.Content,
                 sentAt = message.SentAt.ToLocalTime().ToString("HH:mm"),
                 userName = user.UserName,
-                userAvatar = user.ProfilePicture
+                userAvatar = user.ProfilePicture,
             });
         }
 
         // leave grup
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Leave(int id)
+        public async Task<IActionResult> Leave(int id, string? returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Challenge();
-            }
+            if (user == null) return Challenge();
 
             var group = await _context.Groups
                 .Include(g => g.Members)
-                    .ThenInclude(m => m.User)
+                .ThenInclude(m => m.User)
                 .FirstOrDefaultAsync(g => g.Id == id);
-            if (group == null)
-            {
-                return NotFound();
-            }
+
+            if (group == null) return NotFound();
 
             var membership = group.Members.FirstOrDefault(m => m.UserId == user.Id);
-            if (membership == null)
-            {
-                return RedirectToAction(nameof(Index));
-            }
+            if (membership == null) return RedirectToAction(nameof(Index));
 
-            // daca proprietarul paraseste grupul
+            // daca pleaca proprietarul
             if (group.OwnerId == user.Id)
             {
-                // cautam un succesor
-                // prioritate: moderatori => membrii cei mai vechi
+                // cautam succesor (moderatori -> cei mai vechi membri)
                 var successor = group.Members
                     .Where(m => m.UserId != user.Id)
                     .OrderByDescending(m => m.Role == GroupRole.Moderator)
@@ -283,37 +275,39 @@ namespace MicroSocialPlatform.Controllers
 
                 if (successor != null)
                 {
-                    // transferam puterea
+                    // exista urmas -> transferam puterea si stergem membrul
                     group.OwnerId = successor.User.Id;
                     successor.Role = GroupRole.Admin;
 
                     _context.Update(group);
                     _context.Update(successor);
 
-                    TempData["Message"] = $"Ai parasit grupul. Proprietatea a fost transferata unui alt membru.";
+                    _context.GroupMembers.Remove(membership);
+
+                    TempData["InfoMessage"] = "Ai părăsit grupul. Proprietatea a fost transferată unui alt membru.";
                 }
                 else
                 {
-                    // daca nu mai e alticneva in grup, stergem grupul
+                    // nu exista urmas -> stergem grupul complet
                     _context.Groups.Remove(group);
-                    await _context.SaveChangesAsync();
 
-                    TempData["Message"] = "Ai parasit grupul. Grupul a fost sters deoarece nu mai are membri.";
-                    TempData["MessageType"] = "warning";
-                    return RedirectToAction(nameof(Index));
+                    TempData["InfoMessage"] = "Ai părăsit grupul. Grupul a fost șters deoarece nu mai are membri.";
                 }
             }
-
+            // daca pleaca un membru simplu sau moderator
             else
             {
-                TempData["Message"] = "Ai parasit grupul cu succes.";
+                // grupul ramane -> stergem manual membrul
+                _context.GroupMembers.Remove(membership);
+                TempData["SuccessMessage"] = "Ai părăsit grupul cu succes.";
             }
 
-            // stergem membrul
-            _context.GroupMembers.Remove(membership);
             await _context.SaveChangesAsync();
-            TempData["MessageType"] = "success";
 
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -334,8 +328,8 @@ namespace MicroSocialPlatform.Controllers
                 return NotFound();
             }
 
-            // doar proprietarul poate sterge grupul
-            if (group.OwnerId != user.Id)
+            // doar proprietarul sau adminul platformei poate sterge grupul 
+            if (group.OwnerId != user.Id && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -343,8 +337,8 @@ namespace MicroSocialPlatform.Controllers
             _context.Groups.Remove(group);
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = "Grupul a fost sters cu succes.";
-            TempData["MessageType"] = "success";
+            TempData["SuccessMessage"] = "Grupul a fost sters cu succes.";
+            // TempData["MessageType"] = "success";
 
             return RedirectToAction(nameof(Index));
         }
@@ -374,8 +368,8 @@ namespace MicroSocialPlatform.Controllers
             // verificam daca userul este admin/moderator sau autorul mesajului
             var membership = message.Group.Members
                 .FirstOrDefault(m => m.UserId == user.Id);
-            if (membership == null ||
-                (membership.Role != GroupRole.Admin && membership.Role != GroupRole.Moderator && message.UserId != user.Id))
+            if ((membership == null ||
+                (membership.Role != GroupRole.Admin && membership.Role != GroupRole.Moderator && message.UserId != user.Id)) && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -383,8 +377,8 @@ namespace MicroSocialPlatform.Controllers
             _context.GroupMessages.Remove(message);
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = "Mesajul a fost sters cu succes.";
-            TempData["MessageType"] = "success";
+            TempData["SuccessMessage"] = "Mesajul a fost sters cu succes.";
+            // TempData["MessageType"] = "success";
 
             return RedirectToAction(nameof(Details), new { id = message.GroupId });
         }
@@ -410,7 +404,7 @@ namespace MicroSocialPlatform.Controllers
 
             // verificam daca currentUser este admin
             var currentMembership = group.Members.FirstOrDefault(m => m.UserId == currentUser.Id);
-            if (currentMembership == null || currentMembership.Role != GroupRole.Admin)
+            if ((currentMembership == null || currentMembership.Role != GroupRole.Admin) && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -425,8 +419,8 @@ namespace MicroSocialPlatform.Controllers
             // promovam membrul
             memberToPromote.Role = GroupRole.Moderator;
             await _context.SaveChangesAsync();
-            TempData["Message"] = "Membrul a fost promovat la moderator.";
-            TempData["MessageType"] = "success";
+            TempData["InfoMessage"] = "Membrul a fost promovat la moderator.";
+            // TempData["MessageType"] = "success";
             return RedirectToAction(nameof(Details), new { id = groupId });
         }
 
@@ -451,7 +445,7 @@ namespace MicroSocialPlatform.Controllers
 
             // verificam daca currentUser este admin
             var currentMembership = group.Members.FirstOrDefault(m => m.UserId == currentUser.Id);
-            if (currentMembership == null || currentMembership.Role != GroupRole.Admin)
+            if ((currentMembership == null || currentMembership.Role != GroupRole.Admin) && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -466,8 +460,8 @@ namespace MicroSocialPlatform.Controllers
             // retrogradam membrul
             memberToDemote.Role = GroupRole.Member;
             await _context.SaveChangesAsync();
-            TempData["Message"] = "Membrul a fost demovat la membru simplu.";
-            TempData["MessageType"] = "success";
+            TempData["InfoMessage"] = "Membrul a fost retrogradat la membru simplu.";
+            // TempData["MessageType"] = "success";
             return RedirectToAction(nameof(Details), new { id = groupId });
         }
 
@@ -486,7 +480,7 @@ namespace MicroSocialPlatform.Controllers
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null || group.OwnerId != currentUser.Id)
+            if ((currentUser == null || group.OwnerId != currentUser.Id) && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -508,7 +502,7 @@ namespace MicroSocialPlatform.Controllers
 
             // doar adminul poate edita
             var user = await _userManager.GetUserAsync(User);
-            if (groupToUpdate.OwnerId != user.Id) return Forbid();
+            if ((groupToUpdate.OwnerId != user.Id) && !User.IsInRole("Administrator")) return Forbid();
 
             try
             {
@@ -540,8 +534,8 @@ namespace MicroSocialPlatform.Controllers
                 _context.Update(groupToUpdate);
                 await _context.SaveChangesAsync();
 
-                TempData["Message"] = "Grupul a fost actualizat cu succes!";
-                TempData["MessageType"] = "success";
+                TempData["SuccessMessage"] = "Grupul a fost actualizat cu succes!";
+                // TempData["MessageType"] = "success";
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -574,7 +568,7 @@ namespace MicroSocialPlatform.Controllers
 
             // verificam daca currentUser este admin
             var currentMembership = group.Members.FirstOrDefault(m => m.UserId == currentUser.Id);
-            if (currentMembership == null || currentMembership.Role != GroupRole.Admin)
+            if ((currentMembership == null || currentMembership.Role != GroupRole.Admin) && !User.IsInRole("Administrator"))
             {
                 return Forbid();
             }
@@ -588,18 +582,54 @@ namespace MicroSocialPlatform.Controllers
 
             // stergem membrul
             // moderatorul nu poate da kick la admin sau la alti moderatori
-            if ((memberToKick.Role == GroupRole.Admin || memberToKick.Role == GroupRole.Moderator) && currentMembership.Role == GroupRole.Moderator)
+            if (!User.IsInRole("Administrator"))
             {
-                TempData["Message"] = "Nu ai permisiunea sa dai afara acest membru.";
-                TempData["MessageType"] = "danger";
-                return RedirectToAction(nameof(Details), new { id = groupId });
+                if (currentMembership != null && // verificam sa nu fie null
+                    (memberToKick.Role == GroupRole.Admin || memberToKick.Role == GroupRole.Moderator) &&
+                    currentMembership.Role == GroupRole.Moderator)
+                {
+                    TempData["ErrorMessage"] = "Nu ai permisiunea sa dai afara acest membru.";
+                    return RedirectToAction(nameof(Details), new { id = groupId });
+                }
+            }
+
+            // daca grupul avea un singur membru, il stergem complet
+            if (group.Members.Count == 1)
+            {
+                _context.Groups.Remove(group);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Grupul a fost șters automat deoarece ultimul membru a fost eliminat.";
+                return RedirectToAction(nameof(Index)); // Ne întoarcem la lista de grupuri, că grupul nu mai există
+            }
+
+            // daca dam afara proprietarul grupului (dar mai sunt altii)
+            if (memberToKick.UserId == group.OwnerId)
+            {
+                // cautam un urmas
+                var successor = group.Members
+                    .Where(m => m.UserId != memberToKick.UserId)
+                    .OrderByDescending(m => m.Role == GroupRole.Moderator) // prioritate moderatori
+                    .ThenBy(m => m.JoinedAt) // apoi vechime
+                    .FirstOrDefault();
+
+                if (successor != null)
+                {
+                    group.OwnerId = successor.UserId;
+                    successor.Role = GroupRole.Admin;
+                    _context.Update(group);
+                    _context.Update(successor);
+
+                    string newAdminName = successor.User != null ? successor.User.UserName : "un alt membru";
+                    TempData["InfoMessage"] = $"Proprietarul a fost eliminat. Rolul de Admin a fost transferat catre {newAdminName}.";
+                }
             }
 
             _context.GroupMembers.Remove(memberToKick);
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = "Membrul a fost dat afara cu succes.";
-            TempData["MessageType"] = "warning";
+            TempData["SuccessMessage"] = "Membrul a fost dat afara cu succes.";
+            // TempData["MessageType"] = "warning";
 
             return RedirectToAction(nameof(Details), new { id = groupId });
         }

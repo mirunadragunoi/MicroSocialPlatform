@@ -19,13 +19,6 @@
         </a>
     </div>
 
-    @if (TempData["Message"] != null)
-    {
-        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4" style="background-color: #f3e5f5; color: #8e44ad;">
-            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Message"]
-        </div>
-    }
-
     @if (!Model.Any())
     {
         <div class="text-center py-5 rounded-4 bg-white shadow-sm border">
@@ -47,9 +40,11 @@
         <div class="row g-4">
             @foreach (var group in Model)
             {
-                // verificam daca userul curent este in lista de membri a grupului
-                bool isMember = ViewBag.CurrentUserId != null &&
-                group.Members.Any(m => m.UserId == (string)ViewBag.CurrentUserId);
+                var currentUserId = ViewBag.CurrentUserId as string;
+                var myMembership = group.Members.FirstOrDefault(m => m.UserId == currentUserId);
+
+                bool isMember = myMembership != null;
+                bool isGroupAdmin = isMember && myMembership.Role == MicroSocialPlatform.Models.GroupRole.Admin;
 
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100 border-0 shadow-sm rounded-4 group-card overflow-hidden">
@@ -75,7 +70,14 @@
                                 }
                             </div>
 
-                            @if (isMember)
+                            @if (isGroupAdmin)
+                            {
+                                <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-warning text-dark shadow-sm"
+                                      title="Ești administratorul acestui grup">
+                                    <i class="bi bi-star-fill me-1"></i> Admin
+                                </span>
+                            }
+                            else if (isMember)
                             {
                                 <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-success shadow-sm">
                                     <i class="bi bi-check-circle-fill me-1"></i> Membru
@@ -110,7 +112,8 @@
                                     </a>
 
                                     <form asp-action="Leave" asp-route-id="@group.Id" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 group-btn" title="Părăsește grupul">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 group-btn" title="Părăsește grupul"
+                                                onclick="return confirm('Sigur vrei să părăsești acest grup?');">
                                             <i class="bi bi-box-arrow-right"></i>
                                         </button>
                                     </form>
