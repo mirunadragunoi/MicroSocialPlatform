@@ -16,8 +16,14 @@ namespace MicroSocialPlatform.Models
         [Required]
         public string FollowingId { get; set; }
 
-        // data la care a inceput urmarirea
-        public DateTime FollowedAt { get; set; } = DateTime.UtcNow;
+        // statusul cererii
+        public FollowStatus Status { get; set; } = FollowStatus.Pending;
+
+        // daca cand a fost trimisa cererea
+        public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+
+        // data cand a fost acceptata cererea
+        public DateTime? AcceptedAt { get; set; }
 
         // navigation proprieties
         [ForeignKey("FollowerId")]

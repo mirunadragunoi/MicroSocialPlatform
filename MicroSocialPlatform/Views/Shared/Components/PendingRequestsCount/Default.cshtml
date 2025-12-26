@@ -1,0 +1,10 @@
+﻿@model int
+
+@if (Model > 0)
+{
+    <span class="badge rounded-pill bg-danger ms-2 shadow-sm"
+          style="font-size: 0.7rem; vertical-align: text-top;"
+          title="@Model cereri în așteptare">
+        @Model
+    </span>
+}

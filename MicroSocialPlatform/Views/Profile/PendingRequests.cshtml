@@ -1,0 +1,124 @@
+﻿@model List<MicroSocialPlatform.Models.Follow>
+
+@{
+    ViewData["Title"] = "Cereri de Urmărire";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-light rounded-circle shadow-sm me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="fw-bold mb-0 text-dark">Cereri de Urmărire</h2>
+            <p class="text-muted mb-0">Gestionează cine îți poate vedea conținutul.</p>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light mb-3"
+                 style="width: 80px; height: 80px;">
+                <i class="bi bi-person-check fs-1 text-muted" style="opacity: 0.5;"></i>
+            </div>
+            <h5 class="text-muted">Nu ai nicio cerere în așteptare.</h5>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var request in Model)
+            {
+                <div class="col-md-6 col-lg-4 request-card" id="request-@request.Id">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                        <div class="d-flex align-items-center justify-content-between">
+
+                            <div class="d-flex align-items-center">
+                                <a asp-controller="Profile" asp-action="Index" asp-route-username="@request.Follower.CustomUsername" class="text-decoration-none">
+                                    @if (!string.IsNullOrEmpty(request.Follower.ProfilePicture))
+                                    {
+                                        <img src="@request.Follower.ProfilePicture" class="rounded-circle border"
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px; font-weight: bold;">
+                                            @request.Follower.UserName.Substring(0, 1).ToUpper()
+                                        </div>
+                                    }
+                                </a>
+
+                                <div class="ms-3">
+                                    <h6 class="mb-0 fw-bold text-dark">@request.Follower.FullName</h6>
+                                    <small class="text-muted">@@@request.Follower.CustomUsername</small>
+                                    <br>
+                                    <small class="text-secondary" style="font-size: 0.75rem;">
+                                        <i class="bi bi-clock"></i> @request.RequestedAt.ToLocalTime().ToString("dd MMM")
+                                    </small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button onclick="handleRequest(@request.Id, 'accept')"
+                                    class="btn btn-primary flex-grow-1 rounded-pill fw-bold btn-sm shadow-sm"
+                                    style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none;">
+                                Acceptă
+                            </button>
+                            <button onclick="handleRequest(@request.Id, 'decline')"
+                                    class="btn btn-light flex-grow-1 rounded-pill fw-bold btn-sm text-danger border">
+                                Șterge
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function handleRequest(requestId, action) {
+            const card = document.getElementById(`request-${requestId}`);
+            const url = action === 'accept'
+                ? '@Url.Action("AcceptRequest", "Profile")'
+                : '@Url.Action("DeclineRequest", "Profile")';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: { requestId: requestId },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() // pentru securitate 
+                },
+                success: function (response) {
+                    if (response.success) {
+                        // animatie de disparitie
+                        card.style.transition = "all 0.5s ease";
+                        card.style.opacity = "0";
+                        card.style.transform = "translateX(20px)";
+
+                        setTimeout(() => {
+                            card.remove();
+                            // verificam daca mai sunt cereri
+                            // daca nu => empty state 
+                            if (document.querySelectorAll('.request-card').length === 0) {
+                                location.reload(); // refresh ca sa apara mesajul "Nu ai cereri"
+                            }
+                        }, 500);
+
+                    } else {
+                        alert("Ceva nu a mers bine.");
+                    }
+                },
+                error: function () {
+                    alert("Eroare de comunicare. Încearcă un refresh.");
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,86 @@
+﻿@model MicroSocialPlatform.Models.Post
+
+@{
+    // 1. Verificăm corect dacă există media
+    var hasMedia = Model.PostMedias != null && Model.PostMedias.Any();
+    var firstMedia = hasMedia ? Model.PostMedias.First() : null;
+    var mediaCount = hasMedia ? Model.PostMedias.Count : 0;
+
+    // 2. Pregătim un text scurt pentru preview (dacă e cazul)
+    // Luăm primele 100 de caractere și adăugăm "..." dacă e mai lung
+    var textSnippet = Model.Content;
+    if (!string.IsNullOrEmpty(textSnippet) && textSnippet.Length > 120)
+    {
+        textSnippet = textSnippet.Substring(0, 120) + "...";
+    }
+}
+
+<a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none d-block h-100">
+    <div class="card border shadow-sm rounded-4 position-relative overflow-hidden h-100"
+         style="aspect-ratio: 1 / 1; background-color: #fff; transition: transform 0.2s;">
+
+        @if (hasMedia && firstMedia != null)
+        {
+            /* --- CAZUL 1: AVEM POZE SAU VIDEO --- */
+
+            @if (firstMedia.MediaType == MicroSocialPlatform.Models.MediaType.Image)
+            {
+                <img src="@firstMedia.Url" alt="Post" class="w-100 h-100" style="object-fit: cover;">
+            }
+            else if (firstMedia.MediaType == MicroSocialPlatform.Models.MediaType.Video)
+            {
+                <video class="w-100 h-100" style="object-fit: cover;" muted>
+                    <source src="@firstMedia.Url" type="video/mp4">
+                </video>
+
+                <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-black bg-opacity-50 rounded-pill p-2">
+                        <i class="bi bi-camera-video-fill text-white"></i>
+                    </span>
+                </div>
+            }
+
+            /* Iconiță Galerie dacă sunt mai multe */
+            @if (mediaCount > 1)
+            {
+                <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-black bg-opacity-50 rounded-pill p-2">
+                        <i class="bi bi-collection-fill text-white"></i>
+                    </span>
+                </div>
+            }
+        }
+        else
+        {
+            /* --- CAZUL 2: DOAR TEXT (Design Curat / Alb) --- */
+            <div class="w-100 h-100 d-flex align-items-center justify-content-center p-4 text-center bg-white">
+                <p class="text-dark fw-normal mb-0" style="font-size: 0.9rem; line-height: 1.5; color: #333;">
+                    @textSnippet
+                </p>
+            </div>
+        }
+
+        <div class="hover-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+             style="background: rgba(0, 0, 0, 0.3); opacity: 0; transition: opacity 0.2s;">
+
+            <div class="text-white text-center d-flex gap-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-heart-fill fs-5 me-2"></i>
+                    <span class="fw-bold fs-6">@Model.LikesCount</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-chat-fill fs-5 me-2"></i>
+                    <span class="fw-bold fs-6">@Model.CommentsCount</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</a>
+
+<style>
+    /* Facem overlay-ul vizibil la hover */
+    .card:hover .hover-overlay {
+        opacity: 1 !important;
+    }
+</style>
