@@ -70,6 +70,25 @@ namespace MicroSocialPlatform.Controllers
             };
 
             _context.Comments.Add(comment);
+            post.CommentsCount++;
+
+            // creez notificarea
+            if (post.UserId != currentUser.Id)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = post.UserId,
+                    SenderId = currentUser.Id,
+                    Type = NotificationType.Comment,
+                    Content = $"{currentUser.UserName} a comentat la postarea ta",
+                    RelatedUrl = $"/Post/Details/{postId}",
+                    RelatedEntityId = postId,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Notifications.Add(notification);
+            }
+
             await _context.SaveChangesAsync();
 
             // actualizez numarul de comentarii dupa salvare
@@ -81,6 +100,8 @@ namespace MicroSocialPlatform.Controllers
             var commentWithUser = await _context.Comments
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == comment.Id);
+
+            await _context.Entry(comment).Reference(c => c.User).LoadAsync();
 
             return Json(new
             {

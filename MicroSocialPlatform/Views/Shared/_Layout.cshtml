@@ -9,8 +9,45 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MicroSocialPlatform.styles.css" asp-append-version="true" />
+
+    <style>
+        /* Badge pentru notificări în sidebar */
+        .notification-badge {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            display: none; /* Ascuns implicit */
+            animation: pulse 2s infinite;
+        }
+
+            .notification-badge.show {
+                display: inline-block;
+            }
+
+        @@keyframes pulse {
+            0%, 100%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        }
+    </style>
 </head>
 <body>
+    @using Microsoft.AspNetCore.Identity
+    @using MicroSocialPlatform.Models
+    @inject SignInManager<ApplicationUser> SignInManager
+    @inject UserManager<ApplicationUser> UserManager
+
     <!-- top navbar orizontal-->
     <nav class="top-navbar">
         <div class="top-navbar-content">
@@ -56,10 +93,10 @@
                     <span>Grupuri</span>
                 </a>
 
-                <a asp-area="" asp-controller="Notifications" asp-action="Index" class="sidebar-link">
+                <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
                     <i class="bi bi-bell-fill"></i>
                     <span>Notificări</span>
-                    <span class="notification-badge">3</span>
+                    <span class="notification-badge" id="sidebarNotificationBadge">0</span>
                 </a>
 
                 <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
@@ -99,7 +136,7 @@
             }
         </nav>
 
-        <!-- fotter sidebar -->
+        <!-- footer sidebar -->
         <div class="sidebar-footer">
             <small>&copy; 2025 Agora</small>
         </div>
@@ -113,14 +150,42 @@
         </div>
     </main>
 
-    @using Microsoft.AspNetCore.Identity
-    @using MicroSocialPlatform.Models
-    @inject SignInManager<ApplicationUser> SignInManager
-    @inject UserManager<ApplicationUser> UserManager
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <script>
+            // Update notification count on page load și periodic
+            function updateNotificationCount() {
+                fetch('/Notification/GetUnreadCount')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.getElementById('sidebarNotificationBadge');
+
+                        if (badge) {
+                            if (data.count > 0) {
+                                badge.textContent = data.count;
+                                badge.classList.add('show');
+                            } else {
+                                badge.classList.remove('show');
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error loading notification count:', error));
+            }
+
+            // Actualizează la încărcare
+            document.addEventListener('DOMContentLoaded', function() {
+                updateNotificationCount();
+
+                // Actualizează la fiecare 30 secunde
+                setInterval(updateNotificationCount, 30000);
+            });
+        </script>
+    }
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

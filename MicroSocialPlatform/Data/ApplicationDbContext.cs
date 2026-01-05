@@ -17,6 +17,7 @@ namespace MicroSocialPlatform.Data
         public DbSet<Follow> Follows { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Like> Likes { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         // DbSet pentru grupuri, membri si mesaje
         public DbSet<Group> Groups { get; set; }
@@ -123,12 +124,28 @@ namespace MicroSocialPlatform.Data
                 .HasIndex(l => new { l.PostId, l.UserId })
                 .IsUnique();
 
+            // configurare sistem notificari
+            builder.Entity<Notification>()
+                .HasOne(n => n.Recipient)
+                .WithMany()
+                .HasForeignKey(n => n.RecipientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Notification>()
+                .HasOne(n => n.Sender)
+                .WithMany()
+                .HasForeignKey(n => n.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
             // index pentru performanta
             builder.Entity<Post>()
                 .HasIndex(p => p.CreatedAt);
 
             builder.Entity<Post>()
                 .HasIndex(p => p.UserId);
+            builder.Entity<Notification>()
+                .HasIndex(n => new { n.RecipientId, n.IsRead, n.CreatedAt });
         }
     }
 }

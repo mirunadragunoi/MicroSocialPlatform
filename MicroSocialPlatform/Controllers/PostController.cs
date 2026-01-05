@@ -101,6 +101,30 @@ namespace MicroSocialPlatform.Controllers
 
             // salvez modificarile
             await _context.SaveChangesAsync();
+
+            // creez notificarile pentru urmaritori
+            var followers = await _context.Follows
+                .Where(f => f.FollowingId == user.Id && f.Status == FollowStatus.Accepted)
+                .Select(f => f.FollowerId)
+                .ToListAsync();
+
+            foreach (var followerId in followers)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = followerId,
+                    SenderId = user.Id,
+                    Type = NotificationType.NewPost,
+                    Content = $"{user.UserName} a publicat o nouă postare",
+                    RelatedUrl = $"/Post/Details/{post.Id}",
+                    RelatedEntityId = post.Id,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Notifications.Add(notification);
+            }
+            await _context.SaveChangesAsync();
+
             return RedirectToAction("Index", "Home");
         }
 

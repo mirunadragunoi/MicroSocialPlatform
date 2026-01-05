@@ -33,7 +33,10 @@ namespace MicroSocialPlatform.Controllers
                     return Json(new { success = false, message = "Nu ești autentificat" });
                 }
 
-                var post = await _context.Posts.FindAsync(postId);
+                var post = await _context.Posts
+                    .Include(p => p.User) 
+                    .FirstOrDefaultAsync(p => p.Id == postId);
+
                 if (post == null)
                 {
                     return Json(new { success = false, message = "Postarea nu există" });
@@ -50,6 +53,17 @@ namespace MicroSocialPlatform.Controllers
                     {
                         _context.Likes.Remove(existingLike);
                         post.LikesCount = Math.Max(0, post.LikesCount - 1);
+
+                        // sterg notificarea asociata
+                        var notificationToDelete = await _context.Notifications
+                            .FirstOrDefaultAsync(n => n.SenderId == user.Id &&
+                                            n.RecipientId == post.UserId &&
+                                            n.Type == NotificationType.Like &&
+                                            n.RelatedEntityId == postId);
+                        if (notificationToDelete != null)
+                        {
+                            _context.Notifications.Remove(notificationToDelete);
+                        }
                     }
                     else
                     {
@@ -70,6 +84,23 @@ namespace MicroSocialPlatform.Controllers
                     };
                     _context.Likes.Add(newLike);
                     post.LikesCount++;
+
+                    // creez notificarea
+                    if (post.UserId != user.Id)
+                    {
+                        var notification = new Notification
+                        {
+                            RecipientId = post.UserId,
+                            SenderId = user.Id,
+                            Type = NotificationType.Like,
+                            Content = $"{user.UserName} a reacționat la postarea ta",
+                            RelatedUrl = $"/Post/Details/{postId}",
+                            RelatedEntityId = postId,
+                            IsRead = false,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Notifications.Add(notification);
+                    }
                 }
 
                 await _context.SaveChangesAsync();
