@@ -112,16 +112,12 @@
             }
         </a>
 
-        <div class="post-actions d-flex gap-3 pt-2 border-top">
-            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none">
-                <i class="bi bi-heart"></i> Like <span class="badge bg-light text-dark">@Model.LikesCount</span>
-            </a>
+        <div class="post-actions d-flex gap-3 pt-2 border-top align-items-center">
+            <partial name="_LikePartial" model="Model" />
+
             <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none">
                 <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">@Model.CommentsCount</span>
             </a>
-            <button class="btn btn-link text-muted">
-                <i class="bi bi-share"></i> Share
-            </button>
         </div>
     </div>
 </div>

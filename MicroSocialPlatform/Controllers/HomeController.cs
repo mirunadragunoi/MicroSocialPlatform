@@ -46,6 +46,8 @@ namespace MicroSocialPlatform.Controllers
                     .Select(f => f.FollowingId)
                     .ToListAsync();
 
+                followingIds.Add(user.Id);
+
                 // iau postarile 
                 posts = await _context.Posts
                     .Include(p => p.User)

@@ -39,7 +39,7 @@ namespace MicroSocialPlatform.Models
         public virtual ICollection<Comment>? Comments { get; set; }
         
         // like urile de la postare
-        public virtual ICollection<Like>? Likes { get; set; }
+        public virtual ICollection<Like>? Likes { get; set; } = new List<Like>();
 
         // colectia de fisiere media atasate postarii (0, 1 sau 10 poze)
         public virtual ICollection<PostMedia>? PostMedias { get; set; } = new List<PostMedia>();

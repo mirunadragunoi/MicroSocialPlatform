@@ -1,0 +1,283 @@
+﻿@model MicroSocialPlatform.Models.Post
+
+<div class="reaction-box" data-post-id="@Model.Id">
+    <button class="btn btn-link text-muted p-0 reaction-toggle text-decoration-none">
+        <i class="bi bi-heart fs-5"></i> Like
+        <span class="badge bg-light text-dark ms-1">@(Model.Likes?.Count() ?? 0)</span>
+    </button>
+
+    <div class="reaction-picker" style="display: none;">
+        <button class="reaction-item" data-type="1" title="Like">❤️</button>
+        <button class="reaction-item" data-type="2" title="Love">🥰</button>
+        <button class="reaction-item" data-type="3" title="Haha">😂</button>
+        <button class="reaction-item" data-type="4" title="Wow">😮</button>
+        <button class="reaction-item" data-type="5" title="Sad">😢</button>
+        <button class="reaction-item" data-type="6" title="Angry">😠</button>
+    </div>
+
+    @if (Model.Likes != null && Model.Likes.Any())
+    {
+        <div class="reaction-summary mt-1">
+            @foreach (var group in Model.Likes.GroupBy(l => l.Type))
+            {
+                <span class="reaction-badge">
+                    @GetEmoji(group.Key) <small>@group.Count()</small>
+                </span>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .reaction-box {
+        position: relative;
+        display: inline-block;
+    }
+
+    .reaction-picker {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        padding: 8px;
+        margin-bottom: 5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 1000;
+    }
+
+    .reaction-item {
+        background: none;
+        border: none;
+        font-size: 24px;
+        padding: 5px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+        .reaction-item:hover {
+            transform: scale(1.3);
+        }
+
+    .reaction-badge {
+        display: inline-block;
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 2px 8px;
+        margin-right: 4px;
+        font-size: 12px;
+    }
+</style>
+
+<script>
+    (function() {
+        const postId = @Model.Id;
+        const box = document.querySelector('.reaction-box[data-post-id="' + postId + '"]');
+
+        if (!box) {
+            console.error('Reaction box not found for post ' + postId);
+            return;
+        }
+
+        const toggle = box.querySelector('.reaction-toggle');
+        const picker = box.querySelector('.reaction-picker');
+        const items = box.querySelectorAll('.reaction-item');
+        const countBadge = box.querySelector('.badge');
+
+        let currentUserReaction = null;
+
+        console.log('Reaction system initialized for post ' + postId);
+
+        // Încarcă reacția curentă a utilizatorului
+        fetch('/Reaction/GetUserReaction?postId=' + postId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.hasReaction) {
+                    currentUserReaction = data.reactionType;
+                    // Marchează butonul ca activ
+                    const activeItem = box.querySelector('.reaction-item[data-type="' + data.reactionType + '"]');
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+                    }
+                    // Schimbă iconița în filled heart
+                    const icon = toggle.querySelector('i');
+                    if (icon) {
+                        icon.className = 'bi bi-heart-fill text-danger fs-5';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading user reaction:', error);
+            });
+
+        // Show/hide picker on long press or click
+        let pressTimer;
+
+        toggle.addEventListener('mousedown', function(e) {
+            pressTimer = setTimeout(function() {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Long press - showing picker');
+                const isVisible = picker.style.display !== 'none';
+                picker.style.display = isVisible ? 'none' : 'flex';
+            }, 200);
+        });
+
+        toggle.addEventListener('mouseup', function(e) {
+            clearTimeout(pressTimer);
+        });
+
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Dacă utilizatorul are deja o reacție, șterge-o (toggle off)
+            if (currentUserReaction !== null) {
+                console.log('User has reaction, removing it');
+
+                fetch('/Reaction/React?postId=' + postId + '&reactionType=' + currentUserReaction, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        countBadge.textContent = data.totalCount;
+                        currentUserReaction = null;
+
+                        // Resetează iconița
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.className = 'bi bi-heart fs-5';
+                        }
+
+                        // Șterge marcajul de activ
+                        items.forEach(item => item.classList.remove('active'));
+
+                        // Update summary
+                        updateSummary(data.counts);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            } else {
+                // Dacă nu are reacție, arată picker-ul
+                console.log('No reaction, showing picker');
+                const isVisible = picker.style.display !== 'none';
+                picker.style.display = isVisible ? 'none' : 'flex';
+            }
+        });
+
+        // Handle reaction clicks
+        items.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const type = parseInt(this.getAttribute('data-type'));
+                console.log('Reaction ' + type + ' clicked for post ' + postId);
+
+                fetch('/Reaction/React?postId=' + postId + '&reactionType=' + type, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        countBadge.textContent = data.totalCount;
+                        picker.style.display = 'none';
+
+                        // Actualizează reacția curentă
+                        if (data.hasReaction) {
+                            currentUserReaction = data.currentReaction;
+
+                            // Schimbă iconița în filled heart
+                            const icon = toggle.querySelector('i');
+                            if (icon) {
+                                icon.className = 'bi bi-heart-fill text-danger fs-5';
+                            }
+
+                            // Marchează butonul activ
+                            items.forEach(btn => btn.classList.remove('active'));
+                            this.classList.add('active');
+                        } else {
+                            currentUserReaction = null;
+
+                            // Resetează iconița
+                            const icon = toggle.querySelector('i');
+                            if (icon) {
+                                icon.className = 'bi bi-heart fs-5';
+                            }
+
+                            items.forEach(btn => btn.classList.remove('active'));
+                        }
+
+                        // Update summary
+                        updateSummary(data.counts);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+
+        function updateSummary(counts) {
+            const emojiMap = {
+                'Like': '❤️',
+                'Love': '🥰',
+                'Haha': '😂',
+                'Wow': '😮',
+                'Sad': '😢',
+                'Angry': '😠'
+            };
+
+            let summaryHtml = '';
+            for (let type in counts) {
+                if (counts[type] > 0) {
+                    summaryHtml += `<span class="reaction-badge">${emojiMap[type]} <small>${counts[type]}</small></span>`;
+                }
+            }
+
+            let summaryDiv = box.querySelector('.reaction-summary');
+            if (summaryHtml) {
+                if (!summaryDiv) {
+                    summaryDiv = document.createElement('div');
+                    summaryDiv.className = 'reaction-summary mt-1';
+                    box.appendChild(summaryDiv);
+                }
+                summaryDiv.innerHTML = summaryHtml;
+            } else if (summaryDiv) {
+                summaryDiv.remove();
+            }
+        }
+
+        // Close picker when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!box.contains(e.target)) {
+                picker.style.display = 'none';
+            }
+        });
+    })();
+</script>
+
+@functions {
+    string GetEmoji(LikeType type)
+    {
+        return type switch
+        {
+            LikeType.Like => "❤️",
+            LikeType.Love => "🥰",
+            LikeType.Haha => "😂",
+            LikeType.Wow => "😮",
+            LikeType.Sad => "😢",
+            LikeType.Angry => "😠",
+            _ => "👍"
+        };
+    }
+}

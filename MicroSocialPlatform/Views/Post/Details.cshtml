@@ -124,9 +124,8 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <div class="post-actions d-flex gap-3 mb-3 pb-2 border-bottom">
-                            <button class="btn btn-link text-muted p-0 like-btn" data-post-id="@Model.Id" style="text-decoration: none;">
-                                <i class="bi @(hasLiked ? "bi-heart-fill text-danger" : "bi-heart") fs-5"></i>
-                            </button>
+                            <partial name="_LikePartial" model="Model" />
+
                             <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted p-0" style="text-decoration: none;">
                                 <i class="bi bi-chat fs-5"></i>
                             </a>

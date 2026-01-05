@@ -279,10 +279,11 @@ namespace MicroSocialPlatform.Controllers
         {
             var publicPosts = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)
+                .Include(p => p.Likes)  
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
-                .Where(p => p.User.IsPublic)   // filtru - doar utilizatorii cu profilul public
+                .Include(p => p.PostMedias)  
+                .Where(p => p.User.IsPublic)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(50)
                 .ToListAsync();
@@ -325,8 +326,8 @@ namespace MicroSocialPlatform.Controllers
         {
             var post = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)
-                    .ThenInclude(l => l.User)
+                .Include(p => p.Likes)          
+                    .ThenInclude(l => l.User)   
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
                 .Include(p => p.PostMedias)
