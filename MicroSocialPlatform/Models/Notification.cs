@@ -8,35 +8,35 @@ namespace MicroSocialPlatform.Models
         [Key]
         public int Id { get; set; }
 
-        // 
+        // cine primeste notificarea
         [Required]
         public string RecipientId { get; set; }
 
-        // Cine a generat notificarea (poate fi null pentru notificări de sistem)
+        // cine a generat notificarea
         public string? SenderId { get; set; }
 
-        // Tipul notificării
+        // tipul notificarii
         [Required]
         public NotificationType Type { get; set; }
 
-        // Conținutul notificării
+        // continutul notificarii
         [Required]
         [StringLength(500)]
         public string Content { get; set; }
 
-        // Link către resursa relevantă (postare, profil, etc.)
+        // link catre resursa relevanta (postare, profil, etc.)
         public string? RelatedUrl { get; set; }
 
-        // ID-ul entității asociate (postare, comentariu, etc.)
+        // ID ul entitatii asociate (postare, comentariu, etc.)
         public int? RelatedEntityId { get; set; }
 
-        // A fost citită?
+        // daca a fost citita
         public bool IsRead { get; set; } = false;
 
-        // Data creării
+        // data crearii
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation properties
+        // navigation properties
         [ForeignKey("RecipientId")]
         public virtual ApplicationUser? Recipient { get; set; }
 
@@ -46,12 +46,15 @@ namespace MicroSocialPlatform.Models
 
     public enum NotificationType
     {
-        Like = 1,           // Cineva a dat like la postarea ta
-        Comment = 2,        // Cineva a comentat la postarea ta
-        Follow = 3,         // Cineva te-a început să te urmărească
-        FollowRequest = 4,  // Cerere de urmărire (cont privat)
-        FollowAccepted = 5, // Cererea ta de urmărire a fost acceptată
-        NewPost = 6,        // Un utilizator pe care îl urmărești a postat
-        GroupMessage = 7,   // Mesaj nou în grup
+        Like = 1,               // cineva a dat like la postarea ta
+        Comment = 2,            // cineva a comentat la postarea ta
+        Follow = 3,             // cineva a inceput sa te urmareasca
+        FollowRequest = 4,      // cerere de urmarire (cont privat)
+        FollowAccepted = 5,     // cererea ta de urmarire a fost acceptata
+        NewPost = 6,            // un utilizator pe care il urmaresti a postat
+        GroupMessage = 7,       // mesaj nou in grup
+        Mention = 8,            // ai fost mentionat undeva??? maybe
+        GroupJoinRequest = 9,   // cerere de join pt un grup
+        GroupJoinAccepted = 10, // cererea de join pt un grup a fost acceptata
     }
 }

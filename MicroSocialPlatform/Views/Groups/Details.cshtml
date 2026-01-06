@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = Model.Name;
     string currentUserId = ViewBag.CurrentUserId as string;
+
     bool isMember = ViewBag.IsMember;
 
     // permisiuni
@@ -57,6 +58,18 @@
             @if (hasFullControl)
             {
                 <div class="position-absolute top-0 end-0 m-3 d-flex gap-2">
+                    @if (ViewBag.PendingRequestsCount != null && ViewBag.PendingRequestsCount > 0)
+                    {
+                        <a asp-action="JoinRequests" asp-route-id="@Model.Id"
+                           class="btn btn-sm btn-warning rounded-pill fw-bold text-decoration-none position-relative">
+                            <i class="bi bi-person-plus-fill me-1"></i>
+                            Cereri (@ViewBag.PendingRequestsCount)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                @ViewBag.PendingRequestsCount
+                            </span>
+                        </a>
+                    }
+
                     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-light rounded-pill opacity-75 fw-bold text-decoration-none">
                         <i class="bi bi-gear-fill"></i> Setări
                     </a>
@@ -83,10 +96,10 @@
                         @(Model.Name.Length >= 2 ? Model.Name.Substring(0, 2).ToUpper() : Model.Name.Substring(0, 1).ToUpper())
                     </div>
                 }
-
                 <div class="mb-2">
+                    <br />
+                    <br />
                     <h3 class="fw-bold mb-0 text-dark">@Model.Name</h3>
-
                     <div class="d-flex flex-wrap align-items-center gap-3 text-muted small mt-1 mb-1">
 
                         <div class="d-flex align-items-center">
@@ -132,12 +145,20 @@
                     }
                     else
                     {
-                        <form asp-action="Join" asp-route-id="@Model.Id" method="post">
-                            <button type="submit" class="btn text-white rounded-pill px-4 fw-bold shadow-sm"
-                                    style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none;">
-                                <i class="bi bi-plus-lg me-1"></i> Intră în Grup
+                        @if (ViewBag.HasPendingRequest)
+                        {
+                            <button class="btn btn-secondary rounded-pill" disabled>
+                                <i class="bi bi-hourglass-split me-2"></i>Cerere Trimisă
                             </button>
-                        </form>
+                        }
+                        else
+                        {
+                            <form asp-action="Join" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-primary rounded-pill">
+                                    <i class="bi bi-person-plus me-2"></i>Alătură-te
+                                </button>
+                            </form>
+                        }
                     }
                 }
             </div>
@@ -179,7 +200,7 @@
                                             <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
                                                  style="width: 30px; height: 30px; font-size: 0.7rem;"
                                                  data-bs-toggle="tooltip" title="@msg.User.UserName">
-                                                @msg.User.UserName.Substring(0, 2).ToUpper()
+                                                 @msg.User.UserName.Substring(0, 2).ToUpper()
                                             </div>
                                         }
                                     </div>
@@ -200,18 +221,29 @@
                                         </small>
                                     }
 
-                                    <div class="p-3 shadow-sm text-break"
-                                         style="border-radius: 15px;
-                                                        border-bottom-@(isMe ? "right" : "left")-radius: 2px;
-                                                        background: @(isMe ? "linear-gradient(135deg, #a18cd1, #fbc2eb)" : "#ffffff");
-                                                        color: @(isMe ? "white" : "#212529");">
-                                        @msg.Content
+                                    <div class="p-3 shadow-sm text-break message-content"
+                                         style="border-radius: 15px; border-bottom-@(isMe ? "right" : "left")-radius: 2px; background: @(isMe ? "linear-gradient(135deg, #a18cd1, #fbc2eb)" : "#ffffff"); color: @(isMe ? "white" : "#212529");">
+                                        <span data-message-id="@msg.Id">@msg.Content</span>
+                                        @if (msg.EditedAt != null)
+                                        {
+                                            <small class="edited-badge text-muted ms-2">
+                                                <i class="bi bi-pencil-fill"></i> (editat)
+                                            </small>
+                                        }
                                     </div>
+
 
                                     <div class="d-flex align-items-center mt-1 @(isMe ? "me-1" : "ms-1")">
                                         <small class="text-muted" style="font-size: 0.65rem;">
                                             @msg.SentAt.ToLocalTime().ToString("HH:mm")
                                         </small>
+                                        @if (ViewBag.CurrentUserId == msg.UserId)
+                                        {
+                                            <button class="btn btn-link btn-sm text-muted p-0"
+                                                    onclick="editMessage(@msg.Id, '@Html.Raw(msg.Content.Replace("'", "\\'"))')">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        }
                                         @if (canDelete)
                                         {
                                             <form asp-action="DeleteMessage" method="post" class="ms-2">
@@ -460,6 +492,95 @@
                 })
                 .catch(error => console.error('Error:', error));
             });
+        }
+
+        // functie de editare mesaj
+        function editMessage(messageId, currentContent) {
+            const messageSpan = document.querySelector(`[data-message-id="${messageId}"]`);
+            const messageContainer = messageSpan.closest('.message-content');
+
+            // creeaza input pentru editare
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control form-control-sm';
+            input.value = currentContent;
+            input.maxLength = 1000;
+
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'mt-2';
+            btnGroup.innerHTML = `
+                <button class="btn btn-sm btn-success me-1" onclick="saveMessage(${messageId}, this)">
+                    <i class="bi bi-check"></i> Salvează
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="cancelEdit(${messageId}, '${currentContent.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-x"></i> Anulează
+                </button>
+            `;
+
+            messageSpan.style.display = 'none';
+            messageContainer.appendChild(input);
+            messageContainer.appendChild(btnGroup);
+            input.focus();
+        }
+
+        // functie pentru salvarea mesajului
+        function saveMessage(messageId, btn) {
+            const container = btn.closest('.message-content');
+            const input = container.querySelector('input');
+            const newContent = input.value.trim();
+
+            if (!newContent) {
+                alert('Mesajul nu poate fi gol!');
+                return;
+            }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            fetch('/Groups/EditMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: new URLSearchParams({
+                    messageId: messageId,
+                    content: newContent,
+                    __RequestVerificationToken: token
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const messageSpan = container.querySelector(`[data-message-id="${messageId}"]`);
+                    messageSpan.textContent = data.content;
+                    messageSpan.style.display = '';
+
+                    // adauga indicator "(editat)"
+                    let editedBadge = container.querySelector('.edited-badge');
+                    if (!editedBadge) {
+                        editedBadge = document.createElement('small');
+                        editedBadge.className = 'edited-badge text-muted ms-2';
+                        editedBadge.innerHTML = '<i class="bi bi-pencil-fill"></i> (editat)';
+                        messageSpan.after(editedBadge);
+                    }
+
+                    input.remove();
+                    btn.closest('div').remove();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Eroare la editarea mesajului');
+            });
+        }
+
+        function cancelEdit(messageId, originalContent) {
+            const messageSpan = document.querySelector(`[data-message-id="${messageId}"]`);
+            const container = messageSpan.closest('.message-content');
+
+            container.querySelector('input').remove();
+            container.querySelector('div.mt-2').remove();
+            messageSpan.style.display = '';
         }
     </script>
 }

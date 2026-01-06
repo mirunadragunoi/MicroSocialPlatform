@@ -97,11 +97,18 @@ namespace MicroSocialPlatform.Controllers
             }
 
             // verific daca exista o cerere de follow primita de la acest utilizator
-            var incomingRequestObj = await _context.Follows.FirstOrDefaultAsync(f => f.FollowerId == user.Id && f.FollowingId == currentUser.Id && f.Status == FollowStatus.Pending);
-            if (incomingRequestObj != null) { 
-                incomingRequest = incomingRequestObj.Id;
+            if (currentUser != null && !isOwnProfile)
+            {
+                var incomingRequestObj = await _context.Follows
+                    .FirstOrDefaultAsync(f => f.FollowerId == user.Id 
+                        && f.FollowingId == currentUser.Id 
+                        && f.Status == FollowStatus.Pending);
+                if (incomingRequestObj != null)
+                {
+                    incomingRequest = incomingRequestObj.Id;
+                }
             }
-
+         
             // obtin postarile doar daca e vizibil
             var posts = canViewProfile
                 ? await _context.Posts

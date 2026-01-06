@@ -19,10 +19,10 @@ Am implementat un sistem inteligent care **analizează automat** textul postări
 
 ### Funcționalități Principale
 
-? **Detectare automată** a conținutului neadecvat (insulte, limbaj vulgar, hate speech)  
-? **Blocare instantanee** a publicării dacă textul conține probleme  
-? **Feedback clar** pentru utilizator cu explicația motivului blocării  
-? **Fără intervenție umană** - totul se întâmplă automat în sub 3 secunde  
+**Detectare automată** a conținutului neadecvat (insulte, limbaj vulgar, hate speech)  
+**Blocare instantanee** a publicării dacă textul conține probleme  
+**Feedback clar** pentru utilizator cu explicația motivului blocării  
+**Fără intervenție umană** - totul se întâmplă automat în sub 3 secunde  
 
 ---
 
@@ -38,10 +38,10 @@ Platformele sociale se confruntă cu provocări majore:
 
 ### Soluția Noastră (AI Automat)
 
-? **Rapidă** - Verificare în 1-3 secunde  
-? **Eficientă** - Cost de ~$3.50/lună pentru 100 utilizatori  
-? **Consistență** - Aceleași reguli pentru toată lumea  
-? **Scalabilă** - Poate verifica mii de mesaje pe zi  
+**Rapidă** - Verificare în 1-3 secunde  
+**Eficientă** - Cost de ~$3.50/lună pentru 100 utilizatori  
+**Consistență** - Aceleași reguli pentru toată lumea  
+**Scalabilă** - Poate verifica mii de mesaje pe zi  
 
 ---
 
@@ -55,15 +55,15 @@ Platformele sociale se confruntă cu provocări majore:
 - Returnează un răspuns detaliat (OK/Blocat + motivul)
 
 **Avantaje:**
-- ? Acuratețe ~95% (înțelege context, ironie, sarcasm)
-- ? Multilingv (funcționează în multe limbi)
-- ? Se îmbunătățește continuu (model actualizat)
-- ? Detectează chiar și expresii creative de insulte
+- Acuratețe ~95% (înțelege context, ironie, sarcasm)
+- Multilingv (funcționează în multe limbi)
+- Se îmbunătățește continuu (model actualizat)
+- Detectează chiar și expresii creative de insulte
 
 **Dezavantaje:**
-- ? Cost: ~$0.0014 per verificare ($3.50/lună pentru 100 useri)
-- ? Mai lent: 1-3 secunde
-- ? Necesită internet și API key
+- Cost: ~$0.0014 per verificare ($3.50/lună pentru 100 useri)
+- Mai lent: 1-3 secunde
+- Necesită internet și API key
 
 ### Procesul Complet
 
@@ -268,13 +268,9 @@ Pentru comentarii folosim **AJAX** (fără reload de pagină), deci:
 
 Am testat sistemul pentru câteva teste pentru a eviden?ia folosirea componentei AI:
 
-####  Teste
-
----
-
 #### Postare
 
-** Efectul vizual **
+**Efectul vizual**
 
 Încercăm să introducem un cuvânt ofensator în textul unei postări:
 
@@ -282,11 +278,11 @@ Am testat sistemul pentru câteva teste pentru a eviden?ia folosirea componentei
 
 Componenta AI blochează publicarea postării după analiza textului și întoarce mesajul de eroare.
 
-** Ce se întamplă de fapt în cod: **
+**Ce se întamplă de fapt în cod:**
 
-![Cod postare conținut jignitor](images/TestPostareContinutJignitorCod.png)
+![Cod postare conținut jignitor](images/TetsPostareContinutJignitorCod.png)
 
-** Efectul vizual*
+**Efectul vizual**
 
 Introducem un text normal, atunci postarea va fi publicată cu succes, iar în cod componenta AI verifică scrisul în modul următor:
 
@@ -296,7 +292,7 @@ Introducem un text normal, atunci postarea va fi publicată cu succes, iar în c
 
 #### Comentariu
 
-** Efectul vizual **
+**Efectul vizual**
 
 Încercăm să introducem un cuvânt vulgar în textul unui comentariu:
 
@@ -304,13 +300,13 @@ Introducem un text normal, atunci postarea va fi publicată cu succes, iar în c
 
 Componenta AI blochează publicarea comentariului după analiza textului și întoarce mesajul de eroare.
 
-** Ce se întamplă de fapt în cod: **
+**Ce se întamplă de fapt în cod:**
 
 ![Cod comentariu conținut vulgar](images/TestComentariuContinutVulgarCod.png)
 
 --- 
 
-** Efectul vizual*
+**Efectul vizual**
 
 Introducem un text normal, atunci comentariul va fi publicat cu succes, iar în cod componenta AI verifică scrisul în modul următor:
 

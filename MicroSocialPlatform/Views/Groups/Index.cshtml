@@ -1,4 +1,6 @@
-﻿@model IEnumerable<MicroSocialPlatform.Models.Group>
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<MicroSocialPlatform.Models.Group>
+@inject SignInManager<ApplicationUser> SignInManager
 
 @{
     ViewData["Title"] = "Grupuri";
@@ -13,10 +15,22 @@
             <p class="text-muted mb-0">Găsește-ți tribul sau creează-ți propria comunitate.</p>
         </div>
 
-        <a asp-action="Create" class="btn text-white rounded-pill px-4 py-2 shadow-sm fw-bold d-flex align-items-center"
-           style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none; transition: transform 0.2s;">
-            <i class="bi bi-plus-circle-fill me-2"></i> Grup Nou
-        </a>
+        @if (SignInManager.IsSignedIn(User))
+        {
+            // utilizator autentificat, link normal
+            <a asp-action="Create" class="btn text-white rounded-pill px-4 py-2 shadow-sm fw-bold d-flex align-items-center"
+               style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none; transition: transform 0.2s;">
+                <i class="bi bi-plus-circle-fill me-2"></i> Grup Nou
+            </a>
+        }
+        else
+        {
+            // utilizator neautentificat, alerta
+            <button onclick="showAuthAlert()" class="btn text-white rounded-pill px-4 py-2 shadow-sm fw-bold d-flex align-items-center"
+                    style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none; transition: transform 0.2s; cursor: pointer;">
+                <i class="bi bi-plus-circle-fill me-2"></i> Grup Nou
+            </button>
+        }
     </div>
 
     @if (!Model.Any())
@@ -30,9 +44,18 @@
             </div>
             <h4 class="fw-bold text-dark">Încă nu există grupuri</h4>
             <p class="text-muted mb-4">Fii tu primul care creează o comunitate pe Agora!</p>
-            <a asp-action="Create" class="btn btn-outline-primary rounded-pill px-4">
-                Începe acum
-            </a>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <a asp-action="Create" class="btn btn-outline-primary rounded-pill px-4">
+                    Începe acum
+                </a>
+            }
+            else
+            {
+                <button onclick="showAuthAlert()" class="btn btn-outline-primary rounded-pill px-4">
+                    Începe acum
+                </button>
+            }
         </div>
     }
     else

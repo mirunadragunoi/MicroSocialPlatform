@@ -23,6 +23,7 @@ namespace MicroSocialPlatform.Data
         public DbSet<Group> Groups { get; set; }
         public DbSet<GroupMember> GroupMembers { get; set; }
         public DbSet<GroupMessage> GroupMessages { get; set; }
+        public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
 
         // IMPLEMENTAREA RELATIILOR SI ETC
         protected override void OnModelCreating(ModelBuilder builder)
@@ -137,6 +138,17 @@ namespace MicroSocialPlatform.Data
                 .HasForeignKey(n => n.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<GroupJoinRequest>()
+                .HasOne(r => r.Group)
+                .WithMany()
+                .HasForeignKey(r => r.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<GroupJoinRequest>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // index pentru performanta
             builder.Entity<Post>()

@@ -1,4 +1,6 @@
-﻿@model MicroSocialPlatform.Models.Group
+﻿@using Microsoft.AspNetCore.Identity
+@model MicroSocialPlatform.Models.Group
+@inject SignInManager<ApplicationUser> SignInManager
 
 @{
     // preluam id-ul utilizatorului curent
@@ -112,6 +114,28 @@
                     </a>
 
                     // intra in grup
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        // utilizator autentificat, link normal
+                        <form asp-controller="Groups" asp-action="Join" asp-route-id="@Model.Id"
+                              asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                              method="post">
+                            <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold bg-gradient border-0"
+                                    style="background-color: #8e44ad;">
+                                <i class="bi bi-plus-lg me-1"></i>Intră în Grup
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        // utilizator neautentificat, alerta
+                        <button onclick="showAuthAlert()" class="btn btn-primary rounded-pill w-100 fw-bold bg-gradient border-0"
+                                style="background-color: #8e44ad;">
+                            <i class="bi bi-plus-circle-fill me-2"></i> Intră în Grup
+                        </button>
+                    }
+                    /*
+                    // intra in grup
                     <form asp-controller="Groups" asp-action="Join" asp-route-id="@Model.Id"
                           asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
                           method="post">
@@ -119,7 +143,7 @@
                                 style="background-color: #8e44ad;">
                             <i class="bi bi-plus-lg me-1"></i>Intră în Grup
                         </button>
-                    </form>
+                    </form>*/
                 }
 
             </div>
