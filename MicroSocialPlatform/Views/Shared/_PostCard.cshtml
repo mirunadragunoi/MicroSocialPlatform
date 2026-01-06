@@ -3,81 +3,46 @@
 <div class="card mb-3 post-card border-0 shadow-sm rounded-4" style="overflow: visible;">
     <div class="card-body">
         <div class="d-flex gap-3 mb-3">
-            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
-               class="text-decoration-none" style="text-decoration: none !important;">
-                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User.CustomUsername ?? Model.User.UserName)" class="text-decoration-none">
-                    @if (!string.IsNullOrEmpty(Model.User.ProfilePicture))
-                    {
-                        <img src="@Model.User.ProfilePicture"
-                             alt="Profile Picture"
-                             class="rounded-circle border"
-                             style="width: 40px; height: 40px; object-fit: cover;">
-                    }
-                    else
-                    {
-                        <div class="user-avatar" style="width: 40px; height:40px; ... (stilurile tale existente) ...">
-                            <span>
-                                @(Model.User.UserName?.Substring(0, 2).ToUpper() ?? "AN")
-                            </span>
-                        </div>        
-                    }
-                </a>
+            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" class="text-decoration-none">
+                @if (!string.IsNullOrEmpty(Model.User.ProfilePicture))
+                {
+                    <img src="@Model.User.ProfilePicture" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;">
+                }
+                else
+                {
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span>@(Model.User.UserName?.Substring(0, 2).ToUpper() ?? "AN")</span>
+                    </div>
+                }
             </a>
 
             <div class="flex-grow-1">
-                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
-                   class="text-decoration-none text-dark">
-                    <h6 class="mb-0">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</h6>
+                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" class="text-decoration-none text-dark">
+                    <h6 class="mb-0">@(Model.User?.FullName ?? Model.User?.UserName)</h6>
                 </a>
-                <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" 
-                   class="text-decoration-none text-muted" style="text-decoration: none !important;">
-                    <small class="text-muted" style="font-size: 0.8rem;">
-                        @Model.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")
-
-                        @if (Model.UpdatedAt != null && Model.UpdatedAt != Model.CreatedAt)
-                        {
-                            <span class="fst-italic ms-1" title="Editat la @Model.UpdatedAt.Value.ToLocalTime().ToString("g")">
-                                (editat)
-                            </span>
-                        }
-                    </small>
+                <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-muted">
+                    <small style="font-size: 0.8rem;">@Model.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")</small>
                 </a>
             </div>
 
             <div class="dropdown">
-                <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-three-dots"></i>
-                </button>
+                <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                     <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-flag me-2"></i> Raportează</a></li>
-
                     @{
                         var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
                         var isAdmin = User.IsInRole("Administrator");
                     }
-
                     @if (isOwner || isAdmin)
                     {
                         <li><hr class="dropdown-divider"></li>
-                    }
-
-                    @if (isOwner)
-                    {
-                        <li>
-                            <a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item">
-                                <i class="bi bi-pencil-square me-2"></i> Editeaza Postarea
-                            </a>
-                        </li>
-                    }
-
-                    @if (isOwner || isAdmin)
-                    {
+                        @if (isOwner)
+                        {
+                            <li><a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item"><i class="bi bi-pencil-square me-2"></i> Editeaza</a></li>
+                        }
                         <li>
                             <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
-                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ești sigur că vrei să ștergi această postare?');">
-                                    <i class="bi bi-trash3-fill me-2"></i> Șterge Postarea
-                                </button>
+                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ștergi postarea?');"><i class="bi bi-trash3-fill me-2"></i> Șterge</button>
                             </form>
                         </li>
                     }
@@ -85,38 +50,36 @@
             </div>
         </div>
 
-        <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-dark">
-            <p class="card-text">
-                @Model.Content
-            </p>
+        <div class="card-text mb-3">
+            @Model.Content
+        </div>
 
-            @if (Model.PostMedias != null && Model.PostMedias.Any())
-            {
-                <div class="row g-2 mb-3">
-                    @foreach (var media in Model.PostMedias)
-                    {
-                        <div class="col-md-6">
-                            @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
-                            {
-                                <img src="@media.Url" class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover; cursor: pointer;" alt="Post image">
-                            }
-                            else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
-                            {
-                                <video controls class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover; cursor: pointer;">
-                                    <source src="@media.Url" type="video/mp4">
-                                </video>
-                            }
-                        </div>
-                    }
-                </div>
-            }
-        </a>
+        @if (Model.PostMedias != null && Model.PostMedias.Any())
+        {
+            <div class="row g-2 mb-3">
+                @foreach (var media in Model.PostMedias)
+                {
+                    <div class="col-12">
+                        @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
+                        {
+                            <img src="@media.Url" class="img-fluid rounded border w-100" style="max-height: 400px; object-fit: cover;">
+                        }
+                        else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
+                        {
+                            <video controls class="img-fluid rounded border w-100" style="max-height: 400px;"><source src="@media.Url" type="video/mp4"></video>
+                        }
+                    </div>
+                }
+            </div>
+        }
 
-        <div class="post-actions d-flex gap-3 pt-2 border-top align-items-center">
+        <hr class="my-1 opacity-10">
+
+        <div class="d-flex gap-2 pt-1">
             <partial name="_LikePartial" model="Model" />
 
-            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none">
-                <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">@Model.CommentsCount</span>
+            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light flex-fill rounded-pill fw-bold text-muted">
+                <i class="bi bi-chat"></i> Comentează
             </a>
         </div>
     </div>
