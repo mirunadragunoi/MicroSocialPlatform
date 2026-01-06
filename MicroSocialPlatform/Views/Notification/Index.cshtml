@@ -4,432 +4,234 @@
     ViewData["Title"] = "Notificări";
     var unreadCount = Model.Count(n => !n.IsRead);
     var readCount = Model.Count(n => n.IsRead);
+    var totalCount = Model.Count();
 }
 
-<!-- pentru mesajul de succes -->
 <div id="successAlert" class="success-alert-container" style="display: none;">
-    <div class="success-alert">
-        <button type="button" class="alert-close" onclick="closeSuccessAlert()">
+    <div class="success-alert shadow rounded-4 d-flex align-items-center bg-white">
+        <div class="alert-icon-wrapper me-3">
+            <i class="bi bi-check-circle-fill" style="color: #a18cd1; font-size: 1.5rem;"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="mb-0 fw-bold" style="color: #6c757d;">Succes</h6>
+            <div id="alertMessage" class="text-muted small">Operațiune reușită!</div>
+        </div>
+        <button type="button" class="btn btn-link text-muted p-0 ms-3" onclick="closeSuccessAlert()">
             <i class="bi bi-x-lg"></i>
         </button>
-        <div class="alert-content">
-            <div class="alert-icon">
-                <i class="bi bi-check-circle-fill"></i>
-            </div>
-            <div class="alert-text">
-                <div class="alert-title">SUCCES</div>
-                <div class="alert-message" id="alertMessage"></div>
-            </div>
-        </div>
     </div>
 </div>
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <!-- Header cu statistici -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-2">
-                                <i class="bi bi-bell-fill text-primary"></i> Notificări
-                            </h2>
-                            <div class="d-flex gap-3">
-                                <span class="badge bg-danger">@unreadCount necitite</span>
-                                <span class="badge bg-secondary">@readCount citite</span>
-                                <span class="badge bg-info">@Model.Count() total</span>
+<div class="container mt-4" style="max-width: 850px;">
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-2 fw-bold" style="color: #4a4a4a;">
+                        <i class="bi bi-bell-fill me-2" style="color: #a18cd1;"></i>Notificări
+                    </h2>
+
+                    <div class="d-flex gap-2">
+                        <span class="badge rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                              style="background-color: rgba(161, 140, 209, 0.15); color: #8e44ad; border: 1px solid rgba(161, 140, 209, 0.2);">
+                            <span class="d-inline-block rounded-circle" style="width: 6px; height: 6px; background-color: #8e44ad;"></span>
+                            <span id="badgeUnread">@unreadCount</span> necitite
+                        </span>
+
+                        <span class="badge rounded-pill px-3 py-2 text-muted bg-light border">
+                            <span id="badgeRead">@readCount</span> citite
+                        </span>
+
+                        <span class="badge rounded-pill px-3 py-2 text-muted bg-white border">
+                            <span id="badgeTotal">@totalCount</span> total
+                        </span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    @if (unreadCount > 0)
+                    {
+                        <button class="btn btn-light rounded-pill border px-3 text-muted hover-purple" id="markAllRead" title="Marchează tot ca citit">
+                            <i class="bi bi-check2-all me-1"></i> <span class="d-none d-sm-inline">Citește tot</span>
+                        </button>
+                    }
+                    @if (Model.Any())
+                    {
+                        <button class="btn btn-light rounded-pill border px-3 text-danger hover-red" id="deleteAll" title="Șterge tot istoricul">
+                            <i class="bi bi-trash3 me-1"></i> <span class="d-none d-sm-inline">Șterge tot</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-bell-slash text-muted opacity-25" style="font-size: 4rem;"></i>
+                </div>
+                <h5 class="text-muted fw-bold">Nu ai notificări noi</h5>
+                <p class="text-muted small">Când cineva interacționează cu tine, va apărea aici.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm rounded-4 overflow-hidden border-0">
+            @foreach (var notification in Model)
+            {
+                var isUnread = !notification.IsRead;
+                var iconClass = "bi-bell-fill";
+                var gradient = "linear-gradient(135deg, #a18cd1, #fbc2eb)";
+
+                if (notification.Type == NotificationType.Like) { iconClass = "bi-heart-fill"; gradient = "linear-gradient(135deg, #ff9a9e, #fecfef)"; }
+                else if (notification.Type == NotificationType.Comment) { iconClass = "bi-chat-dots-fill"; gradient = "linear-gradient(135deg, #a18cd1, #fbc2eb)"; }
+                else if (notification.Type == NotificationType.Follow) { iconClass = "bi-person-plus-fill"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+
+                <a href="@notification.RelatedUrl"
+                   class="list-group-item list-group-item-action notification-item p-3 border-0 border-bottom @(isUnread ? "notification-unread" : "notification-read")"
+                   data-notification-id="@notification.Id"
+                   style="transition: background-color 0.2s;">
+
+                    <div class="d-flex w-100 align-items-center gap-3">
+
+                        <div class="flex-shrink-0 position-relative">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm notification-icon-circle"
+                                 style="width: 48px; height: 48px; background: @gradient;">
+                                <i class="@iconClass fs-5"></i>
                             </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            @if (unreadCount > 0)
+                            @if (isUnread)
                             {
-                                <button class="btn btn-sm btn-outline-primary" id="markAllRead" title="Marchează toate ca citite">
-                                    <i class="bi bi-check-all"></i>
-                                </button>
-                            }
-                            @if (Model.Any())
-                            {
-                                <button class="btn btn-sm btn-outline-danger" id="deleteAll" title="Șterge toate">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle unread-dot"></span>
                             }
                         </div>
+
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <p class="mb-1 text-dark @(isUnread ? "fw-bold" : "")" style="font-size: 0.95rem; line-height: 1.4;">
+                                    @if (notification.Sender != null)
+                                    {
+                                        <span class="text-primary">@notification.Sender.UserName</span>
+                                    }
+                                    @notification.Content.Replace(notification.Sender?.UserName ?? "", "")
+                                </p>
+
+                                <button class="btn btn-link text-muted p-0 ms-2 delete-notification opacity-50 hover-opacity-100"
+                                        data-notification-id="@notification.Id"
+                                        title="Șterge">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+
+                            <small class="text-muted d-flex align-items-center gap-1">
+                                <i class="bi bi-clock"></i> @GetTimeAgo(notification.CreatedAt)
+                            </small>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            @if (!Model.Any())
-            {
-                <!-- State gol -->
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-bell-slash display-1 text-muted mb-3"></i>
-                        <h5 class="text-muted">Nu ai notificări</h5>
-                        <p class="text-muted small">Când vei primi notificări, le vei vedea aici.</p>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <!-- Notificări necitite -->
-                @if (unreadCount > 0)
-                {
-                    <h5 class="mb-3 text-muted">
-                        <i class="bi bi-circle-fill text-danger" style="font-size: 0.5rem;"></i>
-                        Necitite (@unreadCount)
-                    </h5>
-                    <div class="list-group shadow-sm mb-4">
-                        @foreach (var notification in Model.Where(n => !n.IsRead))
-                        {
-                            <a href="@notification.RelatedUrl"
-                               class="list-group-item list-group-item-action notification-item notification-unread"
-                               data-notification-id="@notification.Id">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="d-flex align-items-start gap-3 flex-grow-1">
-                                        <!-- Indicator necitit -->
-                                        <div class="unread-indicator">
-                                            <i class="bi bi-circle-fill text-danger"></i>
-                                        </div>
-
-                                        <!-- Iconița tipului de notificare -->
-                                        <div class="notification-icon mt-1">
-                                            @switch (notification.Type)
-                                            {
-                                                case NotificationType.Like:
-                                                    <i class="bi bi-heart-fill text-danger fs-4"></i>
-                                                    break;
-                                                case NotificationType.Comment:
-                                                    <i class="bi bi-chat-fill text-primary fs-4"></i>
-                                                    break;
-                                                case NotificationType.Follow:
-                                                    <i class="bi bi-person-check-fill text-success fs-4"></i>
-                                                    break;
-                                                case NotificationType.FollowRequest:
-                                                    <i class="bi bi-person-plus-fill text-warning fs-4"></i>
-                                                    break;
-                                                case NotificationType.FollowAccepted:
-                                                    <i class="bi bi-check-circle-fill text-success fs-4"></i>
-                                                    break;
-                                                case NotificationType.NewPost:
-                                                    <i class="bi bi-plus-circle-fill text-info fs-4"></i>
-                                                    break;
-                                                case NotificationType.GroupMessage:
-                                                    <i class="bi bi-envelope-fill text-secondary fs-4"></i>
-                                                    break;
-                                                default:
-                                                    <i class="bi bi-bell-fill text-muted fs-4"></i>
-                                                    break;
-                                            }
-                                        </div>
-
-                                        <!-- Avatar utilizator -->
-                                        @if (notification.Sender != null)
-                                        {
-                                            @if (!string.IsNullOrEmpty(notification.Sender.ProfilePicture))
-                                            {
-                                                <img src="@notification.Sender.ProfilePicture"
-                                                     alt="@notification.Sender.UserName"
-                                                     class="rounded-circle"
-                                                     style="width: 45px; height: 45px; object-fit: cover;">
-                                            }
-                                            else
-                                            {
-                                                <div class="user-avatar-small">
-                                                    <span>@(notification.Sender.UserName?.Substring(0, 2).ToUpper() ?? "AN")</span>
-                                                </div>
-                                            }
-                                        }
-
-                                        <!-- Conținut notificare -->
-                                        <div class="flex-grow-1">
-                                            <p class="mb-1 fw-semibold">
-                                                @if (notification.Sender != null)
-                                                {
-                                                    <strong class="text-dark">@notification.Sender.UserName</strong>
-                                                }
-                                                <span class="text-dark">@notification.Content.Replace(notification.Sender?.UserName ?? "", "")</span>
-                                            </p>
-                                            <small class="text-primary fw-bold">
-                                                <i class="bi bi-clock"></i> @GetTimeAgo(notification.CreatedAt)
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Buton de ștergere -->
-                                    <button class="btn btn-sm btn-outline-danger delete-notification"
-                                            data-notification-id="@notification.Id"
-                                            onclick="event.preventDefault(); event.stopPropagation();"
-                                            title="Șterge">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-                            </a>
-                        }
-                    </div>
-                }
-
-                <!-- Notificări citite -->
-                @if (readCount > 0)
-                {
-                    <h5 class="mb-3 text-muted">
-                        <i class="bi bi-check-circle text-success"></i>
-                        Citite (@readCount)
-                    </h5>
-                    <div class="list-group shadow-sm">
-                        @foreach (var notification in Model.Where(n => n.IsRead))
-                        {
-                            <a href="@notification.RelatedUrl"
-                               class="list-group-item list-group-item-action notification-item notification-read"
-                               data-notification-id="@notification.Id">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="d-flex align-items-start gap-3 flex-grow-1">
-                                        <!-- Iconița tipului de notificare (opacitate redusă) -->
-                                        <div class="notification-icon mt-1 opacity-50">
-                                            @switch (notification.Type)
-                                            {
-                                                case NotificationType.Like:
-                                                    <i class="bi bi-heart-fill text-danger fs-4"></i>
-                                                    break;
-                                                case NotificationType.Comment:
-                                                    <i class="bi bi-chat-fill text-primary fs-4"></i>
-                                                    break;
-                                                case NotificationType.Follow:
-                                                    <i class="bi bi-person-check-fill text-success fs-4"></i>
-                                                    break;
-                                                case NotificationType.FollowRequest:
-                                                    <i class="bi bi-person-plus-fill text-warning fs-4"></i>
-                                                    break;
-                                                case NotificationType.FollowAccepted:
-                                                    <i class="bi bi-check-circle-fill text-success fs-4"></i>
-                                                    break;
-                                                case NotificationType.NewPost:
-                                                    <i class="bi bi-plus-circle-fill text-info fs-4"></i>
-                                                    break;
-                                                case NotificationType.GroupMessage:
-                                                    <i class="bi bi-envelope-fill text-secondary fs-4"></i>
-                                                    break;
-                                                default:
-                                                    <i class="bi bi-bell-fill text-muted fs-4"></i>
-                                                    break;
-                                            }
-                                        </div>
-
-                                        <!-- Avatar utilizator (opacitate redusă) -->
-                                        @if (notification.Sender != null)
-                                        {
-                                            @if (!string.IsNullOrEmpty(notification.Sender.ProfilePicture))
-                                            {
-                                                <img src="@notification.Sender.ProfilePicture"
-                                                     alt="@notification.Sender.UserName"
-                                                     class="rounded-circle opacity-75"
-                                                     style="width: 40px; height: 40px; object-fit: cover;">
-                                            }
-                                            else
-                                            {
-                                                <div class="user-avatar-small opacity-75">
-                                                    <span>@(notification.Sender.UserName?.Substring(0, 2).ToUpper() ?? "AN")</span>
-                                                </div>
-                                            }
-                                        }
-
-                                        <!-- Conținut notificare (text mai pal) -->
-                                        <div class="flex-grow-1">
-                                            <p class="mb-1 text-muted">
-                                                @if (notification.Sender != null)
-                                                {
-                                                    <strong>@notification.Sender.UserName</strong>
-                                                }
-                                                @notification.Content.Replace(notification.Sender?.UserName ?? "", "")
-                                            </p>
-                                            <small class="text-muted">
-                                                <i class="bi bi-clock"></i> @GetTimeAgo(notification.CreatedAt)
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Buton de ștergere -->
-                                    <button class="btn btn-sm btn-outline-danger delete-notification opacity-50"
-                                            data-notification-id="@notification.Id"
-                                            onclick="event.preventDefault(); event.stopPropagation();"
-                                            title="Șterge">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-                            </a>
-                        }
-                    </div>
-                }
+                </a>
             }
         </div>
-    </div>
+    }
 </div>
+
+@functions {
+    string GetTimeAgo(DateTime date)
+    {
+        var timeSpan = DateTime.UtcNow - date;
+        if (timeSpan.TotalMinutes < 1) return "Acum";
+        if (timeSpan.TotalMinutes < 60) return $"Acum {(int)timeSpan.TotalMinutes}m";
+        if (timeSpan.TotalHours < 24) return $"Acum {(int)timeSpan.TotalHours}h";
+        if (timeSpan.TotalDays < 7) return $"Acum {(int)timeSpan.TotalDays}z";
+        return date.ToString("dd MMM");
+    }
+}
 
 <style>
     .success-alert-container {
         position: fixed;
-        top: 80px;
-        left: 50%;
-        transform: translateX(-50%);
+        top: 90px;
+        right: 20px;
         z-index: 9999;
-        width: 90%;
-        max-width: 900px;
-        animation: slideDown 0.3s ease-out;
+        min-width: 300px;
+        animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .success-alert {
-        background: linear-gradient(135deg, #d4f4dd, #e8f8ed);
-        border: 1px solid #a3d9b1;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
-        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.2);
-        position: relative;
+        border-left: 5px solid #a18cd1 !important;
+        padding: 1rem 1.2rem;
     }
 
-    .alert-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: none;
-        border: none;
-        color: #6c757d;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        transition: color 0.2s;
-    }
-
-        .alert-close:hover {
-            color: #495057;
-        }
-
-    .alert-content {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .alert-icon {
-        font-size: 2.5rem;
-        color: #28a745;
-    }
-
-    .alert-text {
-        flex: 1;
-    }
-
-    .alert-title {
-        color: #28a745;
-        font-weight: 700;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.25rem;
-    }
-
-    .alert-message {
-        color: #495057;
-        font-size: 1rem;
-        font-weight: 500;
-    }
-
-    @@keyframes slideDown {
-        from {
-            transform: translateX(-50%) translateY(-100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-    }
-
-    @@keyframes slideUp {
-        from {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        to {
-            transform: translateX(-50%) translateY(-100%);
-            opacity: 0;
-        }
-    }
-
-    /* Notificare necitită */
     .notification-unread {
-        background: linear-gradient(to right, #e7f3ff 0%, #ffffff 100%) !important;
-        border-left: 4px solid #0d6efd !important;
-        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15) !important;
+        background-color: #fbf7ff !important;
+        border-left: 4px solid #a18cd1 !important;
     }
 
-    /* Notificare citită */
+        .notification-unread:hover {
+            background-color: #f3eafd !important;
+        }
+
     .notification-read {
-        background: #ffffff !important;
-        border-left: 2px solid #dee2e6 !important;
-        opacity: 0.8;
+        background-color: #ffffff;
+        border-left: 4px solid transparent !important;
     }
 
         .notification-read:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-read .notification-icon-circle {
+            opacity: 0.6;
+            filter: grayscale(30%);
+        }
+
+    /* animatii */
+    @@keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
             opacity: 1;
-            background: #f8f9fa !important;
+        }
+    }
+
+    @@keyframes fadeOut {
+        from {
+            opacity: 1;
         }
 
-    .notification-item {
-        border-radius: 12px !important;
-        margin-bottom: 8px;
-        transition: all 0.2s;
-        padding: 1rem;
-    }
-
-        .notification-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        to {
+            opacity: 0;
         }
-
-    .unread-indicator {
-        width: 12px;
-        font-size: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
-    .notification-icon {
-        width: 50px;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .hover-purple:hover {
+        background-color: #f3eafd;
+        color: #8e44ad !important;
+        border-color: #a18cd1 !important;
     }
 
-    .user-avatar-small {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #a18cd1, #fbc2eb);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 600;
-        font-size: 0.9rem;
-        flex-shrink: 0;
+    .hover-red:hover {
+        background-color: #fff5f5;
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
     }
 
-    .delete-notification {
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-
-    .notification-item:hover .delete-notification {
+    .hover-opacity-100:hover {
         opacity: 1 !important;
     }
+
 </style>
 
 @section Scripts {
     <script>
-        // Funcție pentru afișarea alertei de succes
+        // functii pentru alerta de succes
         function showSuccessAlert(message) {
             const alertContainer = document.getElementById('successAlert');
             const alertMessage = document.getElementById('alertMessage');
@@ -437,234 +239,116 @@
             alertMessage.textContent = message;
             alertContainer.style.display = 'block';
 
-            // Auto-hide după 4 secunde
-            setTimeout(() => {
-                closeSuccessAlert();
-            }, 4000);
+            alertContainer.style.animation = 'none';
+            alertContainer.offsetHeight;
+            alertContainer.style.animation = 'slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+            // mesajul dispare dupa 4 secunde
+            setTimeout(() => { closeSuccessAlert(); }, 4000);
         }
 
-        // Funcție pentru închiderea alertei
         function closeSuccessAlert() {
             const alertContainer = document.getElementById('successAlert');
-            alertContainer.style.animation = 'slideUp 0.3s ease-out';
+            alertContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            alertContainer.style.opacity = '0';
+            alertContainer.style.transform = 'translateX(50px)';
 
             setTimeout(() => {
                 alertContainer.style.display = 'none';
-                alertContainer.style.animation = 'slideDown 0.3s ease-out';
-            }, 300);
+                alertContainer.style.opacity = '1';
+                alertContainer.style.transform = 'none';
+            }, 500);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Marchează toate ca citite
+
+            // marcheaza tot ca citit
             const markAllBtn = document.getElementById('markAllRead');
             if (markAllBtn) {
                 markAllBtn.addEventListener('click', function() {
-                    if (confirm('Marchezi toate notificările ca citite?')) {
-                        fetch('/Notification/MarkAllAsRead', {
-                            method: 'POST'
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                showSuccessAlert('Toate notificările au fost marcate ca citite! ✓');
-                                setTimeout(() => {
-                                    location.reload();
-                                }, 2000);
-                            }
-                        })
-                        .catch(error => {
-                            alert('Eroare la marcarea notificărilor');
-                        });
-                    }
+                    fetch('/Notification/MarkAllAsRead', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            showSuccessAlert('Toate notificările au fost citite! ✓');
+
+                            document.querySelectorAll('.notification-unread').forEach(item => {
+                                item.classList.remove('notification-unread');
+                                item.classList.add('notification-read');
+                                item.querySelector('.unread-dot')?.remove();
+                            });
+                            updateHeaderBadges(0);
+                        }
+                    });
                 });
             }
 
-            // Șterge toate notificările
+            // sterge tot istoricul
             const deleteAllBtn = document.getElementById('deleteAll');
             if (deleteAllBtn) {
                 deleteAllBtn.addEventListener('click', function() {
-                    const notificationCount = document.querySelectorAll('.notification-item').length;
-                    if (confirm(`Sigur vrei să ștergi TOATE cele ${notificationCount} notificări? Această acțiune este ireversibilă!`)) {
-                        fetch('/Notification/DeleteAll', {
-                            method: 'POST'
-                        })
-                        .then(response => response.json())
+                    if (confirm('Sigur vrei să ștergi tot istoricul?')) {
+                        fetch('/Notification/DeleteAll', { method: 'POST' })
+                        .then(r => r.json())
                         .then(data => {
                             if (data.success) {
-                                showSuccessAlert(`Toate cele ${notificationCount} notificări au fost șterse cu succes! 🗑️`);
+                                showSuccessAlert('Istoricul a fost șters complet! 🗑️');
+
+                                // asteptam 3 secunde si reincarcam pagina
                                 setTimeout(() => {
                                     location.reload();
-                                }, 2500);
+                                }, 3000);
                             }
-                        })
-                        .catch(error => {
-                            alert('Eroare la ștergerea notificărilor');
                         });
                     }
                 });
             }
 
-            // Șterge o notificare individuală
-            document.querySelectorAll('.delete-notification').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const notificationId = this.getAttribute('data-notification-id');
+            // stergere notificare individuala
+            document.querySelectorAll('.delete-notification').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault(); e.stopPropagation();
+                    const id = this.dataset.notificationId;
                     const item = this.closest('.notification-item');
 
-                    if (confirm('Ștergi această notificare?')) {
-                        fetch('/Notification/Delete/' + notificationId, {
-                            method: 'POST'
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Animație de ștergere
-                                item.style.transition = 'all 0.3s';
-                                item.style.opacity = '0';
-                                item.style.transform = 'translateX(-20px)';
-
-                                // Afișează alert
-                                showSuccessAlert('Notificarea a fost ștearsă cu succes! ✓');
-
-                                setTimeout(() => {
-                                    item.remove();
-                                    updateNotificationBadge();
-
-                                    // Verifică dacă nu mai sunt notificări
-                                    if (document.querySelectorAll('.notification-item').length === 0) {
-                                        setTimeout(() => {
-                                            location.reload();
-                                        }, 2000);
-                                    }
-                                }, 300);
-                            }
-                        })
-                        .catch(error => {
-                            alert('Eroare la ștergerea notificării');
-                        });
-                    }
-                });
-            });
-
-            // Click pe notificare → marchează ca citită și redirect
-            document.querySelectorAll('.notification-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    // Nu face nimic dacă s-a dat click pe butonul de delete
-                    if (e.target.closest('.delete-notification')) {
-                        return;
-                    }
-
-                    e.preventDefault();
-
-                    const notificationId = this.getAttribute('data-notification-id');
-                    const targetUrl = this.getAttribute('href');
-                    const isRead = this.classList.contains('notification-read');
-
-                    // Dacă e deja citită, redirect direct
-                    if (isRead) {
-                        window.location.href = targetUrl;
-                        return;
-                    }
-
-                    // Marchează ca citită
-                    fetch('/Notification/MarkAsRead?id=' + notificationId, {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
+                    fetch('/Notification/Delete/' + id, { method: 'POST' })
+                    .then(r => r.json())
                     .then(data => {
                         if (data.success) {
-                            // Schimbă vizual din unread în read
-                            this.classList.remove('notification-unread');
-                            this.classList.add('notification-read');
+                            item.style.transition = 'all 0.4s ease';
+                            item.style.transform = 'translateX(100px)';
+                            item.style.opacity = '0';
 
-                            // Schimbă stilurile
-                            this.style.opacity = '0.8';
-                            const icon = this.querySelector('.notification-icon');
-                            if (icon) icon.classList.add('opacity-50');
-
-                            const avatar = this.querySelector('.rounded-circle, .user-avatar-small');
-                            if (avatar) avatar.classList.add('opacity-75');
-
-                            const content = this.querySelector('.flex-grow-1 p');
-                            if (content) content.classList.add('text-muted');
-
-                            const timestamp = this.querySelector('.flex-grow-1 small');
-                            if (timestamp) {
-                                timestamp.classList.remove('text-primary', 'fw-bold');
-                                timestamp.classList.add('text-muted');
-                            }
-
-                            const indicator = this.querySelector('.unread-indicator');
-                            if (indicator) indicator.remove();
-
-                            // Actualizează badge-ul
-                            updateNotificationBadge();
-
-                            // Redirect după 300ms
-                            setTimeout(() => {
-                                window.location.href = targetUrl;
-                            }, 300);
-                        } else {
-                            window.location.href = targetUrl;
+                            setTimeout(() => item.remove(), 400);
+                            showSuccessAlert('Notificare ștearsă.');
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error marking as read:', error);
-                        window.location.href = targetUrl;
                     });
                 });
             });
 
-            // Funcție helper pentru actualizarea badge-ului
-            function updateNotificationBadge() {
-                fetch('/Notification/GetUnreadCount')
-                    .then(response => response.json())
-                    .then(data => {
-                        const badge = document.getElementById('sidebarNotificationBadge');
-                        if (badge) {
-                            if (data.count > 0) {
-                                badge.textContent = data.count;
-                                badge.classList.add('show');
-                            } else {
-                                badge.classList.remove('show');
-                            }
-                        }
+            // click pe notificare pentru a o marca ca citita
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (e.target.closest('.delete-notification')) return;
+                    e.preventDefault();
 
-                        updateHeaderBadges();
-                    });
-            }
+                    const id = this.dataset.notificationId;
+                    const url = this.getAttribute('href');
 
-            // Actualizează badge-urile din header
-            function updateHeaderBadges() {
-                const unreadItems = document.querySelectorAll('.notification-unread').length;
-                const readItems = document.querySelectorAll('.notification-read').length;
-                const totalItems = unreadItems + readItems;
+                    if (this.classList.contains('notification-read')) {
+                        window.location.href = url;
+                        return;
+                    }
 
-                const badges = document.querySelectorAll('.card-body .badge');
-                if (badges.length >= 3) {
-                    badges[0].textContent = `${unreadItems} necitite`;
-                    badges[1].textContent = `${readItems} citite`;
-                    badges[2].textContent = `${totalItems} total`;
-                }
+                    fetch('/Notification/MarkAsRead?id=' + id, { method: 'POST' })
+                    .then(() => window.location.href = url);
+                });
+            });
+
+            function updateHeaderBadges(unreadCount) {
+                const badgeUnread = document.getElementById('badgeUnread');
+                if(badgeUnread) badgeUnread.textContent = unreadCount;
             }
         });
     </script>
-}
-
-
-@functions {
-    string GetTimeAgo(DateTime date)
-    {
-        var timeSpan = DateTime.UtcNow - date;
-
-        if (timeSpan.TotalMinutes < 1) return "Acum";
-        if (timeSpan.TotalMinutes < 60) return $"Acum {(int)timeSpan.TotalMinutes}m";
-        if (timeSpan.TotalHours < 24) return $"Acum {(int)timeSpan.TotalHours}h";
-        if (timeSpan.TotalDays < 7) return $"Acum {(int)timeSpan.TotalDays}z";
-        if (timeSpan.TotalDays < 30) return $"Acum {(int)(timeSpan.TotalDays / 7)} săpt";
-
-        return date.ToString("dd MMM yyyy");
-    }
 }

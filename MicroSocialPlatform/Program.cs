@@ -45,6 +45,10 @@ builder.Services.AddAuthorization(options =>
     // Nu este nevoie de o politică specială, deoarece implicit toate rutele sunt accesibile
 });
 
+// Serviciu de moderare a conținutului cu AI
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IContentModerationService, ContentModerationService>();
+
 var app = builder.Build();
 
 // seed roles si admin user

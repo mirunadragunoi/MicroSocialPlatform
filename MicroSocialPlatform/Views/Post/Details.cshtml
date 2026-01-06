@@ -9,6 +9,23 @@
     var hasLiked = ViewBag.HasLiked as bool? ?? false;
 }
 
+<div id="commentErrorAlert" class="comment-error-alert" style="display: none;">
+    <div class="alert-content">
+        <button type="button" class="alert-close" onclick="closeCommentAlert()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="d-flex align-items-center gap-3">
+            <div class="alert-icon">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+            </div>
+            <div class="alert-text">
+                <div class="alert-title">ATENȚIE</div>
+                <div class="alert-message" id="commentErrorMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container mt-4 mb-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
@@ -288,6 +305,31 @@
 
 @section Scripts {
     <script>
+        // Funcție pentru afișarea alertei de eroare comentariu
+        function showCommentError(message) {
+            const alertContainer = document.getElementById('commentErrorAlert');
+            const alertMessage = document.getElementById('commentErrorMessage');
+
+            alertMessage.textContent = message;
+            alertContainer.style.display = 'block';
+
+            // Auto-hide după 5 secunde
+            setTimeout(() => {
+                closeCommentAlert();
+            }, 5000);
+        }
+
+        // Funcție pentru închiderea alertei
+        function closeCommentAlert() {
+            const alertContainer = document.getElementById('commentErrorAlert');
+            alertContainer.style.animation = 'slideUp 0.3s ease-out';
+
+            setTimeout(() => {
+                alertContainer.style.display = 'none';
+                alertContainer.style.animation = 'slideDown 0.3s ease-out';
+            }, 300);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const postId = @Model.Id;
             const commentInput = document.getElementById('comment-input-' + postId);
@@ -308,7 +350,10 @@
                     e.preventDefault();
 
                     const content = commentInput.value.trim();
-                    if (!content) { alert('Comentariul nu poate fi gol!'); return; }
+                    if (!content) {
+                        showCommentError('Comentariul nu poate fi gol!');
+                        return;
+                    }
 
                     // token CSRF pentru securitate
                     const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
@@ -331,73 +376,77 @@
                         const result = await response.json();
 
                         if (result.success) {
-                        // resetam formularul
-                        commentInput.value = '';
-                        if (charCount) charCount.textContent = '0/500';
+                            // resetam formularul
+                            commentInput.value = '';
+                            if (charCount) charCount.textContent = '0/500';
 
-                        // formatam data
-                        const d = new Date(result.comment.createdAt);
-                        const dateStr = d.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' +
-                                      d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+                            // formatam data
+                            const d = new Date(result.comment.createdAt);
+                            const dateStr = d.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' }) + ' ' +
+                                          d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
 
-                        let avatarHtml = '';
-                        if (result.comment.user.profilePicture) {
-                            // daca serverul a trimis o poza, construim tag-ul img
-                            avatarHtml = `
-                                <img src="${result.comment.user.profilePicture}"
-                                     class="rounded-circle border"
-                                     style="width: 32px; height: 32px; object-fit: cover;"
-                                     alt="${result.comment.user.userName}">`;
-                        } else {
-                            // daca nu, construim div-ul cu initialele userului
-                            const initials = result.comment.user.userName.substring(0, 2).toUpperCase();
-                            avatarHtml = `
-                                <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                    <span>${initials}</span>
+                            let avatarHtml = '';
+                            if (result.comment.user.profilePicture) {
+                                // daca serverul a trimis o poza, construim tag-ul img
+                                avatarHtml = `
+                                    <img src="${result.comment.user.profilePicture}"
+                                         class="rounded-circle border"
+                                         style="width: 32px; height: 32px; object-fit: cover;"
+                                         alt="${result.comment.user.userName}">`;
+                            } else {
+                                // daca nu, construim div-ul cu initialele userului
+                                const initials = result.comment.user.userName.substring(0, 2).toUpperCase();
+                                avatarHtml = `
+                                    <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                        <span>${initials}</span>
+                                    </div>`;
+                            }
+
+                            const html = `
+                                <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="${result.comment.id}">
+                                    <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none">
+                                        ${avatarHtml}
+                                    </a>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none text-dark fw-bold">
+                                                ${result.comment.user.customUsername}
+                                            </a>
+                                            <span class="text-dark comment-content" data-comment-id="${result.comment.id}">${escapeHtml(result.comment.content)}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted date-container">${dateStr}</small>
+
+                                            <button class="btn btn-link text-primary p-0 edit-comment-btn"
+                                                    data-comment-id="${result.comment.id}"
+                                                    title="Editează">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-link text-danger p-0 delete-comment-btn"
+                                                    data-comment-id="${result.comment.id}"
+                                                    title="Șterge">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>`;
+
+                            // scoatem mesajul "nu exista comentarii"
+                            const noComm = commentsContainer.querySelector('p.text-muted');
+                            if (noComm) noComm.remove();
+
+                            // adaugam la final
+                            commentsContainer.insertAdjacentHTML('beforeend', html);
+
+                            updateCount(result.commentsCount);
+                            attachHandlers();
+                        } else {
+                            // ← AICI E FIX-UL IMPORTANT: Afișează alertul roșu
+                            showCommentError(result.message || 'Eroare la adăugarea comentariului');
                         }
-
-                        const html = `
-                            <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="${result.comment.id}">
-                                <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none">
-                                    ${avatarHtml}  </a>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <a href="/Profile?username=${encodeURIComponent(result.comment.user.customUsername)}" class="text-decoration-none text-dark fw-bold">
-                                            ${result.comment.user.customUsername}
-                                        </a>
-                                        <span class="text-dark comment-content" data-comment-id="${result.comment.id}">${escapeHtml(result.comment.content)}</span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <small class="text-muted date-container">${dateStr}</small>
-
-                                        <button class="btn btn-link text-primary p-0 edit-comment-btn"
-                                                data-comment-id="${result.comment.id}"
-                                                title="Editează">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-link text-danger p-0 delete-comment-btn"
-                                                data-comment-id="${result.comment.id}"
-                                                title="Șterge">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>`;
-
-                        // scoatem mesajul "nu exista comentarii"
-                        const noComm = commentsContainer.querySelector('p.text-muted');
-                        if (noComm) noComm.remove();
-
-                        // adaugam la final
-                        commentsContainer.insertAdjacentHTML('beforeend', html);
-
-                        updateCount(result.commentsCount);
-                        attachHandlers();
-                    }
                     } catch (err) {
                         console.error(err);
-                        alert('Eroare de comunicare cu serverul.');
+                        showCommentError('Eroare de comunicare cu serverul. Te rugăm să încerci din nou.');
                     }
                 });
             }
@@ -449,7 +498,10 @@
                         // save
                         const save = async () => {
                             const newTxt = input.value.trim();
-                            if (!newTxt) { alert('Nu poate fi gol!'); return; }
+                            if (!newTxt) {
+                                showCommentError('Comentariul nu poate fi gol!');
+                                return;
+                            }
 
                             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
@@ -469,9 +521,12 @@
                                     }
                                     cleanup();
                                 } else {
-                                    alert(res.message);
+                                    showCommentError(res.message || 'Eroare la editarea comentariului');
                                 }
-                            } catch (e) { console.error(e); alert('Eroare la editare.'); }
+                            } catch (e) {
+                                console.error(e);
+                                showCommentError('Eroare la editare. Te rugăm să încerci din nou.');
+                            }
                         };
 
                         btnGroup.querySelector('.save-btn').addEventListener('click', save);
@@ -499,9 +554,12 @@
                                 if (item) item.remove();
                                 updateCount(res.commentsCount);
                             } else {
-                                alert(res.message);
+                                showCommentError(res.message || 'Eroare la ștergerea comentariului');
                             }
-                        } catch (e) { console.error(e); alert('Eroare la ștergere.'); }
+                        } catch (e) {
+                            console.error(e);
+                            showCommentError('Eroare la ștergere. Te rugăm să încerci din nou.');
+                        }
                     });
                 });
             }
@@ -565,6 +623,85 @@
     .like-btn:hover {
         transform: scale(1.2);
         transition: transform 0.2s;
+    }
+    /* Alert pentru erori comentarii */
+    .comment-error-alert {
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        width: 90%;
+        max-width: 700px;
+        animation: slideDown 0.3s ease-out;
+    }
+
+        .comment-error-alert .alert-content {
+            background: linear-gradient(135deg, #ffe0e0, #fff0f0);
+            border: 2px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);
+            position: relative;
+        }
+
+        .comment-error-alert .alert-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            transition: color 0.2s;
+        }
+
+            .comment-error-alert .alert-close:hover {
+                color: #a71d2a;
+            }
+
+        .comment-error-alert .alert-icon {
+            font-size: 2.5rem;
+        }
+
+        .comment-error-alert .alert-title {
+            color: #dc3545;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-error-alert .alert-message {
+            color: #721c24;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+    @@keyframes slideDown {
+        from {
+            transform: translateX(-50%) translateY(-100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        to {
+            transform: translateX(-50%) translateY(-100%);
+            opacity: 0;
+        }
     }
 </style>
 

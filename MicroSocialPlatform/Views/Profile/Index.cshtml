@@ -13,7 +13,34 @@
     var posts = ViewBag.Posts as List<MicroSocialPlatform.Models.Post>;
 }
 
-<!-- cover photo -->
+<style>
+    .btn-accept-gradient {
+        background: linear-gradient(90deg, #9d50bb 0%, #ff6b6b 100%);
+        color: white !important;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .btn-accept-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(157, 80, 187, 0.3);
+            opacity: 0.95;
+        }
+
+    .btn-decline-outline {
+        background-color: white;
+        color: #dc3545;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s;
+    }
+
+        .btn-decline-outline:hover {
+            background-color: #fff5f5;
+            border-color: #dc3545;
+            color: #c82333;
+        }
+</style>
+
 <div class="profile-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 300px; position: relative;">
     @if (!string.IsNullOrEmpty(user.CoverPhoto))
     {
@@ -22,14 +49,12 @@
 </div>
 
 <div class="container">
-    <!-- profile header -->
     <div class="profile-header" style="margin-top: -80px; position: relative; z-index: 10;">
         <div class="row">
             <div class="col-md-12">
                 <div class="card shadow-sm">
                     <div class="card-body p-4">
                         <div class="row align-items-center">
-                            <!-- profile picture -->
                             <div class="col-md-3 text-center">
                                 @if (!string.IsNullOrEmpty(user.ProfilePicture))
                                 {
@@ -43,7 +68,6 @@
                                 }
                             </div>
 
-                            <!-- profile info -->
                             <div class="col-md-9">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
@@ -55,7 +79,6 @@
                                             <p class="text-muted mb-2">@@@user.CustomUsername</p>
                                         }
 
-                                        <!-- status cu emoji -->
                                         @if (!string.IsNullOrEmpty(user.Status) || !string.IsNullOrEmpty(user.StatusEmoji))
                                         {
                                             <div class="badge bg-light text-dark border mb-2">
@@ -68,8 +91,41 @@
                                         }
                                     </div>
 
-                                    <!-- action buttons -->
-                                    <div>
+                                    <div class="d-flex flex-column align-items-end gap-2">
+
+                                        @if (ViewBag.IncomingRequestId != null)
+                                        {
+                                            <div class="card border-0 shadow-sm px-4 py-3 mb-2 bg-white rounded-4" style="min-width: 320px;">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <div class="d-flex align-items-center text-muted fw-bold small mb-1">
+                                                        <i class="bi bi-person-plus-fill text-primary me-2"></i>
+                                                        <span>Vrea să te urmărească:</span>
+                                                    </div>
+
+                                                    <div class="d-flex gap-2 w-100">
+                                                        <form asp-controller="Profile" asp-action="AcceptRequestFromProfile" method="post" class="flex-grow-1 m-0">
+                                                            <input type="hidden" name="requestId" value="@ViewBag.IncomingRequestId" />
+
+                                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+
+                                                            <button type="submit" class="btn btn-accept-gradient btn-sm w-100 fw-bold rounded-pill py-2">
+                                                                Acceptă
+                                                            </button>
+                                                        </form>
+
+                                                        <form asp-controller="Profile" asp-action="DeclineRequestFromProfile" method="post" class="flex-grow-1 m-0">
+                                                            <input type="hidden" name="requestId" value="@ViewBag.IncomingRequestId" />
+
+                                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+
+                                                            <button type="submit" class="btn btn-decline-outline btn-sm w-100 fw-bold rounded-pill py-2">
+                                                                Șterge
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
                                         @if (isOwnProfile)
                                         {
                                             <a asp-action="Edit" class="btn btn-outline-primary">
@@ -78,33 +134,35 @@
                                         }
                                         else if (ViewBag.IsAuthenticated)
                                         {
-                                            <button type="button"
-                                                    class="btn follow-btn rounded-pill px-4 fw-bold @(isFollowing ? "btn-outline-primary" : (isPending ? "btn-light border" : "btn-primary text-white"))"
-                                                    style="@(isPending ? "color: #6c757d;" : "")"
-                                                    data-user-id="@user.Id">
+                                            <div class="d-flex gap-2">
+                                                <button type="button"
+                                                        class="btn follow-btn rounded-pill px-4 fw-bold @(isFollowing ? "btn-outline-primary" : (isPending ? "btn-light border" : "btn-primary text-white"))"
+                                                        style="@(isPending ? "color: #6c757d;" : "")"
+                                                        data-user-id="@user.Id">
 
-                                                @if (isFollowing)
-                                                {
-                                                    <span><i class="bi bi-person-check-fill me-1"></i> Urmărești</span>
-                                                }
-                                                else if (isPending)
-                                                {
-                                                    <span><i class="bi bi-clock-history me-1"></i> Cerere trimisă</span>
-                                                }
-                                                else
-                                                {
-                                                    <span><i class="bi bi-person-plus-fill me-1"></i> Urmărește</span>
-                                                }
-                                            </button>
+                                                    @if (isFollowing)
+                                                    {
+                                                        <span><i class="bi bi-person-check-fill me-1"></i> Urmărești</span>
+                                                    }
+                                                    else if (isPending)
+                                                    {
+                                                        <span><i class="bi bi-clock-history me-1"></i> Cerere trimisă</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span><i class="bi bi-person-plus-fill me-1"></i> Urmărește</span>
+                                                    }
+                                                </button>
+
+                                            </div>
                                         }
                                         else
                                         {
-                                            <!-- mesaj pentru utilizatori neinregistrati -->
                                             <div class="alert alert-info rounded-pill border-0 d-inline-block mb-0" style="background: rgba(142, 68, 173, 0.1); padding: 0.5rem 1rem;">
                                                 <div class="d-flex align-items-center gap-2">
                                                     <i class="bi bi-info-circle"></i>
                                                     <span class="small">
-                                                        Pentru a urmări utilizatori, <a asp-area="Identity" asp-page="/Account/Register" class="text-decoration-none fw-bold">creează un cont</a> sau 
+                                                        Pentru a urmări utilizatori, <a asp-area="Identity" asp-page="/Account/Register" class="text-decoration-none fw-bold">creează un cont</a> sau
                                                         <a asp-area="Identity" asp-page="/Account/Login" class="text-decoration-none fw-bold">autentifică-te</a>.
                                                     </span>
                                                 </div>
@@ -113,7 +171,6 @@
                                     </div>
                                 </div>
 
-                                <!-- stats -->
                                 <div class="row text-center mb-3">
                                     <div class="col-4">
                                         <h4 class="mb-0 fw-bold" id="posts-count">@postsCount</h4>
@@ -131,13 +188,11 @@
                                     </div>
                                 </div>
 
-                                <!-- bio -->
                                 @if (!string.IsNullOrEmpty(user.Bio))
                                 {
                                     <p class="mb-2">@user.Bio</p>
                                 }
 
-                                <!-- additional info -->
                                 <div class="small text-muted">
                                     @if (!string.IsNullOrEmpty(user.Location))
                                     {
@@ -175,7 +230,6 @@
         </div>
     </div>
 
-    <!-- posts section -->
     <div class="mt-4 mb-5">
         @if (!canViewProfile)
         {
@@ -260,22 +314,22 @@
                         }
 
                         button.className = 'btn follow-btn rounded-pill px-4 fw-bold'; // Resetam clasele
-                        button.style.color = ''; 
+                        button.style.color = '';
 
                         // aplicam starea noua
                         if (data.isFollowing) {
-                            // acum il urmaresti (Accepted) 
+                            // acum il urmaresti (Accepted)
                             button.classList.add('btn-outline-primary');
-                            button.innerHTML = '<span><i class="bi bi-person-check-fill me-1"></i> Urmărești</span>';
+                            button.innerHTML = '<span><i class="bi bi-person-check-fill me-1"></i> Urmărește</span>';
                         }
                         else if (data.isPending) {
                             // cerere trimisa (Pending)
                             button.classList.add('btn-light', 'border');
-                            button.style.color = '#6c757d'; 
+                            button.style.color = '#6c757d';
                             button.innerHTML = '<span><i class="bi bi-clock-history me-1"></i> Cerere trimisă</span>';
                         }
                         else {
-                            // nu il urmaresti (Unfollow/Cancel) 
+                            // nu il urmaresti (Unfollow/Cancel)
                             button.classList.add('btn-primary', 'text-white');
                             button.innerHTML = '<span><i class="bi bi-person-plus-fill me-1"></i> Urmărește</span>';
                         }
@@ -287,27 +341,23 @@
                     console.error('Error:', error);
                     alert('A apărut o eroare.');
                 } finally {
-                    // Deblocăm butonul indiferent de rezultat
                     button.disabled = false;
                 }
             });
         });
 
         function openFollowModal(userId, type) {
-            // 1. Setăm titlul
             const title = type === 'followers' ? 'Urmăritori' : 'Urmăriri';
             document.getElementById('followModalTitle').innerText = title;
 
-            // 2. Deschidem modala (Bootstrap 5)
+            // deschidem modala
             const modalElement = document.getElementById('followModal');
 
-            // ✅ FIX CRITIC: Mutăm modala fizic la finalul body-ului ca să nu fie acoperită
             document.body.appendChild(modalElement);
 
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
 
-            // 3. Afișăm spinner-ul de încărcare
             document.getElementById('followModalBody').innerHTML = `
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
@@ -315,7 +365,6 @@
                     </div>
                 </div>`;
 
-            // 4. Facem cererea AJAX
             const url = type === 'followers'
                 ? '@Url.Action("GetFollowersList", "Profile")'
                 : '@Url.Action("GetFollowingList", "Profile")';

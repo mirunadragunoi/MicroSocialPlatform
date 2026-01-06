@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using MicroSocialPlatform.Models;
 using MicroSocialPlatform.Data;
 using MicroSocialPlatform.Helpers;
+using MicroSocialPlatform.Models;
+using MicroSocialPlatform.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MicroSocialPlatform.Controllers
 {
@@ -12,13 +13,16 @@ namespace MicroSocialPlatform.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IContentModerationService _contentModerationService;
 
         public CommentController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IContentModerationService contentModerationService)
         {
             _context = context;
             _userManager = userManager;
+            _contentModerationService = contentModerationService;
         }
 
         // POST: Comment/Create
@@ -35,6 +39,18 @@ namespace MicroSocialPlatform.Controllers
             if (content.Length > 500)
             {
                 return Json(new { success = false, message = "Comentariul nu poate depăși 500 de caractere!" });
+            }
+
+            // verificare cu AI pentru continutul neadecvant
+            var moderationResult = await _contentModerationService.ModerateContentAsync(content);
+
+            if (!moderationResult.IsClean)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Comentariul tău conține conținut nepotrivit. {moderationResult.Reason}"
+                });
             }
 
             var currentUser = await _userManager.GetUserAsync(User);

@@ -14,11 +14,13 @@ namespace MicroSocialPlatform.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IFileUploadService _fileUploadService;
-        public PostController(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IFileUploadService fileUploadService)
+        private readonly IContentModerationService _contentModerationService;
+        public PostController(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IFileUploadService fileUploadService, IContentModerationService contentModerationService)
         {
             _userManager = userManager;
             _context = context;
             _fileUploadService = fileUploadService;
+            _contentModerationService = contentModerationService;
         }
 
         // afisez formularul pentru creare postare
@@ -45,6 +47,23 @@ namespace MicroSocialPlatform.Controllers
             {
                 return RedirectToAction("Login", "Account");
             }
+
+            // verific cu componenta AI daca continutul este ok
+            if (!string.IsNullOrWhiteSpace(model.Content))
+            {
+                Console.WriteLine("Calling moderation service...");
+                var moderationResult = await _contentModerationService.ModerateContentAsync(model.Content);
+                Console.WriteLine($"Moderation result: {moderationResult.IsClean}");
+
+                if (!moderationResult.IsClean)
+                {
+                    Console.WriteLine($"BLOCKED! Reason: {moderationResult.Reason}");
+                    TempData["ErrorMessage"] = $"❌ Postarea ta conține conținut nepotrivit. {moderationResult.Reason}";
+                    return View(model);
+                }
+            }
+
+            Console.WriteLine("Content approved, creating post...");
 
             // creez noua postare fara imagine/video initial
             var post = new Post

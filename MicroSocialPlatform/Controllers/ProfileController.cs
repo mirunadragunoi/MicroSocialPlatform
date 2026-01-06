@@ -76,6 +76,9 @@ namespace MicroSocialPlatform.Controllers
             bool isFollowingUser = false;
             bool isPending = false; // cerere trimisa
 
+            // daca exista o cerere de follow primita
+            int? incomingRequest = null;
+
             if (currentUser != null && !isOwnProfile)
             {
                 var followRelation = await _context.Follows
@@ -91,6 +94,12 @@ namespace MicroSocialPlatform.Controllers
                         isPending = true;
                     }
                 }
+            }
+
+            // verific daca exista o cerere de follow primita de la acest utilizator
+            var incomingRequestObj = await _context.Follows.FirstOrDefaultAsync(f => f.FollowerId == user.Id && f.FollowingId == currentUser.Id && f.Status == FollowStatus.Pending);
+            if (incomingRequestObj != null) { 
+                incomingRequest = incomingRequestObj.Id;
             }
 
             // obtin postarile doar daca e vizibil
@@ -114,7 +123,8 @@ namespace MicroSocialPlatform.Controllers
             ViewBag.IsFollowing = isFollowingUser;
             ViewBag.IsPending = isPending;
             ViewBag.Posts = posts;
-            ViewBag.IsAuthenticated = User.Identity?.IsAuthenticated ?? false; // ADĂUGAT
+            ViewBag.IsAuthenticated = User.Identity?.IsAuthenticated ?? false; // ADAUGAT
+            ViewBag.IncomingRequestId = incomingRequest;
 
             return View(user);
         }
@@ -324,6 +334,33 @@ namespace MicroSocialPlatform.Controllers
                 }
 
                 _context.Follows.Add(newFollow);
+
+                // logica pentru notificari
+                var notification = new Notification
+                {
+                    RecipientId = userId,
+                    SenderId = currentUser.Id,
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    RelatedUrl = $"/Profile/Index?username={currentUser.UserName}"
+                };
+
+                // decidem tipul notificarii in functie de confidentialitatea codului
+                if (targetUser.IsPublic) 
+                {
+                    // cont public ->> notificare Follow
+                    notification.Type = NotificationType.Follow;
+                    notification.Content = $"a început să te urmărească!";
+                }
+                else
+                {
+                    // cont privat -->> notificare de tip FollowRequest
+                    notification.Type = NotificationType.FollowRequest;
+                    notification.Content = $"ți-a trimis o cerere de urmărire!";
+                }
+
+                _context.Notifications.Add(notification);
+
                 await _context.SaveChangesAsync();
 
                 var followersCount = await _context.Follows.CountAsync(f => f.FollowingId == userId && f.Status == FollowStatus.Accepted);
@@ -443,6 +480,21 @@ namespace MicroSocialPlatform.Controllers
 
             request.Status = FollowStatus.Accepted;
             request.AcceptedAt = DateTime.UtcNow;
+
+            // logica pentru notificari
+            var notification = new Notification
+            {
+                RecipientId = request.FollowerId,
+                SenderId = currentUser.Id,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false,
+                Type = NotificationType.FollowAccepted,
+                Content = $"a acceptat cererea ta de urmărire.",
+                RelatedUrl = $"/Profile/Index?username={currentUser.UserName}"
+            };
+
+            _context.Notifications.Add(notification);
+
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Cererea de urmărire a fost acceptată." });
@@ -495,6 +547,70 @@ namespace MicroSocialPlatform.Controllers
                 .ToListAsync();
 
             return PartialView("_UserListModal", following);
+        }
+
+        // metode de acceptare/respingere cereri de follow din pagina de profil
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AcceptRequestFromProfile(int requestId, string returnUrl)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            var request = await _context.Follows.FindAsync(requestId);
+
+            if (request == null)
+            {
+                if (!string.IsNullOrEmpty(returnUrl))
+                {
+                    return LocalRedirect(returnUrl);
+                }
+                return RedirectToAction("Index", "Home");
+            }
+
+            // acceptam cererea
+            request.Status = FollowStatus.Accepted;
+            request.AcceptedAt = DateTime.UtcNow;
+
+            // trimitem notificare celui care a cerut follow
+            var notification = new Notification
+            {
+                RecipientId = request.FollowerId,
+                SenderId = currentUser.Id,
+                Type = NotificationType.FollowAccepted,
+                Content = "ți-a acceptat cererea de urmărire.",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false,
+                RelatedUrl = $"/Profile/Index?username={currentUser.CustomUsername ?? currentUser.UserName}"
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            // redirectionare inapoi
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeclineRequestFromProfile(int requestId, string returnUrl)
+        {
+            var request = await _context.Follows.FindAsync(requestId);
+
+            if (request != null)
+            {
+                // stergem cererea
+                _context.Follows.Remove(request);
+                await _context.SaveChangesAsync();
+            }
+
+            // redirectionare inapoi
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+            return RedirectToAction("Index", "Home");
         }
     }
 }
