@@ -85,8 +85,8 @@
         function handleRequest(requestId, action) {
             const card = document.getElementById(`request-${requestId}`);
             const url = action === 'accept'
-                ? '@Url.Action("AcceptRequest", "Profile")'
-                : '@Url.Action("DeclineRequest", "Profile")';
+                ? '@Url.Action("AcceptRequest", "Follow")'
+                : '@Url.Action("DeclineRequest", "Follow")';
 
             $.ajax({
                 url: url,

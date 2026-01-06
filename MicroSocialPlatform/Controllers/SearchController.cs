@@ -80,7 +80,7 @@ namespace MicroSocialPlatform.Controllers
             {
                 var postsQuery = _context.Posts
                     .Include(p => p.User)
-                    .Include(p => p.Likes)
+                    .Include(p => p.Reactions)
                     .Include(p => p.Comments)
                     .Include(p => p.PostMedias)
                     .AsQueryable();

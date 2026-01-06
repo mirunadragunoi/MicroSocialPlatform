@@ -16,7 +16,7 @@ namespace MicroSocialPlatform.Data
         public DbSet<PostMedia> PostMedias { get; set; }
         public DbSet<Follow> Follows { get; set; }
         public DbSet<Comment> Comments { get; set; }
-        public DbSet<Like> Likes { get; set; }
+        public DbSet<Reaction> Reactions { get; set; }
 
         // DbSet pentru grupuri, membri si mesaje
         public DbSet<Group> Groups { get; set; }
@@ -104,31 +104,32 @@ namespace MicroSocialPlatform.Data
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // configurare relatie Like-Post (One-to-Many)
-            builder.Entity<Like>()
-                .HasOne(l => l.Post)
-                .WithMany(p => p.Likes)
-                .HasForeignKey(l => l.PostId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // configurare relatie Like-User (One-to-Many)
-            builder.Entity<Like>()
-                .HasOne(l => l.User)
-                .WithMany()
-                .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // index pentru Like (un user poate da like o singura data la un post)
-            builder.Entity<Like>()
-                .HasIndex(l => new { l.PostId, l.UserId })
-                .IsUnique();
-
             // index pentru performanta
             builder.Entity<Post>()
                 .HasIndex(p => p.CreatedAt);
 
             builder.Entity<Post>()
                 .HasIndex(p => p.UserId);
+
+            // configurare reactii
+            // relatie Reaction-Post (One-to-Many)
+            builder.Entity<Reaction>()
+                .HasOne(r => r.Post)
+                .WithMany(p => p.Reactions)
+                .HasForeignKey(r => r.PostId)
+                .OnDelete(DeleteBehavior.Cascade); // daca stergi postarea, stergi si reactiile
+
+            // relatie Reaction-User (One-to-Many)
+            builder.Entity<Reaction>()
+                .HasOne(r => r.User)
+                .WithMany(u => u.Reactions)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict); // daca stergi userul, se sterg automat si reactiile
+
+            // cheie compusa unica (UserId + PostId)
+            builder.Entity<Reaction>()
+                .HasIndex(r => new { r.UserId, r.PostId })
+                .IsUnique();
         }
     }
 }

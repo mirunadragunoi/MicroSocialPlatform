@@ -58,5 +58,8 @@ namespace MicroSocialPlatform.Models
 
         // urmariti
         public virtual ICollection<Follow>? Following {  get; set; }
+
+        // reactii
+        public virtual ICollection<Reaction>? Reactions { get; set; } = new List<Reaction>();
     }
 }

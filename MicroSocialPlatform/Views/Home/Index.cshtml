@@ -2,6 +2,8 @@
 @using MicroSocialPlatform.Models;
 @using Microsoft.AspNetCore.Identity;
 @inject UserManager<ApplicationUser> UserManager;
+
+@Html.AntiForgeryToken()
 @{
     ViewData["Title"] = "Acasă";
     var currentUser = await UserManager.GetUserAsync(User);
@@ -302,3 +304,83 @@
         opacity: 0.7;
     }
 </style>
+
+<script>
+    console.log("🚀 Scriptul a pornit!");
+
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("📄 Pagina s-a incarcat complet.");
+
+        // Găsim toate butoanele de like
+        var buttons = document.querySelectorAll('.like-btn');
+        console.log("Am gasit " + buttons.length + " butoane de Like.");
+
+        // Adăugăm funcționalitatea pentru fiecare buton
+        buttons.forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // Oprim link-ul
+
+                // --- AICI ESTE LOGICA ---
+                var postId = this.getAttribute('data-post-id');
+                var icon = this.querySelector('i'); // Iconita
+                var countSpan = this.querySelector('.like-count'); // Numarul
+
+                // Luam token-ul (input-ul ascuns generat de @Html.AntiForgeryToken)
+                var tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+                var token = tokenElement ? tokenElement.value : null;
+
+                if (!token) {
+                    console.error("❌ Token-ul lipseste!");
+                    alert("Eroare de securitate: Token lipsă.");
+                    return;
+                }
+
+                console.log("❤️ Click pe postarea: " + postId);
+
+                // Facem butonul sa "sara" putin (animatie)
+                this.style.transform = "scale(1.2)";
+                var btn = this; // Salvam referinta la buton
+                setTimeout(function() { btn.style.transform = "scale(1)"; }, 200);
+
+                // Trimitem datele la server
+                fetch('/Reaction/ToggleLike', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: "postId=" + postId
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    console.log("📦 Raspuns server:", data);
+
+                    if (data.success) {
+                        // Actualizam numarul
+                        countSpan.textContent = data.likesCount;
+
+                        // Actualizam inima (Plina vs Goala)
+                        if (data.liked) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            btn.classList.add('text-danger'); // Rosu
+                            btn.classList.remove('text-muted');
+                        } else {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            btn.classList.remove('text-danger');
+                            btn.classList.add('text-muted'); // Gri
+                        }
+                    } else {
+                        console.error("Ceva nu a mers la server.");
+                    }
+                })
+                .catch(function(err) {
+                    console.error("Eroare retea:", err);
+                });
+            });
+        });
+    });
+</script>

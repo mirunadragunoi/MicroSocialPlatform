@@ -49,7 +49,7 @@ namespace MicroSocialPlatform.Controllers
                 // iau postarile 
                 posts = await _context.Posts
                     .Include(p => p.User)
-                    .Include(p => p.Likes)
+                    .Include(p => p.Reactions)
                     .Include(p => p.Comments)
                         .ThenInclude(c => c.User)
                     .Include(p => p.PostMedias)
@@ -64,7 +64,7 @@ namespace MicroSocialPlatform.Controllers
                 // vizitator -> doar postarile publice
                 posts = await _context.Posts
                     .Include(p => p.User)
-                    .Include(p => p.Likes)
+                    .Include(p => p.Reactions)
                     .Include(p => p.Comments)
                         .ThenInclude(c => c.User)
                     .Include(p => p.PostMedias)

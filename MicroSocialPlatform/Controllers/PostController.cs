@@ -53,7 +53,6 @@ namespace MicroSocialPlatform.Controllers
                 CreatedAt = DateTime.UtcNow,
                 UserId = user.Id,
                 User = user,
-                LikesCount = 0,
                 CommentsCount = 0,
                 Visibility = PostVisibility.Public
             };
@@ -279,7 +278,7 @@ namespace MicroSocialPlatform.Controllers
         {
             var publicPosts = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)
+                .Include(p => p.Reactions)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
                 .Where(p => p.User.IsPublic)   // filtru - doar utilizatorii cu profilul public
@@ -309,7 +308,7 @@ namespace MicroSocialPlatform.Controllers
             // NU mai verificam IsPublic pentru ca follow = ai acces
             var followingPosts = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)
+                .Include(p => p.Reactions)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
                 .Where(p => followingIds.Contains(p.UserId))
@@ -325,7 +324,7 @@ namespace MicroSocialPlatform.Controllers
         {
             var post = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)
+                .Include(p => p.Reactions)
                     .ThenInclude(l => l.User)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
@@ -350,7 +349,7 @@ namespace MicroSocialPlatform.Controllers
             bool hasLiked = false;
             if (currentUser != null)
             {
-                hasLiked = await _context.Likes
+                hasLiked = await _context.Reactions
                     .AnyAsync(l => l.PostId == post.Id && l.UserId == currentUser.Id);
             }
 

@@ -241,7 +241,7 @@
                 button.disabled = true;
 
                 try {
-                    const response = await fetch('@Url.Action("ToggleFollow", "Profile")', {
+                    const response = await fetch('@Url.Action("ToggleFollow", "Follow")', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -287,27 +287,25 @@
                     console.error('Error:', error);
                     alert('A apărut o eroare.');
                 } finally {
-                    // Deblocăm butonul indiferent de rezultat
+                    // deblocam butonul 
                     button.disabled = false;
                 }
             });
         });
 
         function openFollowModal(userId, type) {
-            // 1. Setăm titlul
             const title = type === 'followers' ? 'Urmăritori' : 'Urmăriri';
             document.getElementById('followModalTitle').innerText = title;
 
-            // 2. Deschidem modala (Bootstrap 5)
+            // deschidem modala
             const modalElement = document.getElementById('followModal');
 
-            // ✅ FIX CRITIC: Mutăm modala fizic la finalul body-ului ca să nu fie acoperită
             document.body.appendChild(modalElement);
 
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
 
-            // 3. Afișăm spinner-ul de încărcare
+            // afisam loader-ul
             document.getElementById('followModalBody').innerHTML = `
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
@@ -315,10 +313,10 @@
                     </div>
                 </div>`;
 
-            // 4. Facem cererea AJAX
+            // incarcam lista prin AJAX
             const url = type === 'followers'
-                ? '@Url.Action("GetFollowersList", "Profile")'
-                : '@Url.Action("GetFollowingList", "Profile")';
+                ? '@Url.Action("GetFollowersList", "Follow")'
+                : '@Url.Action("GetFollowingList", "Follow")';
 
             fetch(`${url}?userId=${userId}`)
                 .then(response => response.text())

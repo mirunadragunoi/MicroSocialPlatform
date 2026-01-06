@@ -1,44 +1,46 @@
-﻿@model MicroSocialPlatform.Models.Post
+﻿@using MicroSocialPlatform.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@model MicroSocialPlatform.Models.Post
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var currentUserId = currentUser?.Id;
+
+    bool isLiked = Model.Reactions?.Any(r => r.UserId == currentUserId && r.Type == ReactionType.Like) ?? false;
+
+    var likesCount = Model.LikesCount;
+}
 
 <div class="card mb-3 post-card border-0 shadow-sm rounded-4" style="overflow: visible;">
     <div class="card-body">
+
         <div class="d-flex gap-3 mb-3">
-            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)"
                class="text-decoration-none" style="text-decoration: none !important;">
-                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User.CustomUsername ?? Model.User.UserName)" class="text-decoration-none">
-                    @if (!string.IsNullOrEmpty(Model.User.ProfilePicture))
-                    {
-                        <img src="@Model.User.ProfilePicture"
-                             alt="Profile Picture"
-                             class="rounded-circle border"
-                             style="width: 40px; height: 40px; object-fit: cover;">
-                    }
-                    else
-                    {
-                        <div class="user-avatar" style="width: 40px; height:40px; ... (stilurile tale existente) ...">
-                            <span>
-                                @(Model.User.UserName?.Substring(0, 2).ToUpper() ?? "AN")
-                            </span>
-                        </div>        
-                    }
-                </a>
+                @if (!string.IsNullOrEmpty(Model.User?.ProfilePicture))
+                {
+                    <img src="@Model.User.ProfilePicture" alt="Profile Picture" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;">
+                }
+                else
+                {
+                    <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #a18cd1, #fbc2eb); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                        <span>@(Model.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN")</span>
+                    </div>
+                }
             </a>
 
             <div class="flex-grow-1">
-                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
-                   class="text-decoration-none text-dark">
+                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" class="text-decoration-none text-dark">
                     <h6 class="mb-0">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</h6>
                 </a>
-                <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" 
-                   class="text-decoration-none text-muted" style="text-decoration: none !important;">
+                <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-muted" style="text-decoration: none !important;">
                     <small class="text-muted" style="font-size: 0.8rem;">
                         @Model.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")
-
                         @if (Model.UpdatedAt != null && Model.UpdatedAt != Model.CreatedAt)
                         {
-                            <span class="fst-italic ms-1" title="Editat la @Model.UpdatedAt.Value.ToLocalTime().ToString("g")">
-                                (editat)
-                            </span>
+                            <span class="fst-italic ms-1" title="Editat la @Model.UpdatedAt.Value.ToLocalTime().ToString("g")">(editat)</span>
                         }
                     </small>
                 </a>
@@ -51,28 +53,17 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                     <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
                     <li><a class="dropdown-item" href="#"><i class="bi bi-flag me-2"></i> Raportează</a></li>
-
                     @{
                         var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
                         var isAdmin = User.IsInRole("Administrator");
                     }
-
                     @if (isOwner || isAdmin)
                     {
                         <li><hr class="dropdown-divider"></li>
-                    }
-
-                    @if (isOwner)
-                    {
-                        <li>
-                            <a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item">
-                                <i class="bi bi-pencil-square me-2"></i> Editeaza Postarea
-                            </a>
-                        </li>
-                    }
-
-                    @if (isOwner || isAdmin)
-                    {
+                        @if (isOwner)
+                        {
+                            <li><a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item"><i class="bi bi-pencil-square me-2"></i> Editeaza Postarea</a></li>
+                        }
                         <li>
                             <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
                                 <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ești sigur că vrei să ștergi această postare?');">
@@ -86,10 +77,7 @@
         </div>
 
         <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-dark">
-            <p class="card-text">
-                @Model.Content
-            </p>
-
+            <p class="card-text">@Model.Content</p>
             @if (Model.PostMedias != null && Model.PostMedias.Any())
             {
                 <div class="row g-2 mb-3">
@@ -98,11 +86,11 @@
                         <div class="col-md-6">
                             @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
                             {
-                                <img src="@media.Url" class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover; cursor: pointer;" alt="Post image">
+                                <img src="@media.Url" class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover;" alt="Post image">
                             }
                             else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
                             {
-                                <video controls class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover; cursor: pointer;">
+                                <video controls class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover;">
                                     <source src="@media.Url" type="video/mp4">
                                 </video>
                             }
@@ -113,14 +101,27 @@
         </a>
 
         <div class="post-actions d-flex gap-3 pt-2 border-top">
-            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none">
-                <i class="bi bi-heart"></i> Like <span class="badge bg-light text-dark">@Model.LikesCount</span>
+
+            <button class="btn btn-link text-decoration-none like-btn d-flex align-items-center gap-1 p-0 border-0 @(isLiked ? "text-danger" : "text-muted")"
+                    data-post-id="@Model.Id"
+                    style="transition: transform 0.2s;">
+
+                <i class="bi @(isLiked ? "bi-heart-fill" : "bi-heart") fs-5 like-icon"></i>
+
+                <span class="ms-1">Like</span>
+
+                <span class="badge bg-light text-dark like-count border">@likesCount</span>
+            </button>
+
+            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none d-flex align-items-center gap-1 p-0">
+                <i class="bi bi-chat fs-5"></i>
+                <span class="ms-1">Comentează</span>
+                <span class="badge bg-light text-dark border">@Model.CommentsCount</span>
             </a>
-            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none">
-                <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">@Model.CommentsCount</span>
-            </a>
-            <button class="btn btn-link text-muted">
-                <i class="bi bi-share"></i> Share
+
+            <button class="btn btn-link text-muted text-decoration-none d-flex align-items-center gap-1 p-0">
+                <i class="bi bi-share fs-5"></i>
+                <span class="ms-1">Share</span>
             </button>
         </div>
     </div>

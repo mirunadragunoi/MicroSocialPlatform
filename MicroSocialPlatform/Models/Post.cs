@@ -19,7 +19,8 @@ namespace MicroSocialPlatform.Models
         public DateTime? UpdatedAt { get; set; }
 
         // numar like uri
-        public int LikesCount { get; set; } = 0;
+        [NotMapped]
+        public int LikesCount => Reactions?.Count(r => r.Type == ReactionType.Like) ?? 0;
 
         // numar de comentarii
         public int CommentsCount { get; set; } = 0;
@@ -37,12 +38,12 @@ namespace MicroSocialPlatform.Models
 
         // comentariile de la postare
         public virtual ICollection<Comment>? Comments { get; set; }
-        
-        // like urile de la postare
-        public virtual ICollection<Like>? Likes { get; set; }
 
         // colectia de fisiere media atasate postarii (0, 1 sau 10 poze)
         public virtual ICollection<PostMedia>? PostMedias { get; set; } = new List<PostMedia>();
+
+        // reactiile de la postare
+        public virtual ICollection<Reaction>? Reactions { get; set; } = new List<Reaction>();
     }
 
     public enum PostVisibility
