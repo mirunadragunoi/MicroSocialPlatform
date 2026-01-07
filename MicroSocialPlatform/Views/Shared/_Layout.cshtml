@@ -151,6 +151,44 @@
             });
         }
     });
+
+    function showFloatingAlert(message, type) {
+        const container = document.getElementById('ajax-alert-container');
+
+        let bgStyle = '';
+        let iconClass = '';
+        let borderClass = '';
+
+        if (type === 'success') {
+            // salvare 
+            bgStyle = 'background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;';
+            iconClass = 'bi-check-circle-fill';
+        } else {
+            // stergere
+            bgStyle = 'background-color: #ffffff; color: #dc3545; border: 1px solid #dc3545; border-left: 5px solid #dc3545;';
+            iconClass = 'bi-trash3-fill'; 
+        }
+
+        const html = `
+            <div class="alert alert-dismissible fade show shadow rounded-3 mb-2" role="alert" style="${bgStyle}">
+                <div class="d-flex align-items-center">
+                    <i class="bi ${iconClass} fs-4 me-2"></i>
+                    <div class="fw-bold">${message}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        setTimeout(() => {
+            const alertElement = container.querySelector('.alert');
+            if (alertElement) {
+                const bsAlert = new bootstrap.Alert(alertElement);
+                bsAlert.close();
+            }
+        }, 3000);
+    }
 </script>
 
 <body>
@@ -232,6 +270,11 @@
                         <span>Grupuri</span>
                     </a>
 
+                    <a asp-area="" asp-controller="Post" asp-action="Saved" class="sidebar-link">
+                        <i class="bi bi-bookmark-fill"></i>
+                        <span>Salvate</span>
+                    </a>
+
                     <a asp-area="" asp-controller="Admin" asp-action="Users" class="sidebar-link">
                         <i class="bi bi-shield-fill"></i>
                         <span>Utilizatori</span>
@@ -266,6 +309,11 @@
                     <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
                         <i class="bi bi-people-fill"></i>
                         <span>Grupuri</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Post" asp-action="Saved" class="sidebar-link">
+                        <i class="bi bi-bookmark-fill"></i>
+                        <span>Salvate</span>
                     </a>
 
                     <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
@@ -317,6 +365,8 @@
             <small>&copy; 2025 Agora</small>
         </div>
     </aside>
+
+    <div id="ajax-alert-container" style="position: fixed; top: 100px; right: 20px; z-index: 9999; min-width: 300px;"></div>
 
     <!-- main content area -->
     <main class="main-content">

@@ -215,7 +215,13 @@
                                                 var authorMember = Model.Members.FirstOrDefault(m => m.UserId == msg.UserId);
                                                 if (authorMember != null && authorMember.Role != MicroSocialPlatform.Models.GroupRole.Member)
                                                 {
+                                                    // daca e mesajul unui moderator sau admin
                                                     <span class="badge bg-warning text-dark" style="font-size: 0.5rem">MOD</span>
+                                                }
+                                                else if (authorMember == null)
+                                                {
+                                                    // daca e mesajul adminului global
+                                                    <span class="badge bg-danger text-white" style="font-size: 0.5rem">STAFF</span>
                                                 }
                                             }
                                         </small>
@@ -246,8 +252,8 @@
                                         }
                                         @if (canDelete)
                                         {
-                                            <form asp-action="DeleteMessage" method="post" class="ms-2">
-                                                <input type="hidden" name="messageId" value="@msg.Id" />
+                                            <form action="@Url.Action("DeleteMessage", "Groups")" method="post" class="ms-2" onsubmit="return confirm('Sigur vrei să ștergi acest mesaj?');">
+                                                @Html.AntiForgeryToken() <input type="hidden" name="messageId" value="@msg.Id" />
                                                 <button type="submit" class="btn btn-link p-0 text-danger opacity-50 hover-opacity-100 border-0"
                                                         style="font-size: 0.8rem; line-height: 1;" title="Șterge mesajul">
                                                     <i class="bi bi-trash-fill"></i>
@@ -269,7 +275,7 @@
                 </div>
 
                 <div class="card-footer bg-white border-top p-3">
-                    @if (isMember)
+                    @if (isMember || isAdmin)
                     {
                         <form id="chatForm" class="d-flex gap-2">
                             <input type="hidden" name="groupId" value="@Model.Id" />
@@ -443,53 +449,66 @@
                     }
                 })
                 .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // golim inputul
-                        messageInput.value = '';
+                        .then(data => {
+            if (data.success) {
+                // golim inputul
+                messageInput.value = '';
 
-                        // construim html-ul mesajului 
-                        const newMsgHtml = `
-                            <div class="d-flex mb-3 justify-content-end">
-                                <div class="d-flex flex-column align-items-end" style="max-width: 75%;">
-                                    <div class="p-3 shadow-sm text-break"
-                                         style="border-radius: 15px;
-                                                border-bottom-right-radius: 2px;
-                                                background: linear-gradient(135deg, #a18cd1, #fbc2eb);
-                                                color: white;">
-                                            ${data.content}
-                                    </div>
-                                    <div class="d-flex align-items-center mt-1 me-1">
-                                        <small class="text-muted" style="font-size: 0.65rem;">
-                                            ${data.sentAt}
-                                        </small>
-                                        <form action="/Groups/DeleteMessage" method="post" class="ms-2">
-                                            <input type="hidden" name="messageId" value="${data.messageId}" />
-                                            <button type="submit" class="btn btn-link p-0 text-danger opacity-50 hover-opacity-100 border-0"
-                                                    style="font-size: 0.8rem; line-height: 1;" title="Șterge mesajul">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </button>
-                                        </form>
-                                    </div>
+                // 1. Luam token-ul de securitate existent in pagina
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                // construim html-ul mesajului
+                const newMsgHtml = `
+                    <div class="d-flex mb-3 justify-content-end">
+                        <div class="d-flex flex-column align-items-end" style="max-width: 75%;">
+                            <div class="message-content">
+                                <div class="p-3 shadow-sm text-break"
+                                     style="border-radius: 15px;
+                                            border-bottom-right-radius: 2px;
+                                            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+                                            color: white;">
+                                    <span data-message-id="${data.messageId}">${data.content}</span>
                                 </div>
                             </div>
-                        `;
 
-                        // daca era mesajul "fii primul care scrie", il scoatem
-                        if (chatContainer.querySelector('.text-center.my-auto')) {
-                            chatContainer.innerHTML = '';
-                            chatContainer.classList.remove('d-flex', 'flex-column'); // resetare layout gol
-                        }
+                            <div class="d-flex align-items-center mt-1 me-1">
+                                <small class="text-muted" style="font-size: 0.65rem;">
+                                    ${data.sentAt}
+                                </small>
 
-                        // adaugam mesajul la final
-                        chatContainer.insertAdjacentHTML('beforeend', newMsgHtml);
+                                <button class="btn btn-link btn-sm text-muted p-0 ms-2"
+                                        onclick="editMessage(${data.messageId}, '${data.content.replace(/'/g, "\\'")}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
 
-                        // scroll jos
-                        scrollToBottom();
-                    } else {
-                        alert('Eroare la trimiterea mesajului.');
-                    }
-                })
+                                <form action="/Groups/DeleteMessage" method="post" class="ms-2" onsubmit="return confirm('Sigur vrei să ștergi acest mesaj?');">
+                                    <input type="hidden" name="__RequestVerificationToken" value="${token}" />
+                                    <input type="hidden" name="messageId" value="${data.messageId}" />
+                                    <button type="submit" class="btn btn-link p-0 text-danger opacity-50 hover-opacity-100 border-0"
+                                            style="font-size: 0.8rem; line-height: 1;" title="Șterge mesajul">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // daca era mesajul "fii primul care scrie", il scoatem
+                if (chatContainer.querySelector('.text-center.my-auto')) {
+                    chatContainer.innerHTML = '';
+                    chatContainer.classList.remove('d-flex', 'flex-column');
+                }
+
+                // adaugam mesajul la final
+                chatContainer.insertAdjacentHTML('beforeend', newMsgHtml);
+
+                // scroll jos
+                scrollToBottom();
+            } else {
+                alert('Eroare la trimiterea mesajului.');
+            }
+        })
                 .catch(error => console.error('Error:', error));
             });
         }

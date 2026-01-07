@@ -25,6 +25,9 @@ namespace MicroSocialPlatform.Data
         public DbSet<GroupMessage> GroupMessages { get; set; }
         public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
 
+        // DbSet pentru postari salvate
+        public DbSet<SavedPost> SavedPosts { get; set; }
+
         // IMPLEMENTAREA RELATIILOR SI ETC
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -158,6 +161,18 @@ namespace MicroSocialPlatform.Data
                 .HasIndex(p => p.UserId);
             builder.Entity<Notification>()
                 .HasIndex(n => new { n.RecipientId, n.IsRead, n.CreatedAt });
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.User)
+                .WithMany()
+                .HasForeignKey(sp => sp.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.Post)
+                .WithMany()
+                .HasForeignKey(sp => sp.PostId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -21,11 +21,11 @@
         transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .btn-accept-gradient:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(157, 80, 187, 0.3);
-        opacity: 0.95;
-    }
+        .btn-accept-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(157, 80, 187, 0.3);
+            opacity: 0.95;
+        }
 
     .btn-decline-outline {
         background-color: white;
@@ -34,11 +34,11 @@
         transition: all 0.2s;
     }
 
-    .btn-decline-outline:hover {
-        background-color: #fff5f5;
-        border-color: #dc3545;
-        color: #c82333;
-    }
+        .btn-decline-outline:hover {
+            background-color: #fff5f5;
+            border-color: #dc3545;
+            color: #c82333;
+        }
 </style>
 
 <div class="profile-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 300px; position: relative;">
@@ -71,9 +71,7 @@
                             <div class="col-md-9">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
-                                        <h2 class="mb-1">
-                                            @user.FullName
-                                        </h2>
+                                        <h2 class="mb-1">@user.FullName</h2>
                                         @if (!string.IsNullOrEmpty(user.CustomUsername))
                                         {
                                             <p class="text-muted mb-2">@@@user.CustomUsername</p>
@@ -102,23 +100,10 @@
                                                         <span>Vrea să te urmărească:</span>
                                                     </div>
 
-                                    <div class="d-flex flex-column align-items-end gap-2">
-
-                                        @if (ViewBag.IncomingRequestId != null)
-                                        {
-                                            <div class="card border-0 shadow-sm px-4 py-3 mb-2 bg-white rounded-4" style="min-width: 320px;">
-                                                <div class="d-flex flex-column gap-2">
-                                                    <div class="d-flex align-items-center text-muted fw-bold small mb-1">
-                                                        <i class="bi bi-person-plus-fill text-primary me-2"></i>
-                                                        <span>Vrea să te urmărească:</span>
-                                                    </div>
-
                                                     <div class="d-flex gap-2 w-100">
                                                         <form asp-controller="Profile" asp-action="AcceptRequestFromProfile" method="post" class="flex-grow-1 m-0">
                                                             <input type="hidden" name="requestId" value="@ViewBag.IncomingRequestId" />
-
                                                             <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-
                                                             <button type="submit" class="btn btn-accept-gradient btn-sm w-100 fw-bold rounded-pill py-2">
                                                                 Acceptă
                                                             </button>
@@ -126,9 +111,7 @@
 
                                                         <form asp-controller="Profile" asp-action="DeclineRequestFromProfile" method="post" class="flex-grow-1 m-0">
                                                             <input type="hidden" name="requestId" value="@ViewBag.IncomingRequestId" />
-
                                                             <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-
                                                             <button type="submit" class="btn btn-decline-outline btn-sm w-100 fw-bold rounded-pill py-2">
                                                                 Șterge
                                                             </button>
@@ -137,6 +120,7 @@
                                                 </div>
                                             </div>
                                         }
+
                                         @if (isOwnProfile)
                                         {
                                             <a asp-action="Edit" class="btn btn-outline-primary">
@@ -164,7 +148,6 @@
                                                         <span><i class="bi bi-person-plus-fill me-1"></i> Urmărește</span>
                                                     }
                                                 </button>
-
                                             </div>
                                         }
                                         else
@@ -187,12 +170,10 @@
                                         <h4 class="mb-0 fw-bold" id="posts-count">@postsCount</h4>
                                         <small class="text-muted">Postări</small>
                                     </div>
-
                                     <div class="col-4" style="cursor: pointer;" onclick="openFollowModal('@user.Id', 'followers')">
                                         <h4 class="mb-0 fw-bold" id="followers-count">@followersCount</h4>
                                         <small class="text-muted text-primary-hover">Urmăritori</small>
                                     </div>
-
                                     <div class="col-4" style="cursor: pointer;" onclick="openFollowModal('@user.Id', 'following')">
                                         <h4 class="mb-0 fw-bold">@followingCount</h4>
                                         <small class="text-muted text-primary-hover">Urmăriri</small>
@@ -207,9 +188,7 @@
                                 <div class="small text-muted">
                                     @if (!string.IsNullOrEmpty(user.Location))
                                     {
-                                        <span class="me-3">
-                                            <i class="bi bi-geo-alt-fill"></i> @user.Location
-                                        </span>
+                                        <span class="me-3"><i class="bi bi-geo-alt-fill"></i> @user.Location</span>
                                     }
                                     @if (!string.IsNullOrEmpty(user.Website))
                                     {
@@ -218,9 +197,7 @@
                                             <a href="@user.Website" target="_blank" class="text-decoration-none">@user.Website</a>
                                         </span>
                                     }
-                                    <span>
-                                        <i class="bi bi-calendar3"></i> Membru din @user.CreatedAt.ToString("MMMM yyyy")
-                                    </span>
+                                    <span><i class="bi bi-calendar3"></i> Membru din @user.CreatedAt.ToString("MMMM yyyy")</span>
                                 </div>
 
                                 @if (!user.IsPublic)
@@ -228,9 +205,7 @@
                                     <div class="d-flex align-items-center justify-content-center p-3 mt-3 rounded-4 shadow-sm"
                                          style="background-color: #f3e5f5; color: #8e44ad; border: 1px solid rgba(142, 68, 173, 0.2);">
                                         <i class="bi bi-lock-fill fs-5 me-2"></i>
-                                        <span>
-                                            <strong>Profil Privat</strong> - Doar urmăritorii aprobați pot vedea postările.
-                                        </span>
+                                        <span><strong>Profil Privat</strong> - Doar urmăritorii aprobați pot vedea postările.</span>
                                     </div>
                                 }
 
@@ -239,9 +214,7 @@
                                     <div class="d-flex align-items-center justify-content-center p-3 mt-3 rounded-4 shadow-sm"
                                          style="background-color: #fff3cd; color: #856404; border: 1px solid #ffc107;">
                                         <i class="bi bi-shield-fill-check fs-5 me-2"></i>
-                                        <span>
-                                            <strong>Mod Administrator</strong> - Vizualizezi un profil privat cu drepturi de admin.
-                                        </span>
+                                        <span><strong>Mod Administrator</strong> - Vizualizezi un profil privat cu drepturi de admin.</span>
                                     </div>
                                 }
                             </div>
@@ -307,13 +280,10 @@
 
 @section Scripts {
     <script>
-        // follow/unfollow functionality
         document.querySelectorAll('.follow-btn').forEach(btn => {
             btn.addEventListener('click', async function() {
                 const userId = this.dataset.userId;
                 const button = this;
-
-                // blocam butonul cat timp se face cererea la server
                 button.disabled = true;
 
                 try {
@@ -329,33 +299,27 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // actualizam numarul de urmaritori
                         const followersElement = document.getElementById('followers-count');
                         if(followersElement) {
                             followersElement.textContent = data.followersCount;
                         }
 
-                        button.className = 'btn follow-btn rounded-pill px-4 fw-bold'; // Resetam clasele
+                        button.className = 'btn follow-btn rounded-pill px-4 fw-bold';
                         button.style.color = '';
 
-                        // aplicam starea noua
                         if (data.isFollowing) {
-                            // acum il urmaresti (Accepted)
                             button.classList.add('btn-outline-primary');
-                            button.innerHTML = '<span><i class="bi bi-person-check-fill me-1"></i> Urmărește</span>';
+                            button.innerHTML = '<span><i class="bi bi-person-check-fill me-1"></i> Urmărești</span>';
                         }
                         else if (data.isPending) {
-                            // cerere trimisa (Pending)
                             button.classList.add('btn-light', 'border');
                             button.style.color = '#6c757d';
                             button.innerHTML = '<span><i class="bi bi-clock-history me-1"></i> Cerere trimisă</span>';
                         }
                         else {
-                            // nu il urmaresti (Unfollow/Cancel)
                             button.classList.add('btn-primary', 'text-white');
                             button.innerHTML = '<span><i class="bi bi-person-plus-fill me-1"></i> Urmărește</span>';
                         }
-
                     } else {
                         alert(data.message);
                     }
@@ -371,12 +335,8 @@
         function openFollowModal(userId, type) {
             const title = type === 'followers' ? 'Urmăritori' : 'Urmăriri';
             document.getElementById('followModalTitle').innerText = title;
-
-            // deschidem modala
             const modalElement = document.getElementById('followModal');
-
             document.body.appendChild(modalElement);
-
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
 

@@ -322,10 +322,10 @@ namespace MicroSocialPlatform.Controllers
         {
             var publicPosts = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)  
+                .Include(p => p.Likes)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
-                .Include(p => p.PostMedias)  
+                .Include(p => p.PostMedias)
                 .Where(p => p.User.IsPublic)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(50)
@@ -369,8 +369,8 @@ namespace MicroSocialPlatform.Controllers
         {
             var post = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)          
-                    .ThenInclude(l => l.User)   
+                .Include(p => p.Likes)
+                    .ThenInclude(l => l.User)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
                 .Include(p => p.PostMedias)
@@ -436,6 +436,71 @@ namespace MicroSocialPlatform.Controllers
                 .AnyAsync(f => f.FollowerId == currentUser.Id && f.FollowingId == post.UserId);
 
             return isFollowing;
+        }
+
+        // actiune pentru butonul de salvare postare
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> ToggleSave(int postId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var existingSave = await _context.SavedPosts
+                .FirstOrDefaultAsync(sp => sp.PostId == postId && sp.UserId == user.Id);
+
+            bool isSaved = false;
+
+            if (existingSave != null)
+            {
+                // daca exista deja, sterg salvarea
+                _context.SavedPosts.Remove(existingSave);
+                isSaved = false;
+            }
+            else
+            {
+                // daca nu exista, creez o noua salvare
+                var savedPost = new SavedPost
+                {
+                    PostId = postId,
+                    UserId = user.Id,
+                    SavedAt = DateTime.UtcNow
+                };
+                _context.SavedPosts.Add(savedPost);
+                isSaved = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, isSaved = isSaved });
+        }
+
+        // GET - lista de postari salvate
+        [Authorize]
+        public async Task<IActionResult> Saved()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var savedPosts = await _context.SavedPosts
+                .Include(s => s.Post)
+                    .ThenInclude(p => p.User)
+                .Include(s => s.Post)
+                    .ThenInclude(p => p.Comments)
+                .Include(s => s.Post)
+                    .ThenInclude(p => p.Likes)
+                .Where(s => s.UserId == user.Id)
+                .OrderByDescending(s => s.SavedAt)
+                .Select(s => s.Post)
+                .ToListAsync();
+
+            return View(savedPosts);
         }
     }
 }

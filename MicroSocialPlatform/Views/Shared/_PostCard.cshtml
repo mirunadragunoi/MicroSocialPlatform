@@ -28,7 +28,11 @@
             <div class="dropdown">
                 <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="toggleSavePost(@Model.Id, this)">
+                            <i class="bi bi-bookmark me-2"></i> Salvează
+                        </a>
+                    </li>
                     @{
                         var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
                         var isAdmin = User.IsInRole("Administrator");
@@ -84,3 +88,64 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleSavePost(postId, element) {
+        if(element.style.pointerEvents === 'none') return;
+        element.style.pointerEvents = 'none';
+
+        // schimb iconita imediat pentru feedback vizual
+        const icon = element.querySelector('i');
+        const originalIconClass = icon.className;
+
+        fetch('/Post/ToggleSave', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `postId=${postId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if(data.isSaved) {
+                    showFloatingAlert("Postare salvată în colecție! 📌", "success");
+                    // facem iconita plina
+                    if(icon) icon.className = "bi bi-bookmark-fill me-2 text-primary";
+                } else {
+                    showFloatingAlert("Postare ștearsă din colecție.", "danger");
+                    // facem iconita goala
+                    if(icon) icon.className = "bi bi-bookmark me-2";
+
+                    // verificam daca suntem pe pagina de postari salvate pentru a elimina cardul
+                    if (window.location.pathname.toLowerCase().includes('/saved')) {
+                        const cardColumn = element.closest('.col-md-6, .col-lg-4, .col-12');
+                        if (cardColumn) {
+                            cardColumn.style.transition = "all 0.5s ease";
+                            cardColumn.style.opacity = "0";
+                            cardColumn.style.transform = "scale(0.9)";
+
+                            setTimeout(() => {
+                                cardColumn.remove();
+
+                                // dam reload daca nu mai sunt postari
+                                const remainingPosts = document.querySelectorAll('.post-card');
+                                if(remainingPosts.length === 0) {
+                                    location.reload();
+                                }
+                            }, 500);
+                        }
+                    }
+                }
+            } else {
+                showFloatingAlert("Trebuie să fii autentificat!", "danger");
+                if(icon) icon.className = originalIconClass; 
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showFloatingAlert("A apărut o eroare.", "danger");
+        })
+        .finally(() => {
+            element.style.pointerEvents = 'auto';
+        });
+    }
+</script>
