@@ -1,0 +1,81 @@
+﻿@model IEnumerable<MicroSocialPlatform.Models.ApplicationUser>
+
+@{
+    ViewData["Title"] = "Gestionare Utilizatori";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4">
+        <i class="bi bi-people-fill me-2"></i>
+        Gestionare Utilizatori
+    </h2>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Avatar</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Nume Complet</th>
+                            <th>Profil</th>
+                            <th>Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(user.ProfilePicture))
+                                    {
+                                        <img src="@user.ProfilePicture" class="rounded-circle"
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                             style="width: 40px; height: 40px;">
+                                             @user.UserName.Substring(0, 2)
+                                        </div>
+                                    }
+                                </td>
+                                <td>@user.UserName</td>
+                                <td>@user.Email</td>
+                                <td>@(user.FullName ?? "-")</td>
+                                <td>
+                                    @if (user.IsPublic)
+                                    {
+                                        <span class="badge bg-success">Public</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Privat</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-controller="Profile" asp-action="Index"
+                                           asp-route-username="@user.CustomUsername"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <form asp-action="DeleteUser" method="post" class="d-inline">
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Sigur vrei să ștergi utilizatorul @user.UserName? Această acțiune este IREVERSIBILĂ!');">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

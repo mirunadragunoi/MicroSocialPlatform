@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using MicroSocialPlatform.Data;
 using MicroSocialPlatform.Models;
 using MicroSocialPlatform.Helpers;
@@ -37,27 +37,42 @@ namespace MicroSocialPlatform.Controllers
             // verific tipul de utilizator
             if (User.Identity.IsAuthenticated)
             {
-                // utilizator locat -> feed personalizat
+                // utilizator locat
                 var user = await _userManager.GetUserAsync(User);
+                var isAdmin = User.IsInRole("Administrator");
 
-                // luam id-urile utilizatorilor pe care ii urmareste
-                var followingIds = await _context.Follows
-                    .Where(f => f.FollowerId == user.Id && f.Status == FollowStatus.Accepted)
-                    .Select(f => f.FollowingId)
-                    .ToListAsync();
+                // ✅ ADMIN vede TOATE postările (publice + private)
+                if (isAdmin)
+                {
+                    posts = await _context.Posts
+                        .Include(p => p.User)
+                        .Include(p => p.Likes)
+                        .Include(p => p.Comments)
+                            .ThenInclude(c => c.User)
+                        .Include(p => p.PostMedias)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .ToListAsync();
+                }
+                else
+                {
+                    // Utilizator normal -> feed personalizat (doar urmăriți)
+                    var followingIds = await _context.Follows
+                        .Where(f => f.FollowerId == user.Id && f.Status == FollowStatus.Accepted)
+                        .Select(f => f.FollowingId)
+                        .ToListAsync();
 
-                followingIds.Add(user.Id);
+                    followingIds.Add(user.Id);
 
-                // iau postarile 
-                posts = await _context.Posts
-                    .Include(p => p.User)
-                    .Include(p => p.Likes)
-                    .Include(p => p.Comments)
-                        .ThenInclude(c => c.User)
-                    .Include(p => p.PostMedias)
-                    .Where(p => followingIds.Contains(p.UserId))
-                    .OrderByDescending(p => p.CreatedAt)
-                    .ToListAsync();
+                    posts = await _context.Posts
+                        .Include(p => p.User)
+                        .Include(p => p.Likes)
+                        .Include(p => p.Comments)
+                            .ThenInclude(c => c.User)
+                        .Include(p => p.PostMedias)
+                        .Where(p => followingIds.Contains(p.UserId))
+                        .OrderByDescending(p => p.CreatedAt)
+                        .ToListAsync();
+                }
 
                 ViewBag.IsGuest = false;
             }

@@ -220,34 +220,72 @@
         <nav class="sidebar-nav">
             @if (SignInManager.IsSignedIn(User))
             {
-                <!-- menu pentru utilizatorii autentificati -->
-                <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
-                    <i class="bi bi-house-door-fill"></i>
-                    <span>Acasa</span>
-                </a>
+                @if (User.IsInRole("Administrator"))
+                {
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Acasa</span>
+                    </a>
 
-                <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Grupuri</span>
-                </a>
+                    <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Grupuri</span>
+                    </a>
 
-                <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
-                    <i class="bi bi-bell-fill"></i>
-                    <span>Notificări</span>
-                    <span class="notification-badge" id="sidebarNotificationBadge">0</span>
-                </a>
+                    <a asp-area="" asp-controller="Admin" asp-action="Users" class="sidebar-link">
+                        <i class="bi bi-shield-fill"></i>
+                        <span>Utilizatori</span>
+                    </a>
 
-                <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
-                    <i class="bi bi-person-circle"></i>
-                    <span>Profil</span>
-                </a>
+                    <a asp-area="" asp-controller="Admin" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard Admin</span>
+                    </a>
 
-                <hr class="sidebar-divider">
 
-                <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
-                    <i class="bi bi-plus-circle-fill"></i>
-                    <span>Postare nouă</span>
-                </a>
+                    <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Profil</span>
+                    </a>
+
+                    <hr class="sidebar-divider">
+
+                    <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Postare nouă</span>
+                    </a>
+                }
+                else
+                {
+                    <!-- menu pentru utilizatorii autentificati -->
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Acasa</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Grupuri</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
+                        <i class="bi bi-bell-fill"></i>
+                        <span>Notificări</span>
+                        <span class="notification-badge" id="sidebarNotificationBadge">0</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Profil</span>
+                    </a>
+
+                    <hr class="sidebar-divider">
+
+                    <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Postare nouă</span>
+                    </a>
+                }
             }
             else
             {

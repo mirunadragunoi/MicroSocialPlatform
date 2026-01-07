@@ -100,15 +100,15 @@ namespace MicroSocialPlatform.Controllers
             if (currentUser != null && !isOwnProfile)
             {
                 var incomingRequestObj = await _context.Follows
-                    .FirstOrDefaultAsync(f => f.FollowerId == user.Id 
-                        && f.FollowingId == currentUser.Id 
+                    .FirstOrDefaultAsync(f => f.FollowerId == user.Id
+                        && f.FollowingId == currentUser.Id
                         && f.Status == FollowStatus.Pending);
                 if (incomingRequestObj != null)
                 {
                     incomingRequest = incomingRequestObj.Id;
                 }
             }
-         
+
             // obtin postarile doar daca e vizibil
             var posts = canViewProfile
                 ? await _context.Posts
@@ -139,28 +139,44 @@ namespace MicroSocialPlatform.Controllers
         // metoda helper: verific daca cineva poate vedea un profil
         private async Task<bool> CanViewProfile(ApplicationUser profileUser, string? currentUserId)
         {
-            // daca profilul este public, oricine poate vedea
+            // ✅ 0. ADMINISTRATORUL poate vedea ORICE profil (public sau privat)
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                var currentUser = await _userManager.FindByIdAsync(currentUserId);
+                if (currentUser != null)
+                {
+                    var isAdmin = await _userManager.IsInRoleAsync(currentUser, "Administrator");
+                    if (isAdmin)
+                    {
+                        return true; // Admin vede tot!
+                    }
+                }
+            }
+
+            // 1. daca profilul este public, oricine poate vedea
             if (profileUser.IsPublic)
             {
                 return true;
             }
 
-            // daca profilul este privat
-            // 1. proprietarul poate vedea mereu propriul profil
+            // 2. daca profilul este privat
+            // proprietarul poate vedea mereu propriul profil
             if (currentUserId == profileUser.Id)
             {
                 return true;
             }
 
-            // 2. utilizatorii neautentificati NU pot vedea profiluri private
+            // 3. utilizatorii neautentificati NU pot vedea profiluri private
             if (string.IsNullOrEmpty(currentUserId))
             {
                 return false;
             }
 
-            // 3. verific dacă utilizatorul curent urmareste profilul privat
+            // 4. verific dacă utilizatorul curent urmareste profilul privat
             var isFollowing = await _context.Follows
-                .AnyAsync(f => f.FollowerId == currentUserId && f.FollowingId == profileUser.Id);
+                .AnyAsync(f => f.FollowerId == currentUserId
+                            && f.FollowingId == profileUser.Id
+                            && f.Status == FollowStatus.Accepted);
 
             return isFollowing;
         }
@@ -353,7 +369,7 @@ namespace MicroSocialPlatform.Controllers
                 };
 
                 // decidem tipul notificarii in functie de confidentialitatea codului
-                if (targetUser.IsPublic) 
+                if (targetUser.IsPublic)
                 {
                     // cont public ->> notificare Follow
                     notification.Type = NotificationType.Follow;
