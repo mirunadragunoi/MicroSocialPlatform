@@ -5,92 +5,105 @@
     var group = ViewBag.Group as MicroSocialPlatform.Models.Group;
 }
 
+<style>
+    .btn-accept-gradient {
+        background: linear-gradient(90deg, #9d50bb 0%, #ff6b6b 100%);
+        color: white !important;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .btn-accept-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(157, 80, 187, 0.3);
+            opacity: 0.95;
+        }
+
+    .btn-decline-outline {
+        background-color: white;
+        color: #dc3545;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s;
+    }
+
+        .btn-decline-outline:hover {
+            background-color: #fff5f5;
+            border-color: #dc3545;
+            color: #c82333;
+        }
+</style>
+
 <div class="container py-4">
-    <div class="mb-4">
-        <a asp-action="Details" asp-route-id="@group.Id" class="btn btn-outline-secondary rounded-pill">
-            <i class="bi bi-arrow-left me-2"></i>Înapoi la Grup
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Details" asp-route-id="@group.Id" class="btn btn-light rounded-circle shadow-sm me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-arrow-left"></i>
         </a>
+        <div>
+            <h3 class="fw-bold mb-0">Cereri de Intrare</h3>
+            <p class="text-muted mb-0">Gestionează cine intră în grupul <span class="fw-bold text-dark">@group.Name</span></p>
+        </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white border-0 pt-4 px-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                @if (!string.IsNullOrEmpty(group.GroupPicture))
-                {
-                    <img src="@group.GroupPicture" class="rounded-circle"
-                         style="width: 60px; height: 60px; object-fit: cover;" alt="@group.Name">
-                }
-                else
-                {
-                    <div class="rounded-circle d-flex align-items-center justify-content-center"
-                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: white; font-weight: 700; font-size: 1.5rem;">
-                        @(group.Name.Length >= 2 ? group.Name.Substring(0, 2).ToUpper() : group.Name.Substring(0, 1).ToUpper())
-                    </div>
-                }
-                <div>
-                    <h4 class="mb-0 fw-bold">Cereri de Intrare</h4>
-                    <p class="text-muted mb-0">Grup: @group.Name</p>
-                </div>
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 rounded-4 bg-light bg-opacity-50 border-0">
+            <div class="mb-3">
+                <i class="bi bi-people text-muted opacity-50" style="font-size: 4rem;"></i>
             </div>
+            <h5 class="text-muted fw-bold">Nicio cerere nouă</h5>
+            <p class="text-muted small">Toate cererile au fost procesate.</p>
         </div>
-
-        <div class="card-body p-4">
-            @if (!Model.Any())
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var request in Model)
             {
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
-                    <p class="text-muted">Nu există cereri de intrare în așteptare.</p>
-                </div>
-            }
-            else
-            {
-                <div class="list-group list-group-flush">
-                    @foreach (var request in Model)
-                    {
-                        <div class="list-group-item border-0 border-bottom py-3">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-3">
-                                    @if (!string.IsNullOrEmpty(request.User.ProfilePicture))
-                                    {
-                                        <img src="@request.User.ProfilePicture" class="rounded-circle"
-                                             style="width: 50px; height: 50px; object-fit: cover;" alt="@request.User.UserName">
-                                    }
-                                    else
-                                    {
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                             style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: 600;">
-                                            @request.User.UserName.Substring(0, 2).ToUpper()
-                                        </div>
-                                    }
-                                    <div>
-                                        <h6 class="mb-0 fw-bold">@request.User.UserName</h6>
-                                        <small class="text-muted">
-                                            <i class="bi bi-clock me-1"></i>
-                                            @request.RequestedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
-                                        </small>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                @if (!string.IsNullOrEmpty(request.User.ProfilePicture))
+                                {
+                                    <img src="@request.User.ProfilePicture" class="rounded-circle shadow-sm"
+                                         style="width: 60px; height: 60px; object-fit: cover;" alt="@request.User.UserName">
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: 600; font-size: 1.2rem;">
+                                        @request.User.UserName.Substring(0, 2).ToUpper()
                                     </div>
-                                </div>
+                                }
+                            </div>
 
-                                <div class="d-flex gap-2">
-                                    <form asp-action="AcceptJoinRequest" method="post" class="d-inline">
-                                        <input type="hidden" name="requestId" value="@request.Id" />
-                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
-                                            <i class="bi bi-check-circle me-1"></i>Acceptă
-                                        </button>
-                                    </form>
-                                    <form asp-action="RejectJoinRequest" method="post" class="d-inline">
-                                        <input type="hidden" name="requestId" value="@request.Id" />
-                                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3"
-                                                onclick="return confirm('Sigur vrei să respingi această cerere?');">
-                                            <i class="bi bi-x-circle me-1"></i>Respinge
-                                        </button>
-                                    </form>
-                                </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">@request.User.UserName</h6>
+                                <small class="text-muted" style="font-size: 0.8rem;">
+                                    <i class="bi bi-clock me-1"></i> @request.RequestedAt.ToLocalTime().ToString("dd MMM")
+                                </small>
                             </div>
                         </div>
-                    }
+
+                        <div class="d-flex gap-2 mt-auto">
+                            <form asp-action="AcceptJoinRequest" method="post" class="flex-grow-1">
+                                <input type="hidden" name="requestId" value="@request.Id" />
+                                <button type="submit" class="btn btn-accept-gradient btn-sm w-100 rounded-pill fw-bold py-2">
+                                    Acceptă
+                                </button>
+                            </form>
+
+                            <form asp-action="RejectJoinRequest" method="post" class="flex-grow-1">
+                                <input type="hidden" name="requestId" value="@request.Id" />
+                                <button type="submit" class="btn btn-decline-outline btn-sm w-100 rounded-pill fw-bold py-2"
+                                        onclick="return confirm('Sigur vrei să respingi această cerere?');">
+                                    Șterge
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             }
         </div>
-    </div>
+    }
 </div>

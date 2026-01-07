@@ -41,7 +41,7 @@
         }
 </style>
 
-<div class="profile-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 300px; position: relative;">
+<div class="profile-cover shadow-sm" style="background: linear-gradient(135deg, #ff9a9e 0%, #9d50bb 100%); height: 300px; position: relative; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; overflow: hidden;">
     @if (!string.IsNullOrEmpty(user.CoverPhoto))
     {
         <img src="@user.CoverPhoto" alt="Cover Photo" style="width: 100%; height: 100%; object-fit: cover;">

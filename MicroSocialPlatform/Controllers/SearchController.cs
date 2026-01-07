@@ -68,7 +68,10 @@ namespace MicroSocialPlatform.Controllers
                         Username = u.CustomUsername ?? u.UserName,
                         Bio = u.Bio,
                         ProfilePicture = u.ProfilePicture,
-                        IsPublic = u.IsPublic
+                        IsPublic = u.IsPublic,
+                        IsCurrentUser = (currentUserId != null && u.Id == currentUserId),
+                        IsFollowing = _context.Follows.Any(f => f.FollowerId == currentUserId && f.FollowingId == u.Id && f.Status == FollowStatus.Accepted),
+                        IsPending = _context.Follows.Any(f => f.FollowerId == currentUserId && f.FollowingId == u.Id && f.Status == FollowStatus.Pending),
                     })
                     .Take(20)
                     .ToListAsync();
