@@ -1,0 +1,334 @@
+﻿@model MicroSocialPlatform.Models.ViewModels.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard Administrator";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-speedometer2 me-2" style="color: #8e44ad;"></i>
+                Dashboard Administrator
+            </h2>
+            <p class="text-muted mb-0">Bine ai venit în panoul de administrare!</p>
+        </div>
+        <div>
+            <a asp-action="Users" class="btn btn-outline-primary rounded-pill">
+                <i class="bi bi-people-fill me-2"></i>Gestionează Utilizatori
+            </a>
+        </div>
+    </div>
+
+    @* Statistici Principale *@
+    <h5 class="mb-3 fw-bold text-secondary">
+        <i class="bi bi-bar-chart-fill me-2"></i>Statistici Generale
+    </h5>
+    <div class="row g-4 mb-5">
+        @* Total Users *@
+        <div class="col-md-6 col-lg-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 stat-card stat-users">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <a asp-action="Users" class="btn btn-sm btn-light rounded-pill">
+                            Vezi <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <h3 class="mb-1 fw-bold">@Model.TotalUsers.ToString("N0")</h3>
+                    <p class="text-muted mb-0 small">Utilizatori Totali</p>
+                </div>
+            </div>
+        </div>
+
+        @* Total Posts *@
+        <div class="col-md-6 col-lg-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 stat-card stat-posts">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-card-image"></i>
+                        </div>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-light rounded-pill">
+                            Vezi <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <h3 class="mb-1 fw-bold">@Model.TotalPosts.ToString("N0")</h3>
+                    <p class="text-muted mb-0 small">Postări Totale</p>
+                </div>
+            </div>
+        </div>
+
+        @* Total Groups *@
+        <div class="col-md-6 col-lg-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 stat-card stat-groups">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-collection-fill"></i>
+                        </div>
+                        <a asp-controller="Groups" asp-action="Index" class="btn btn-sm btn-light rounded-pill">
+                            Vezi <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <h3 class="mb-1 fw-bold">@Model.TotalGroups.ToString("N0")</h3>
+                    <p class="text-muted mb-0 small">Grupuri Totale</p>
+                </div>
+            </div>
+        </div>
+
+        @* Total Comments *@
+        <div class="col-md-6 col-lg-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 stat-card stat-comments">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </div>
+                    </div>
+                    <h3 class="mb-1 fw-bold">@Model.TotalComments.ToString("N0")</h3>
+                    <p class="text-muted mb-0 small">Comentarii Totale</p>
+                </div>
+            </div>
+        </div>
+
+        @* Total Reactions *@
+        <div class="col-md-6 col-lg-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 stat-card stat-reactions">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="stat-icon">
+                            <i class="bi bi-heart-fill"></i>
+                        </div>
+                    </div>
+                    <h3 class="mb-1 fw-bold">@Model.TotalReactions.ToString("N0")</h3>
+                    <p class="text-muted mb-0 small">Reacții Totale</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Statistici Recente *@
+    <h5 class="mb-3 fw-bold text-secondary">
+        <i class="bi bi-clock-history me-2"></i>Activitate Recentă
+    </h5>
+    <div class="row g-4 mb-5">
+        @* New Users This Week *@
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 recent-card recent-users">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="recent-icon me-3">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-bold">@Model.NewUsersThisWeek</h4>
+                            <p class="text-muted mb-0 small">Utilizatori noi (7 zile)</p>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: @(Model.TotalUsers > 0 ? (Model.NewUsersThisWeek * 100.0 / Model.TotalUsers) : 0)%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* New Posts Today *@
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 recent-card recent-posts">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="recent-icon me-3">
+                            <i class="bi bi-file-earmark-plus-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-bold">@Model.NewPostsToday</h4>
+                            <p class="text-muted mb-0 small">Postări noi astăzi</p>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                             style="width: @(Model.TotalPosts > 0 ? (Model.NewPostsToday * 100.0 / Model.TotalPosts) : 0)%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Active Users Today *@
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 recent-card recent-active">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="recent-icon me-3">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-bold">@Model.ActiveUsersToday</h4>
+                            <p class="text-muted mb-0 small">Utilizatori activi azi</p>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: @(Model.TotalUsers > 0 ? (Model.ActiveUsersToday * 100.0 / Model.TotalUsers) : 0)%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Cereri Pending *@
+    <h5 class="mb-3 fw-bold text-secondary">
+        <i class="bi bi-hourglass-split me-2"></i>Cereri în Așteptare
+    </h5>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 pending-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="pending-icon me-3">
+                                <i class="bi bi-person-check"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">@Model.PendingFollowRequests</h5>
+                                <p class="text-muted mb-0 small">Cereri de follow pending</p>
+                            </div>
+                        </div>
+                        @if (Model.PendingFollowRequests > 0)
+                        {
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                Necesită atenție
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 pending-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="pending-icon me-3">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">@Model.PendingGroupRequests</h5>
+                                <p class="text-muted mb-0 small">Cereri de grup pending</p>
+                            </div>
+                        </div>
+                        @if (Model.PendingGroupRequests > 0)
+                        {
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                Necesită atenție
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Statistici Principale */
+    .stat-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .stat-users .stat-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-posts .stat-icon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+
+    .stat-groups .stat-icon {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .stat-comments .stat-icon {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
+
+    .stat-reactions .stat-icon {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+
+    /* Statistici Recente */
+    .recent-card {
+        transition: transform 0.3s;
+    }
+
+        .recent-card:hover {
+            transform: translateY(-3px);
+        }
+
+    .recent-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+        color: white;
+    }
+
+    /* Cereri Pending */
+    .pending-card {
+        transition: transform 0.3s;
+    }
+
+        .pending-card:hover {
+            transform: translateX(5px);
+        }
+
+    .pending-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+
+    /* Responsive pentru 5 coloane */
+    @@media (min-width: 1200px) {
+        .col-xl-2-4 {
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+    }
+</style>

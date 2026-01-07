@@ -40,13 +40,151 @@
         }
 
         }
+
+        /* alert overlay pt utilizatori neautentificati */
+        .auth-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .auth-alert-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .auth-alert-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .alert-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.2s;
+        }
+
+            .alert-close:hover {
+                color: #495057;
+            }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @@keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
+
+<script>
+    // functii pentru alert autentificare
+    function showAuthAlert() {
+        const alert = document.getElementById('authRequiredAlert');
+        if (alert) {
+            alert.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // blocheaza scroll-ul
+        }
+    }
+
+    function closeAuthAlert() {
+        const alert = document.getElementById('authRequiredAlert');
+        if (alert) {
+            alert.style.display = 'none';
+            document.body.style.overflow = ''; // Restore scroll
+        }
+    }
+
+    // inchide alert cand se da click pe fundal
+    document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('authRequiredAlert');
+        if (overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeAuthAlert();
+                }
+            });
+        }
+    });
+</script>
+
 <body>
     @using Microsoft.AspNetCore.Identity
     @using MicroSocialPlatform.Models
     @inject SignInManager<ApplicationUser> SignInManager
     @inject UserManager<ApplicationUser> UserManager
+
+    <!-- alerta pentru utilizatorii neautentificati -->
+    <div id="authRequiredAlert" class="auth-alert-overlay" style="display: none;">
+        <div class="auth-alert-content">
+            <button type="button" class="alert-close" onclick="closeAuthAlert()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="text-center">
+                <div class="auth-alert-icon mb-3">
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+                <h5 class="mb-2">Autentificare Necesară</h5>
+                <p class="text-muted mb-4">
+                    Pentru a reacționa la postări, a adăuga comentarii,
+                    sau a crea grupuri noi trebuie să fii autentificat.
+                </p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Autentificare
+                    </a>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary px-4">
+                        <i class="bi bi-person-plus me-2"></i>Creare Cont
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- top navbar orizontal-->
     <nav class="top-navbar">
@@ -82,34 +220,72 @@
         <nav class="sidebar-nav">
             @if (SignInManager.IsSignedIn(User))
             {
-                <!-- menu pentru utilizatorii autentificati -->
-                <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
-                    <i class="bi bi-house-door-fill"></i>
-                    <span>Acasa</span>
-                </a>
+                @if (User.IsInRole("Administrator"))
+                {
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Acasa</span>
+                    </a>
 
-                <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Grupuri</span>
-                </a>
+                    <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Grupuri</span>
+                    </a>
 
-                <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
-                    <i class="bi bi-bell-fill"></i>
-                    <span>Notificări</span>
-                    <span class="notification-badge" id="sidebarNotificationBadge">0</span>
-                </a>
+                    <a asp-area="" asp-controller="Admin" asp-action="Users" class="sidebar-link">
+                        <i class="bi bi-shield-fill"></i>
+                        <span>Utilizatori</span>
+                    </a>
 
-                <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
-                    <i class="bi bi-person-circle"></i>
-                    <span>Profil</span>
-                </a>
+                    <a asp-area="" asp-controller="Admin" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard Admin</span>
+                    </a>
 
-                <hr class="sidebar-divider">
 
-                <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
-                    <i class="bi bi-plus-circle-fill"></i>
-                    <span>Postare nouă</span>
-                </a>
+                    <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Profil</span>
+                    </a>
+
+                    <hr class="sidebar-divider">
+
+                    <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Postare nouă</span>
+                    </a>
+                }
+                else
+                {
+                    <!-- menu pentru utilizatorii autentificati -->
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Acasa</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Grupuri</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
+                        <i class="bi bi-bell-fill"></i>
+                        <span>Notificări</span>
+                        <span class="notification-badge" id="sidebarNotificationBadge">0</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Profile" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Profil</span>
+                    </a>
+
+                    <hr class="sidebar-divider">
+
+                    <a asp-area="" asp-controller="Post" asp-action="Create" class="sidebar-link sidebar-create">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Postare nouă</span>
+                    </a>
+                }
             }
             else
             {
@@ -119,17 +295,17 @@
                     <span>Acasă</span>
                 </a>
 
-                <a asp-area="" asp-controller="Home" asp-action="About" class="sidebar-link">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <span>Despre</span>
+                <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Grupuri</span>
                 </a>
 
-                <a asp-area="Identity" asp-page="/Account/Register" class="sidebar-link sidebar-highlight">
+                <a asp-controller="Account" asp-action="Register" class="sidebar-link sidebar-highlight">
                     <i class="bi bi-person-plus-fill"></i>
                     <span>Înregistrare</span>
                 </a>
 
-                <a asp-area="Identity" asp-page="/Account/Login" class="sidebar-link">
+                <a asp-controller="Account" asp-action="Login" class="sidebar-link">
                     <i class="bi bi-box-arrow-in-right"></i>
                     <span>Autentificare</span>
                 </a>

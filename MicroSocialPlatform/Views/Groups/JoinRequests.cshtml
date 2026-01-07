@@ -1,0 +1,96 @@
+﻿@model IEnumerable<MicroSocialPlatform.Models.GroupJoinRequest>
+
+@{
+    ViewData["Title"] = "Cereri de Intrare";
+    var group = ViewBag.Group as MicroSocialPlatform.Models.Group;
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-action="Details" asp-route-id="@group.Id" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-2"></i>Înapoi la Grup
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                @if (!string.IsNullOrEmpty(group.GroupPicture))
+                {
+                    <img src="@group.GroupPicture" class="rounded-circle"
+                         style="width: 60px; height: 60px; object-fit: cover;" alt="@group.Name">
+                }
+                else
+                {
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: white; font-weight: 700; font-size: 1.5rem;">
+                        @(group.Name.Length >= 2 ? group.Name.Substring(0, 2).ToUpper() : group.Name.Substring(0, 1).ToUpper())
+                    </div>
+                }
+                <div>
+                    <h4 class="mb-0 fw-bold">Cereri de Intrare</h4>
+                    <p class="text-muted mb-0">Grup: @group.Name</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+                    <p class="text-muted">Nu există cereri de intrare în așteptare.</p>
+                </div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var request in Model)
+                    {
+                        <div class="list-group-item border-0 border-bottom py-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(request.User.ProfilePicture))
+                                    {
+                                        <img src="@request.User.ProfilePicture" class="rounded-circle"
+                                             style="width: 50px; height: 50px; object-fit: cover;" alt="@request.User.UserName">
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: 600;">
+                                            @request.User.UserName.Substring(0, 2).ToUpper()
+                                        </div>
+                                    }
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">@request.User.UserName</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            @request.RequestedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <form asp-action="AcceptJoinRequest" method="post" class="d-inline">
+                                        <input type="hidden" name="requestId" value="@request.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
+                                            <i class="bi bi-check-circle me-1"></i>Acceptă
+                                        </button>
+                                    </form>
+                                    <form asp-action="RejectJoinRequest" method="post" class="d-inline">
+                                        <input type="hidden" name="requestId" value="@request.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3"
+                                                onclick="return confirm('Sigur vrei să respingi această cerere?');">
+                                            <i class="bi bi-x-circle me-1"></i>Respinge
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

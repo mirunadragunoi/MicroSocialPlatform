@@ -102,6 +102,17 @@
                                                         <span>Vrea să te urmărească:</span>
                                                     </div>
 
+                                    <div class="d-flex flex-column align-items-end gap-2">
+
+                                        @if (ViewBag.IncomingRequestId != null)
+                                        {
+                                            <div class="card border-0 shadow-sm px-4 py-3 mb-2 bg-white rounded-4" style="min-width: 320px;">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <div class="d-flex align-items-center text-muted fw-bold small mb-1">
+                                                        <i class="bi bi-person-plus-fill text-primary me-2"></i>
+                                                        <span>Vrea să te urmărească:</span>
+                                                    </div>
+
                                                     <div class="d-flex gap-2 w-100">
                                                         <form asp-controller="Profile" asp-action="AcceptRequestFromProfile" method="post" class="flex-grow-1 m-0">
                                                             <input type="hidden" name="requestId" value="@ViewBag.IncomingRequestId" />
@@ -219,6 +230,17 @@
                                         <i class="bi bi-lock-fill fs-5 me-2"></i>
                                         <span>
                                             <strong>Profil Privat</strong> - Doar urmăritorii aprobați pot vedea postările.
+                                        </span>
+                                    </div>
+                                }
+
+                                @if (!user.IsPublic && User.IsInRole("Administrator") && !isOwnProfile)
+                                {
+                                    <div class="d-flex align-items-center justify-content-center p-3 mt-3 rounded-4 shadow-sm"
+                                         style="background-color: #fff3cd; color: #856404; border: 1px solid #ffc107;">
+                                        <i class="bi bi-shield-fill-check fs-5 me-2"></i>
+                                        <span>
+                                            <strong>Mod Administrator</strong> - Vizualizezi un profil privat cu drepturi de admin.
                                         </span>
                                     </div>
                                 }

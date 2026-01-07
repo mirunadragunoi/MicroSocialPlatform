@@ -155,6 +155,31 @@ namespace MicroSocialPlatform.Controllers
             ViewBag.IsMember = isMember;
             ViewBag.IsAdmin = isAdmin;
             ViewBag.CurrentUserId = user?.Id;
+
+            // numarul de cereri in pending -->> doar pentru admin
+            if (isAdmin)
+            {
+                var pendingRequestsCount = await _context.GroupJoinRequests
+                    .CountAsync(r => r.GroupId == id && r.Status == GroupJoinRequestStatus.Pending);
+                ViewBag.PendingRequestsCount = pendingRequestsCount;
+            }
+            else
+            {
+                ViewBag.PendingRequestsCount = 0;
+            }
+
+            // verific si daca userul curent are cerere de pending
+            if (user != null && !isMember)
+            {
+                var userRequest = await _context.GroupJoinRequests
+                    .FirstOrDefaultAsync(r => r.GroupId == id && r.UserId == user.Id && r.Status == GroupJoinRequestStatus.Pending);
+                ViewBag.HasPendingRequest = userRequest != null;
+            }
+            else
+            {
+                ViewBag.HasPendingRequest = false;
+            }
+
             ViewBag.ReturnUrl = returnUrl;
 
             return View(group);
@@ -174,6 +199,7 @@ namespace MicroSocialPlatform.Controllers
             var group = await _context.Groups
                 .Include(g => g.Members)
                 .FirstOrDefaultAsync(g => g.Id == id);
+
             if (group == null)
             {
                 return NotFound();
@@ -184,18 +210,46 @@ namespace MicroSocialPlatform.Controllers
             {
                 TempData["InfoMessage"] = "Esti deja membru al acestui grup.";
                 // TempData["MessageType"] = "info";
+                return RedirectToAction(nameof(Details), new { id = id, returnUrl = returnUrl });
             }
-            var member = new GroupMember
+
+            // verific daca nu cumva exista deja o cerere pending
+            var existingRequest = await _context.GroupJoinRequests
+                 .FirstOrDefaultAsync(r => r.GroupId == id && r.UserId == user.Id && r.Status == GroupJoinRequestStatus.Pending);
+
+            if (existingRequest != null)
             {
-                GroupId = group.Id,
+                TempData["InfoMessage"] = "Ai deja o cerere în așteptare pentru acest grup.";
+                return RedirectToAction(nameof(Details), new { id = id, returnUrl = returnUrl });
+            }
+
+            // creez cerere de join in grup
+            var request = new GroupJoinRequest
+            {
+                GroupId = id,
                 UserId = user.Id,
-                Role = GroupRole.Member,
-                JoinedAt = DateTime.UtcNow
+                Status = GroupJoinRequestStatus.Pending,
+                RequestedAt = DateTime.UtcNow
             };
-            _context.GroupMembers.Add(member);
+
+            _context.GroupJoinRequests.Add(request);
+
+            // creez notificarea pentru administratorul grupului
+            _context.Notifications.Add(new Notification
+            {
+                RecipientId = group.OwnerId,
+                SenderId = user.Id,
+                Type = NotificationType.GroupJoinRequest,
+                Content = $"{user.UserName} dorește să se alăture grupului \"{group.Name}\"",
+                RelatedUrl = $"/Groups/JoinRequests/{group.Id}",
+                RelatedEntityId = request.Id,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Te-ai alaturat grupului cu succes!";
-            // TempData["MessageType"] = "success";
+
+            TempData["SuccessMessage"] = "Cererea ta de intrare în grup a fost trimisă! Așteaptă aprobarea administratorului.";
 
             return RedirectToAction(nameof(Details), new { id = id, returnUrl = returnUrl });
         }
@@ -632,6 +686,196 @@ namespace MicroSocialPlatform.Controllers
             // TempData["MessageType"] = "warning";
 
             return RedirectToAction(nameof(Details), new { id = groupId });
+        }
+
+        // afisare cereri de intrare in grup ->> doar pentru moderatorul grupului
+        [HttpGet]
+        public async Task<IActionResult> JoinRequests(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Challenge();
+            }
+
+            var group = await _context.Groups
+                .Include(g => g.Members)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (group == null)
+            {
+                return NotFound();
+            }
+
+            // verific daca userul este admin
+            var membership = group.Members.FirstOrDefault(m => m.UserId == user.Id);
+            if ((membership == null || membership.Role != GroupRole.Admin) && !User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
+
+            // obtin cererile pending
+            var requests = await _context.GroupJoinRequests
+                .Include(r => r.User)
+                .Where(r => r.GroupId == id && r.Status == GroupJoinRequestStatus.Pending)
+                .OrderByDescending(r => r.RequestedAt)
+                .ToListAsync();
+
+            ViewBag.Group = group;
+            ViewBag.IsAdmin = true;
+
+            return View(requests);
+        }
+
+        // acceptare cerere de join in grup
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AcceptJoinRequest(int requestId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Challenge();
+            }
+
+            var request = await _context.GroupJoinRequests
+                .Include(r => r.Group)
+                    .ThenInclude(g => g.Members)
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            // verific daca userul este admin
+            var membership = request.Group.Members.FirstOrDefault(m => m.UserId == user.Id);
+            if ((membership == null || membership.Role != GroupRole.Admin) && !User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
+
+            // accept cererea -->> adauga automat userul in grup
+            var newMember = new GroupMember
+            {
+                GroupId = request.GroupId,
+                UserId = request.UserId,
+                Role = GroupRole.Member,
+                JoinedAt = DateTime.UtcNow
+            };
+
+            _context.GroupMembers.Add(newMember);
+
+            // actualizeaza status cerere
+            request.Status = GroupJoinRequestStatus.Accepted;
+            request.RespondedAt = DateTime.UtcNow;
+            _context.Update(request);
+
+            // creez notificarea pentru utilizatorul care a cerut sa intre in grup
+            _context.Notifications.Add(new Notification
+            {
+                RecipientId = request.UserId,
+                SenderId = user.Id,
+                Type = NotificationType.GroupJoinAccepted,
+                Content = $"Cererea ta de a intra în grupul \"{request.Group.Name}\" a fost acceptată!",
+                RelatedUrl = $"/Groups/Details/{request.GroupId}",
+                RelatedEntityId = request.GroupId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Ai acceptat cererea lui {request.User.UserName}!";
+
+            return RedirectToAction(nameof(JoinRequests), new { id = request.GroupId });
+        }
+
+        // respingere cerere de join in grup 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectJoinRequest(int requestId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Challenge();
+            }
+
+            var request = await _context.GroupJoinRequests
+                .Include(r => r.Group)
+                    .ThenInclude(g => g.Members)
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            // verifica daca userul este admin
+            var membership = request.Group.Members.FirstOrDefault(m => m.UserId == user.Id);
+            if ((membership == null || membership.Role != GroupRole.Admin) && !User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
+
+            // resping cererea
+            request.Status = GroupJoinRequestStatus.Rejected;
+            request.RespondedAt = DateTime.UtcNow;
+            _context.Update(request);
+
+            await _context.SaveChangesAsync();
+
+            TempData["InfoMessage"] = "Cererea a fost respinsă.";
+
+            return RedirectToAction(nameof(JoinRequests), new { id = request.GroupId });
+        }
+
+        // editarea unui mesaj in grup
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditMessage(int messageId, string content)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var message = await _context.GroupMessages
+                .Include(m => m.Group)
+                .FirstOrDefaultAsync(m => m.Id == messageId);
+
+            if (message == null)
+            {
+                return NotFound();
+            }
+
+            // doar autorul mesajului poate sa l editeze
+            if (message.UserId != user.Id && !User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(content) || content.Length > 1000)
+            {
+                return BadRequest("Conținutul mesajului este invalid.");
+            }
+
+            // actualizez mesajul
+            message.Content = content;
+            message.EditedAt = DateTime.UtcNow;
+
+            _context.Update(message);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                content = message.Content,
+                editedAt = message.EditedAt.Value.ToLocalTime().ToString("HH:mm")
+            });
         }
     }
 }

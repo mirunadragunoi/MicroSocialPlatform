@@ -1,4 +1,7 @@
-﻿@model MicroSocialPlatform.Models.Post
+﻿@using Microsoft.AspNetCore.Identity
+@using MicroSocialPlatform.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@model MicroSocialPlatform.Models.Post
 
 <div class="reaction-box" data-post-id="@Model.Id">
     <button class="btn btn-link text-muted p-0 reaction-toggle text-decoration-none">
@@ -85,54 +88,52 @@
         const items = box.querySelectorAll('.reaction-item');
         const countBadge = box.querySelector('.badge');
 
+        // ← VERIFICARE AUTENTIFICARE
+        const isAuthenticated = @(SignInManager.IsSignedIn(User) ? "true" : "false");
+
         let currentUserReaction = null;
 
         console.log('Reaction system initialized for post ' + postId);
+        console.log('User authenticated:', isAuthenticated);
 
-        // Încarcă reacția curentă a utilizatorului
-        fetch('/Reaction/GetUserReaction?postId=' + postId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.hasReaction) {
-                    currentUserReaction = data.reactionType;
-                    // Marchează butonul ca activ
-                    const activeItem = box.querySelector('.reaction-item[data-type="' + data.reactionType + '"]');
-                    if (activeItem) {
-                        activeItem.classList.add('active');
+        // Dacă utilizatorul E autentificat, încarcă reacția curentă
+        if (isAuthenticated) {
+            fetch('/Reaction/GetUserReaction?postId=' + postId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hasReaction) {
+                        currentUserReaction = data.reactionType;
+                        const activeItem = box.querySelector('.reaction-item[data-type="' + data.reactionType + '"]');
+                        if (activeItem) {
+                            activeItem.classList.add('active');
+                        }
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.className = 'bi bi-heart-fill text-danger fs-5';
+                        }
                     }
-                    // Schimbă iconița în filled heart
-                    const icon = toggle.querySelector('i');
-                    if (icon) {
-                        icon.className = 'bi bi-heart-fill text-danger fs-5';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error loading user reaction:', error);
-            });
+                })
+                .catch(error => {
+                    console.error('Error loading user reaction:', error);
+                });
+        }
 
-        // Show/hide picker on long press or click
-        let pressTimer;
-
-        toggle.addEventListener('mousedown', function(e) {
-            pressTimer = setTimeout(function() {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Long press - showing picker');
-                const isVisible = picker.style.display !== 'none';
-                picker.style.display = isVisible ? 'none' : 'flex';
-            }, 200);
-        });
-
-        toggle.addEventListener('mouseup', function(e) {
-            clearTimeout(pressTimer);
-        });
-
+        // Click pe butonul de like
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
 
-            // Dacă utilizatorul are deja o reacție, șterge-o (toggle off)
+            // ← VERIFICARE: Dacă NU e autentificat → Afișează alert
+            if (!isAuthenticated) {
+                if (typeof showAuthAlert === 'function') {
+                    showAuthAlert();
+                } else {
+                    alert('Pentru a da like, trebuie să fii autentificat!');
+                }
+                return;
+            }
+
+            // Restul logicii pentru utilizatori autentificați
             if (currentUserReaction !== null) {
                 console.log('User has reaction, removing it');
 
@@ -146,16 +147,12 @@
                         countBadge.textContent = data.totalCount;
                         currentUserReaction = null;
 
-                        // Resetează iconița
                         const icon = toggle.querySelector('i');
                         if (icon) {
                             icon.className = 'bi bi-heart fs-5';
                         }
 
-                        // Șterge marcajul de activ
                         items.forEach(item => item.classList.remove('active'));
-
-                        // Update summary
                         updateSummary(data.counts);
                     }
                 })
@@ -163,18 +160,27 @@
                     console.error('Error:', error);
                 });
             } else {
-                // Dacă nu are reacție, arată picker-ul
                 console.log('No reaction, showing picker');
                 const isVisible = picker.style.display !== 'none';
                 picker.style.display = isVisible ? 'none' : 'flex';
             }
         });
 
-        // Handle reaction clicks
+        // Click pe emoji-uri din picker
         items.forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+
+                // ← VERIFICARE: Dacă NU e autentificat → Afișează alert
+                if (!isAuthenticated) {
+                    if (typeof showAuthAlert === 'function') {
+                        showAuthAlert();
+                    } else {
+                        alert('Pentru a da like, trebuie să fii autentificat!');
+                    }
+                    return;
+                }
 
                 const type = parseInt(this.getAttribute('data-type'));
                 console.log('Reaction ' + type + ' clicked for post ' + postId);
@@ -192,23 +198,19 @@
                         countBadge.textContent = data.totalCount;
                         picker.style.display = 'none';
 
-                        // Actualizează reacția curentă
                         if (data.hasReaction) {
                             currentUserReaction = data.currentReaction;
 
-                            // Schimbă iconița în filled heart
                             const icon = toggle.querySelector('i');
                             if (icon) {
                                 icon.className = 'bi bi-heart-fill text-danger fs-5';
                             }
 
-                            // Marchează butonul activ
                             items.forEach(btn => btn.classList.remove('active'));
                             this.classList.add('active');
                         } else {
                             currentUserReaction = null;
 
-                            // Resetează iconița
                             const icon = toggle.querySelector('i');
                             if (icon) {
                                 icon.className = 'bi bi-heart fs-5';
@@ -217,7 +219,6 @@
                             items.forEach(btn => btn.classList.remove('active'));
                         }
 
-                        // Update summary
                         updateSummary(data.counts);
                     }
                 })

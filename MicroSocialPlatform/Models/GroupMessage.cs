@@ -12,6 +12,9 @@ namespace MicroSocialPlatform.Models
 
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
+        // cand a fost editat mesajul 
+        public DateTime? EditedAt { get; set; }
+
         // userul care posteaza mesajul
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }

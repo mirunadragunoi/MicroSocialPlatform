@@ -2,6 +2,7 @@
 @using MicroSocialPlatform.Models;
 @using Microsoft.AspNetCore.Identity;
 @inject UserManager<ApplicationUser> UserManager;
+
 @{
     ViewData["Title"] = "Acasă";
     var currentUser = await UserManager.GetUserAsync(User);
