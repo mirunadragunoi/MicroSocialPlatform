@@ -30,10 +30,9 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4">
-                <!-- header postare -->
                 <div class="card-header bg-white border-0 pb-0 pt-3 px-4">
                     <div class="d-flex align-items-center gap-3">
-                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)"
                            class="text-decoration-none">
                             @if (!string.IsNullOrEmpty(Model.User?.ProfilePicture))
                             {
@@ -53,7 +52,7 @@
                             }
                         </a>
                         <div class="flex-grow-1">
-                            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+                            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)"
                                class="text-decoration-none text-dark">
                                 <h6 class="mb-0 fw-bold">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</h6>
                             </a>
@@ -109,13 +108,12 @@
                     </div>
                 </div>
 
-                <!-- media -->
                 @if (Model.PostMedias != null && Model.PostMedias.Any())
                 {
                     <div class="mb-4">
                         @foreach (var media in Model.PostMedias)
                         {
-                            <div class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden"> 
+                            <div class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden">
                                 @if (media.MediaType == MediaType.Image)
                                 {
                                     <img src="@media.Url" alt="Post Image" class="img-fluid w-100" style="max-height: 600px; object-fit:contain; background-color: #f8f9fa;">
@@ -134,9 +132,7 @@
                     </div>
                 }
 
-                <!-- content si actiuni -->
                 <div class="card-body px-4">
-                    <!-- actiuni (Like, Comment) -->
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <div class="post-actions d-flex gap-3 mb-3 pb-2 border-bottom">
@@ -149,7 +145,6 @@
                     }
                     else
                     {
-                        <!-- pt utilizatori neautentificati -->
                         <div class="post-actions d-flex gap-3 mb-3 pb-2 border-bottom">
                             <partial name="_LikePartial" model="Model" />
 
@@ -159,42 +154,34 @@
                         </div>
                     }
 
-                    <!-- like count -->
-                    <div class="mb-2">
-                        <strong>@Model.LikesCount @(Model.LikesCount == 1 ? "like" : "like-uri")</strong>
-                    </div>
-
-                    <!-- content -->
                     <div class="mb-3">
-                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
+                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)"
                            class="text-decoration-none text-dark fw-bold me-2">
                             @(Model.User?.CustomUsername ?? Model.User?.UserName)
                         </a>
                         <span>@Model.Content</span>
                     </div>
 
-                    <!-- comments count -->
                     @if (Model.CommentsCount > 0)
                     {
-                        <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-muted mb-3 d-block">
-                            Vezi toate cele @Model.CommentsCount @(Model.CommentsCount == 1 ? "comentariu" : "comentarii")
-                        </a>
+                        <div class="text-muted small mb-3">
+                            Cele @Model.CommentsCount @(Model.CommentsCount == 1 ? "comentariu" : "comentarii")
+                        </div>
                     }
 
-                    <!-- comments section -->
                     <div class="comments-section mt-3" id="comments-container-@Model.Id">
                         @if (Model.Comments != null && Model.Comments.Any())
                         {
                             @foreach (var comment in Model.Comments.OrderBy(c => c.CreatedAt))
                             {
                                 <div class="d-flex gap-2 mb-3 comment-item" data-comment-id="@comment.Id">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)" 
+                                    <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)"
                                        class="text-decoration-none">
                                         @if (!string.IsNullOrEmpty(comment.User?.ProfilePicture))
                                         {
                                             <img src="@comment.User.ProfilePicture"
-                                                 alt="@comment.User.UserName" 
-                                                 class="rounded-circle border" 
+                                                 alt="@comment.User.UserName"
+                                                 class="rounded-circle border"
                                                  style="width: 32px; height: 32px; object-fit: cover;">
                                         }
                                         else
@@ -204,12 +191,12 @@
                                                     var commentUserInitials = comment.User?.UserName?.Substring(0, 2).ToUpper() ?? "AN";
                                                 }
                                                 <span>@commentUserInitials</span>
-                                            </div>    
+                                            </div>
                                         }
                                     </a>
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center gap-2 mb-1">
-                                            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)" 
+                                            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(comment.User?.CustomUsername ?? comment.User?.UserName)"
                                                class="text-decoration-none text-dark fw-bold">
                                                 @(comment.User?.CustomUsername ?? comment.User?.UserName)
                                             </a>
@@ -230,11 +217,11 @@
                                                 var isCommentOwner = currentUser != null && comment.UserId == currentUser.Id;
                                                 var isPostOwner = currentUser != null && Model.UserId == currentUser.Id;
                                                 var isAdmin = User.IsInRole("Administrator");
-                                                
+
                                                 // doar autorul comentariului poate edita comentariul
                                                 @if (isCommentOwner)
                                                 {
-                                                    <button class="btn btn-link text-primary p-0 edit-comment-btn" 
+                                                    <button class="btn btn-link text-primary p-0 edit-comment-btn"
                                                             data-comment-id="@comment.Id"
                                                             data-comment-content="@comment.Content"
                                                             style="text-decoration: none; font-size: 0.85rem;"
@@ -242,12 +229,12 @@
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
                                                 }
-                                                
+
                                                 // autorul postarii poate sterge orice comentariu, mai putin daca acesta apartine adminului platformei
                                                 @if (isCommentOwner || isAdmin || (isPostOwner && !(comment.User != null && UserManager.IsInRoleAsync(comment.User, "Administrator").Result)))
                                                 {
-                                                    <button class="btn btn-link text-danger p-0 delete-comment-btn" 
-                                                            data-comment-id="@comment.Id" 
+                                                    <button class="btn btn-link text-danger p-0 delete-comment-btn"
+                                                            data-comment-id="@comment.Id"
                                                             style="text-decoration: none; font-size: 0.85rem;"
                                                             title="Șterge comentariul">
                                                         <i class="bi bi-trash"></i>
@@ -265,15 +252,14 @@
                         }
                     </div>
 
-                    <!-- add comment form -->
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <form class="mt-3 pt-3 border-top comment-form" data-post-id="@Model.Id">
                             @Html.AntiForgeryToken()
                             <div class="input-group">
-                                <input type="text" 
-                                       class="form-control border-0 bg-light rounded-pill ps-3" 
-                                       placeholder="Adaugă un comentariu..." 
+                                <input type="text"
+                                       class="form-control border-0 bg-light rounded-pill ps-3"
+                                       placeholder="Adaugă un comentariu..."
                                        id="comment-input-@Model.Id"
                                        maxlength="500"
                                        required>
@@ -286,12 +272,11 @@
                     }
                     else
                     {
-                        <!-- mesaj pentru utilizatori neinregistrati -->
                         <div class="alert alert-info mt-3 rounded-pill border-0" style="background: rgba(142, 68, 173, 0.1);">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-info-circle"></i>
                                 <span class="small">
-                                    Pentru a adăuga comentarii și a reacționa la postări, <a asp-controller="Account" asp-action="Register" class="text-decoration-none fw-bold">creează un cont</a> sau 
+                                    Pentru a adăuga comentarii și a reacționa la postări, <a asp-controller="Account" asp-action="Register" class="text-decoration-none fw-bold">creează un cont</a> sau
                                     <a asp-controller="Account" asp-action="Login" class="text-decoration-none fw-bold">autentifică-te</a>.
                                 </span>
                             </div>
@@ -300,7 +285,6 @@
                 </div>
             </div>
 
-            <!-- Back button -->
             <div class="mt-3">
                 <a href="javascript:history.back()" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-2"></i>Înapoi
@@ -522,6 +506,8 @@
 
                                 if (res.success) {
                                     span.textContent = res.comment.content;
+                                    span.style.display = '';
+
                                     const dateBox = span.closest('.flex-grow-1').querySelector('.date-container');
                                     if (dateBox && !dateBox.innerHTML.includes('(editat)')) {
                                         dateBox.innerHTML += ' <span class="fst-italic text-muted ms-1">(editat)</span>';
@@ -573,15 +559,8 @@
 
             // helper pentru actualizare numar comentarii
             function updateCount(count) {
-                const link = document.querySelector('a[href*="Details"]');
-                if (!link) return;
-
-                if (count > 0) {
-                    link.textContent = `Vezi toate cele ${count} ${count === 1 ? 'comentariu' : 'comentarii'}`;
-                    link.style.display = 'block';
-                } else {
-                    link.style.display = 'none';
-                }
+                // Nu mai avem link de "Vezi toate..." deci doar ascundem containerul text
+                // Daca vrei sa arati numarul, trebuie sa il identifici cu un ID.
             }
 
             // helper xss protection
@@ -616,9 +595,9 @@
         transition: transform 0.2s;
     }
 
-    .user-avatar:hover {
-        transform: scale(1.1);
-    }
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
 
     .post-media-container {
         background: #000;
@@ -711,4 +690,3 @@
         }
     }
 </style>
-

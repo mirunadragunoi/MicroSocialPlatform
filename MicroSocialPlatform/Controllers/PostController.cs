@@ -502,5 +502,31 @@ namespace MicroSocialPlatform.Controllers
 
             return View(savedPosts);
         }
+
+        // reactiile de la o postare pentru modala
+        [HttpGet]
+        public async Task<IActionResult> GetPostLikes(int id)
+        {
+            var post = await _context.Posts
+                .Include(p => p.Likes)
+                .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            // Returnam un obiect anonim simplu, usor de citit de JS
+            var likers = post.Likes.Select(l => new {
+                userId = l.UserId,
+                userName = l.User.UserName,
+                fullName = l.User.FullName,
+                profilePicture = l.User.ProfilePicture,
+                reactionType = (int)l.Type // Trimitem tipul reactiei ca numar (1, 2, 3...)
+            }).ToList();
+
+            return Json(likers);
+        }
     }
 }

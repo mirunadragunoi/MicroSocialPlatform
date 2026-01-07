@@ -6,7 +6,13 @@
 <div class="reaction-box" data-post-id="@Model.Id">
     <button class="btn btn-link text-muted p-0 reaction-toggle text-decoration-none">
         <i class="bi bi-heart fs-5"></i> Like
-        <span class="badge bg-light text-dark ms-1">@(Model.Likes?.Count() ?? 0)</span>
+        <span class="badge bg-light text-dark ms-1"
+              style="cursor: pointer; user-select: none;"
+              onclick="event.preventDefault(); event.stopPropagation(); openLikesModal(@Model.Id);"
+              onmouseover="this.classList.replace('bg-light', 'bg-secondary'); this.classList.replace('text-dark', 'text-white');"
+              onmouseout="this.classList.replace('bg-secondary', 'bg-light'); this.classList.replace('text-white', 'text-dark');">
+            @(Model.Likes?.Count() ?? 0)
+        </span>
     </button>
 
     <div class="reaction-picker" style="display: none;">
