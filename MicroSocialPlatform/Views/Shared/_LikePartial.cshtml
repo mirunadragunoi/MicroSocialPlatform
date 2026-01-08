@@ -4,11 +4,38 @@
 @model MicroSocialPlatform.Models.Post
 
 <div class="reaction-box" data-post-id="@Model.Id">
-    <button class="btn btn-link text-muted p-0 reaction-toggle text-decoration-none">
-        <i class="bi bi-heart fs-5"></i> Like
-        <span class="badge bg-light text-dark ms-1">@(Model.Likes?.Count() ?? 0)</span>
+    @* ✅ Rezumat Reacții - Aliniat la STÂNGA *@
+    @if (Model.Likes != null && Model.Likes.Any())
+    {
+        <div class="reaction-summary-container mb-2">
+            <div class="reaction-summary d-flex justify-content-start gap-1 flex-wrap">
+                @* ↑ SCHIMBAT: justify-content-start în loc de justify-content-center *@
+                @foreach (var group in Model.Likes.GroupBy(l => l.Type))
+                {
+                    <span class="reaction-badge">
+                        @GetEmoji(group.Key) <small>@group.Count()</small>
+                    </span>
+                }
+            </div>
+        </div>
+    }
+
+    @* Buton Principal Like *@
+    <button class="btn btn-light w-100 rounded-pill fw-bold text-muted reaction-toggle d-flex align-items-center justify-content-center gap-2"
+            style="height: 40px; border: 1px solid #e9ecef !important;">
+        <i class="bi bi-heart fs-6"></i>
+        <span class="like-text">Like</span>
+        @if ((Model.Likes?.Count() ?? 0) > 0)
+        {
+            <span class="badge bg-danger text-white rounded-pill like-count-badge"
+                  style="cursor: pointer;"
+                  onclick="event.preventDefault(); event.stopPropagation(); openLikesModal(@Model.Id);">
+                @(Model.Likes.Count())
+            </span>
+        }
     </button>
 
+    @* Picker pentru Reacții *@
     <div class="reaction-picker" style="display: none;">
         <button class="reaction-item" data-type="1" title="Like">❤️</button>
         <button class="reaction-item" data-type="2" title="Love">🥰</button>
@@ -17,58 +44,140 @@
         <button class="reaction-item" data-type="5" title="Sad">😢</button>
         <button class="reaction-item" data-type="6" title="Angry">😠</button>
     </div>
-
-    @if (Model.Likes != null && Model.Likes.Any())
-    {
-        <div class="reaction-summary mt-1">
-            @foreach (var group in Model.Likes.GroupBy(l => l.Type))
-            {
-                <span class="reaction-badge">
-                    @GetEmoji(group.Key) <small>@group.Count()</small>
-                </span>
-            }
-        </div>
-    }
 </div>
 
 <style>
     .reaction-box {
         position: relative;
-        display: inline-block;
+        display: block;
+        width: 100%;
+    }
+
+    .reaction-toggle {
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+        .reaction-toggle:hover {
+            background-color: #f8f9fa !important;
+            transform: translateY(-1px);
+        }
+
+        .reaction-toggle.has-reaction {
+            background-color: #fff5f5 !important;
+        }
+
+            .reaction-toggle.has-reaction i {
+                color: #dc3545 !important;
+            }
+
+    .like-count-badge:hover {
+        background-color: #c82333 !important;
+        transform: scale(1.1);
     }
 
     .reaction-picker {
         position: absolute;
-        bottom: 100%;
-        left: 0;
+        bottom: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%);
         background: white;
         border: 1px solid #ddd;
         border-radius: 25px;
         padding: 8px;
-        margin-bottom: 5px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 1000;
+        display: flex;
+        gap: 5px;
+        animation: slideUp 0.2s ease;
+    }
+
+    @@keyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
     }
 
     .reaction-item {
         background: none;
         border: none;
-        font-size: 24px;
+        font-size: 28px;
         padding: 5px;
         cursor: pointer;
         transition: transform 0.2s;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
         .reaction-item:hover {
             transform: scale(1.3);
+            background-color: #f8f9fa;
         }
 
+        .reaction-item.active {
+            background-color: #e3f2fd;
+            transform: scale(1.1);
+        }
+
+    /* ✅ Container pentru rezumat - ALINIAT LA STÂNGA */
+    .reaction-summary-container {
+        min-height: 25px;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .reaction-summary {
+        animation: slideDown 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }
+
+    @@keyframes slideDown {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
     .reaction-badge {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
         background: #f8f9fa;
+        border: 1px solid #e9ecef;
         border-radius: 12px;
         padding: 2px 8px;
-        margin-right: 4px;
         font-size: 12px;
     }
 </style>
@@ -86,30 +195,26 @@
         const toggle = box.querySelector('.reaction-toggle');
         const picker = box.querySelector('.reaction-picker');
         const items = box.querySelectorAll('.reaction-item');
-        const countBadge = box.querySelector('.badge');
 
-        // ← VERIFICARE AUTENTIFICARE
         const isAuthenticated = @(SignInManager.IsSignedIn(User) ? "true" : "false");
-
         let currentUserReaction = null;
+        let longPressTimer = null;
 
-        console.log('Reaction system initialized for post ' + postId);
-        console.log('User authenticated:', isAuthenticated);
-
-        // Dacă utilizatorul E autentificat, încarcă reacția curentă
+        // Încarcă reacția curentă
         if (isAuthenticated) {
             fetch('/Reaction/GetUserReaction?postId=' + postId)
                 .then(response => response.json())
                 .then(data => {
                     if (data.hasReaction) {
                         currentUserReaction = data.reactionType;
+                        toggle.classList.add('has-reaction');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.className = 'bi bi-heart-fill text-danger fs-6';
+                        }
                         const activeItem = box.querySelector('.reaction-item[data-type="' + data.reactionType + '"]');
                         if (activeItem) {
                             activeItem.classList.add('active');
-                        }
-                        const icon = toggle.querySelector('i');
-                        if (icon) {
-                            icon.className = 'bi bi-heart-fill text-danger fs-5';
                         }
                     }
                 })
@@ -118,12 +223,11 @@
                 });
         }
 
-        // Click pe butonul de like
+        // Click pe buton
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
 
-            // ← VERIFICARE: Dacă NU e autentificat → Afișează alert
             if (!isAuthenticated) {
                 if (typeof showAuthAlert === 'function') {
                     showAuthAlert();
@@ -133,46 +237,36 @@
                 return;
             }
 
-            // Restul logicii pentru utilizatori autentificați
             if (currentUserReaction !== null) {
-                console.log('User has reaction, removing it');
-
-                fetch('/Reaction/React?postId=' + postId + '&reactionType=' + currentUserReaction, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Response data:', data);
-                    if (data.success) {
-                        countBadge.textContent = data.totalCount;
-                        currentUserReaction = null;
-
-                        const icon = toggle.querySelector('i');
-                        if (icon) {
-                            icon.className = 'bi bi-heart fs-5';
-                        }
-
-                        items.forEach(item => item.classList.remove('active'));
-                        updateSummary(data.counts);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                removeReaction();
             } else {
-                console.log('No reaction, showing picker');
                 const isVisible = picker.style.display !== 'none';
                 picker.style.display = isVisible ? 'none' : 'flex';
             }
         });
 
-        // Click pe emoji-uri din picker
+        // Long press
+        toggle.addEventListener('mousedown', function(e) {
+            if (!isAuthenticated || currentUserReaction !== null) return;
+            longPressTimer = setTimeout(() => {
+                picker.style.display = 'flex';
+            }, 500);
+        });
+
+        toggle.addEventListener('mouseup', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        toggle.addEventListener('mouseleave', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        // Click pe emoji
         items.forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // ← VERIFICARE: Dacă NU e autentificat → Afișează alert
                 if (!isAuthenticated) {
                     if (typeof showAuthAlert === 'function') {
                         showAuthAlert();
@@ -183,52 +277,90 @@
                 }
 
                 const type = parseInt(this.getAttribute('data-type'));
-                console.log('Reaction ' + type + ' clicked for post ' + postId);
-
-                fetch('/Reaction/React?postId=' + postId + '&reactionType=' + type, {
-                    method: 'POST'
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Response data:', data);
-                    if (data.success) {
-                        countBadge.textContent = data.totalCount;
-                        picker.style.display = 'none';
-
-                        if (data.hasReaction) {
-                            currentUserReaction = data.currentReaction;
-
-                            const icon = toggle.querySelector('i');
-                            if (icon) {
-                                icon.className = 'bi bi-heart-fill text-danger fs-5';
-                            }
-
-                            items.forEach(btn => btn.classList.remove('active'));
-                            this.classList.add('active');
-                        } else {
-                            currentUserReaction = null;
-
-                            const icon = toggle.querySelector('i');
-                            if (icon) {
-                                icon.className = 'bi bi-heart fs-5';
-                            }
-
-                            items.forEach(btn => btn.classList.remove('active'));
-                        }
-
-                        updateSummary(data.counts);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                addReaction(type);
             });
         });
 
-        function updateSummary(counts) {
+        function addReaction(type) {
+            fetch('/Reaction/React?postId=' + postId + '&reactionType=' + type, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    picker.style.display = 'none';
+
+                    if (data.hasReaction) {
+                        currentUserReaction = data.currentReaction;
+                        toggle.classList.add('has-reaction');
+
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.className = 'bi bi-heart-fill text-danger fs-6';
+                            icon.style.transform = 'scale(1.3)';
+                            setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
+                        }
+
+                        items.forEach(btn => btn.classList.remove('active'));
+                        const activeItem = box.querySelector('.reaction-item[data-type="' + type + '"]');
+                        if (activeItem) {
+                            activeItem.classList.add('active');
+                        }
+                    }
+
+                    updateBadgeAndSummary(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function removeReaction() {
+            fetch('/Reaction/React?postId=' + postId + '&reactionType=' + currentUserReaction, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentUserReaction = null;
+                    toggle.classList.remove('has-reaction');
+
+                    const icon = toggle.querySelector('i');
+                    if (icon) {
+                        icon.className = 'bi bi-heart fs-6';
+                    }
+
+                    items.forEach(item => item.classList.remove('active'));
+                    updateBadgeAndSummary(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function updateBadgeAndSummary(data) {
+            // Actualizează badge-ul
+            let badge = toggle.querySelector('.like-count-badge');
+            if (data.totalCount > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge bg-danger text-white rounded-pill like-count-badge';
+                    badge.style.cursor = 'pointer';
+                    badge.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openLikesModal(postId);
+                    };
+                    toggle.appendChild(badge);
+                }
+                badge.textContent = data.totalCount;
+            } else if (badge) {
+                badge.remove();
+            }
+
+            // ✅ Actualizează rezumatul ALINIAT LA STÂNGA
             const emojiMap = {
                 'Like': '❤️',
                 'Love': '🥰',
@@ -239,26 +371,28 @@
             };
 
             let summaryHtml = '';
-            for (let type in counts) {
-                if (counts[type] > 0) {
-                    summaryHtml += `<span class="reaction-badge">${emojiMap[type]} <small>${counts[type]}</small></span>`;
+            for (let type in data.counts) {
+                if (data.counts[type] > 0) {
+                    summaryHtml += `<span class="reaction-badge">${emojiMap[type]} <small>${data.counts[type]}</small></span>`;
                 }
             }
 
-            let summaryDiv = box.querySelector('.reaction-summary');
+            let summaryContainer = box.querySelector('.reaction-summary-container');
+
             if (summaryHtml) {
-                if (!summaryDiv) {
-                    summaryDiv = document.createElement('div');
-                    summaryDiv.className = 'reaction-summary mt-1';
-                    box.appendChild(summaryDiv);
+                if (!summaryContainer) {
+                    summaryContainer = document.createElement('div');
+                    summaryContainer.className = 'reaction-summary-container mb-2';
+                    summaryContainer.innerHTML = '<div class="reaction-summary d-flex justify-content-start gap-1 flex-wrap"></div>';
+                    box.insertBefore(summaryContainer, toggle);
                 }
-                summaryDiv.innerHTML = summaryHtml;
-            } else if (summaryDiv) {
-                summaryDiv.remove();
+                summaryContainer.querySelector('.reaction-summary').innerHTML = summaryHtml;
+            } else if (summaryContainer) {
+                summaryContainer.remove();
             }
         }
 
-        // Close picker when clicking outside
+        // Închide picker
         document.addEventListener('click', function(e) {
             if (!box.contains(e.target)) {
                 picker.style.display = 'none';

@@ -4,78 +4,134 @@
     ViewData["Title"] = "Cereri de Urmărire";
 }
 
+<style>
+    .request-item {
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+    }
+
+        .request-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+            border-color: #e0e0e0;
+        }
+
+    .btn-accept-gradient {
+        background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+        color: white !important;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .btn-accept-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(161, 140, 209, 0.3);
+            opacity: 0.95;
+        }
+
+    .btn-decline-outline {
+        background-color: white;
+        color: #dc3545;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s;
+    }
+
+        .btn-decline-outline:hover {
+            background-color: #fff5f5;
+            border-color: #dc3545;
+            color: #c82333;
+        }
+</style>
+
 <div class="container py-4">
     <div class="d-flex align-items-center mb-4">
-        <a asp-action="Index" class="btn btn-light rounded-circle shadow-sm me-3">
+        <a asp-controller="Profile" asp-action="Index"
+           class="btn btn-light rounded-circle shadow-sm me-3"
+           style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
             <i class="bi bi-arrow-left"></i>
         </a>
         <div>
-            <h2 class="fw-bold mb-0 text-dark">Cereri de Urmărire</h2>
+            <h3 class="fw-bold mb-0">Cereri de Urmărire</h3>
             <p class="text-muted mb-0">Gestionează cine îți poate vedea conținutul.</p>
         </div>
     </div>
 
     @if (!Model.Any())
     {
-        <div class="text-center py-5">
-            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light mb-3"
-                 style="width: 80px; height: 80px;">
-                <i class="bi bi-person-check fs-1 text-muted" style="opacity: 0.5;"></i>
+        <div class="text-center py-5 rounded-4 bg-light bg-opacity-50 border-0">
+            <div class="mb-3">
+                <i class="bi bi-person-check text-muted opacity-50" style="font-size: 4rem;"></i>
             </div>
-            <h5 class="text-muted">Nu ai nicio cerere în așteptare.</h5>
+            <h5 class="text-muted fw-bold">Nicio cerere în așteptare</h5>
+            <p class="text-muted small">Nu ai cereri noi de urmărire.</p>
         </div>
     }
     else
     {
-        <div class="row g-3">
-            @foreach (var request in Model)
-            {
-                <div class="col-md-6 col-lg-4 request-card" id="request-@request.Id">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-                        <div class="d-flex align-items-center justify-content-between">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var request in Model)
+                    {
+                        <div class="card border-0 shadow-sm rounded-4 p-3 request-item" id="request-@request.Id">
+                            <div class="d-flex align-items-center gap-3">
+                                @* Avatar *@
+                                <div class="flex-shrink-0">
+                                    <a asp-controller="Profile" asp-action="Index"
+                                       asp-route-username="@(request.Follower.CustomUsername ?? request.Follower.UserName)"
+                                       class="text-decoration-none">
+                                        @if (!string.IsNullOrEmpty(request.Follower.ProfilePicture))
+                                        {
+                                            <img src="@request.Follower.ProfilePicture"
+                                                 class="rounded-circle shadow-sm"
+                                                 style="width: 50px; height: 50px; object-fit: cover;"
+                                                 alt="@request.Follower.UserName">
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                                 style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: 600; font-size: 1rem;">
+                                                @request.Follower.UserName.Substring(0, 2).ToUpper()
+                                            </div>
+                                        }
+                                    </a>
+                                </div>
 
-                            <div class="d-flex align-items-center">
-                                <a asp-controller="Profile" asp-action="Index" asp-route-username="@request.Follower.CustomUsername" class="text-decoration-none">
-                                    @if (!string.IsNullOrEmpty(request.Follower.ProfilePicture))
-                                    {
-                                        <img src="@request.Follower.ProfilePicture" class="rounded-circle border"
-                                             style="width: 50px; height: 50px; object-fit: cover;">
-                                    }
-                                    else
-                                    {
-                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                                             style="width: 50px; height: 50px; font-weight: bold;">
-                                            @request.Follower.UserName.Substring(0, 1).ToUpper()
-                                        </div>
-                                    }
-                                </a>
-
-                                <div class="ms-3">
-                                    <h6 class="mb-0 fw-bold text-dark">@request.Follower.FullName</h6>
-                                    <small class="text-muted">@@@request.Follower.CustomUsername</small>
-                                    <br>
-                                    <small class="text-secondary" style="font-size: 0.75rem;">
-                                        <i class="bi bi-clock"></i> @request.RequestedAt.ToLocalTime().ToString("dd MMM")
+                                @* Info User *@
+                                <div class="flex-grow-1">
+                                    <a asp-controller="Profile" asp-action="Index"
+                                       asp-route-username="@(request.Follower.CustomUsername ?? request.Follower.UserName)"
+                                       class="text-decoration-none">
+                                        <h6 class="fw-bold mb-0 text-dark">
+                                            @(request.Follower.FullName ?? request.Follower.UserName)
+                                        </h6>
+                                    </a>
+                                    <small class="text-muted">
+                                        <span class="me-2">@@@(request.Follower.CustomUsername ?? request.Follower.UserName)</span>
+                                        <i class="bi bi-clock me-1"></i>
+                                        @request.RequestedAt.ToLocalTime().ToString("dd MMM, HH:mm")
                                     </small>
                                 </div>
+
+                                @* Butoane *@
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <button onclick="handleRequest(@request.Id, 'accept')"
+                                            class="btn btn-accept-gradient btn-sm rounded-pill px-4 fw-bold"
+                                            title="Acceptă cererea">
+                                        <i class="bi bi-check-circle me-1"></i> Acceptă
+                                    </button>
+
+                                    <button onclick="handleRequest(@request.Id, 'decline')"
+                                            class="btn btn-decline-outline btn-sm rounded-pill px-4 fw-bold"
+                                            title="Respinge cererea">
+                                        <i class="bi bi-x-circle me-1"></i> Respinge
+                                    </button>
+                                </div>
                             </div>
-
                         </div>
-
-                        <div class="d-flex gap-2 mt-3">
-                            <button onclick="handleRequest(@request.Id, 'accept')"
-                                    class="btn btn-primary flex-grow-1 rounded-pill fw-bold btn-sm shadow-sm"
-                                    style="background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%); border: none;">
-                                Acceptă
-                            </button>
-                            <button onclick="handleRequest(@request.Id, 'decline')"
-                                    class="btn btn-light flex-grow-1 rounded-pill fw-bold btn-sm text-danger border">
-                                Șterge
-                            </button>
-                        </div>
-                    </div>
+                    }
                 </div>
-            }
+            </div>
         </div>
     }
 </div>
@@ -88,35 +144,49 @@
                 ? '@Url.Action("AcceptRequest", "Profile")'
                 : '@Url.Action("DeclineRequest", "Profile")';
 
+            // Dezactivează butoanele pentru a preveni click-uri multiple
+            const buttons = card.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+
             $.ajax({
                 url: url,
                 type: 'POST',
                 data: { requestId: requestId },
                 headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() // pentru securitate 
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                 },
                 success: function (response) {
                     if (response.success) {
-                        // animatie de disparitie
+                        // Animație de dispariție
                         card.style.transition = "all 0.5s ease";
                         card.style.opacity = "0";
-                        card.style.transform = "translateX(20px)";
+                        card.style.transform = "translateX(50px)";
 
                         setTimeout(() => {
                             card.remove();
-                            // verificam daca mai sunt cereri
-                            // daca nu => empty state 
-                            if (document.querySelectorAll('.request-card').length === 0) {
-                                location.reload(); // refresh ca sa apara mesajul "Nu ai cereri"
+
+                            // Verifică dacă mai sunt cereri
+                            const remainingRequests = document.querySelectorAll('.request-item');
+                            if (remainingRequests.length === 0) {
+                                location.reload(); // Refresh pentru empty state
                             }
                         }, 500);
 
+                        // Afișează mesaj succes
+                        if (typeof showFloatingAlert === 'function') {
+                            const message = action === 'accept'
+                                ? 'Cerere acceptată cu succes! ✓'
+                                : 'Cerere respinsă.';
+                            showFloatingAlert(message, action === 'accept' ? 'success' : 'info');
+                        }
                     } else {
-                        alert("Ceva nu a mers bine.");
+                        alert("Ceva nu a mers bine. Te rugăm să încerci din nou.");
+                        buttons.forEach(btn => btn.disabled = false);
                     }
                 },
                 error: function () {
-                    alert("Eroare de comunicare. Încearcă un refresh.");
+                    alert("Eroare de comunicare. Te rugăm să reîncarci pagina.");
+                    buttons.forEach(btn => btn.disabled = false);
                 }
             });
         }

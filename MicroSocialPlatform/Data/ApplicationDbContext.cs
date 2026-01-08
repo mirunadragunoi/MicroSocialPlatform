@@ -1,6 +1,7 @@
 ﻿using MicroSocialPlatform.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace MicroSocialPlatform.Data
 {
@@ -24,6 +25,9 @@ namespace MicroSocialPlatform.Data
         public DbSet<GroupMember> GroupMembers { get; set; }
         public DbSet<GroupMessage> GroupMessages { get; set; }
         public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; }
+
+        // DbSet pentru postari salvate
+        public DbSet<SavedPost> SavedPosts { get; set; }
 
         // IMPLEMENTAREA RELATIILOR SI ETC
         protected override void OnModelCreating(ModelBuilder builder)
@@ -150,6 +154,18 @@ namespace MicroSocialPlatform.Data
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.Post)
+                .WithMany()
+                .HasForeignKey(sp => sp.PostId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.User)
+                .WithMany()
+                .HasForeignKey(sp => sp.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // index pentru performanta
             builder.Entity<Post>()
                 .HasIndex(p => p.CreatedAt);
@@ -158,6 +174,18 @@ namespace MicroSocialPlatform.Data
                 .HasIndex(p => p.UserId);
             builder.Entity<Notification>()
                 .HasIndex(n => new { n.RecipientId, n.IsRead, n.CreatedAt });
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.User)
+                .WithMany()
+                .HasForeignKey(sp => sp.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.Post)
+                .WithMany()
+                .HasForeignKey(sp => sp.PostId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

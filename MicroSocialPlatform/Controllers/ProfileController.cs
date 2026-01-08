@@ -239,6 +239,10 @@ namespace MicroSocialPlatform.Controllers
                 }
             }
 
+            // verific daca cumva userul isi schimba contul din PUBLIC in PRIVAT
+            bool wasPublic = user.IsPublic;
+            bool willBePrivate = !model.IsPublic;
+
             // actualizez datele utilizatorului
             user.FullName = model.FullName;
             user.CustomUsername = model.CustomUsername;
@@ -283,6 +287,29 @@ namespace MicroSocialPlatform.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
+                // daca contul devine privat, sterg postarile salvate de non-followeri
+                if (wasPublic && willBePrivate)
+                {
+                    // Găsește toți followerii tăi activi
+                    var followerIds = await _context.Follows
+                        .Where(f => f.FollowingId == user.Id && f.Status == FollowStatus.Accepted)
+                        .Select(f => f.FollowerId)
+                        .ToListAsync();
+
+                    // Șterge postările tale salvate de oameni care NU te urmăresc
+                    var savedPostsToRemove = await _context.SavedPosts
+                        .Where(sp => sp.Post.UserId == user.Id && !followerIds.Contains(sp.UserId))
+                        .ToListAsync();
+
+                    if (savedPostsToRemove.Any())
+                    {
+                        _context.SavedPosts.RemoveRange(savedPostsToRemove);
+                        await _context.SaveChangesAsync();
+
+                        _logger.LogInformation($"Removed {savedPostsToRemove.Count} saved posts after profile became private");
+                    }
+                }
+
                 _logger.LogInformation("User profile updated successfully.");
                 TempData["SuccessMessage"] = "Profilul a fost actualizat cu succes!";
                 return RedirectToAction(nameof(Index));
@@ -329,14 +356,32 @@ namespace MicroSocialPlatform.Controllers
                 _context.Follows.Remove(existingFollow);
                 await _context.SaveChangesAsync();
 
+                // daca userul are cont privat, sterg toate postarile salvate de la el
+                if (!targetUser.IsPublic)
+                {
+                    var savedPostsToRemove = await _context.SavedPosts
+                        .Where(sp => sp.UserId == currentUser.Id && sp.Post.UserId == userId)
+                        .ToListAsync();
+
+                    if (savedPostsToRemove.Any())
+                    {
+                        _context.SavedPosts.RemoveRange(savedPostsToRemove);
+                        await _context.SaveChangesAsync();
+
+                        _logger.LogInformation($"Removed {savedPostsToRemove.Count} saved posts from private user {userId}");
+                    }
+                }
+
                 var followersCount = await _context.Follows.CountAsync(f => f.FollowingId == userId);
+
+                TempData["InfoMessage"] = "Ai încetat să urmărești utilizatorul!";
 
                 return Json(new
                 {
                     success = true,
                     isFollowing = false,
                     followersCount = followersCount,
-                    message = "Ai încetat să urmărești utilizatorul!"
+                    message = "Ai încetat să urmărești utilizatorul!",
                 });
             }
             else
@@ -398,7 +443,7 @@ namespace MicroSocialPlatform.Controllers
                     isFollowing = newFollow.Status == FollowStatus.Accepted,
                     isPending = newFollow.Status == FollowStatus.Pending,
                     followersCount = followersCount,
-                    message = message
+                    message = message,
                 });
             }
         }
@@ -543,6 +588,24 @@ namespace MicroSocialPlatform.Controllers
                 return Forbid();
             }
 
+            var followerId = request.FollowerId;
+
+            // daca am cont privat, sterg toate postarile salvate de la followerul respins
+            if (!currentUser.IsPublic)
+            {
+                var savedPostsToRemove = await _context.SavedPosts
+                    .Where(sp => sp.UserId == followerId && sp.Post.UserId == currentUser.Id)
+                    .ToListAsync();
+
+                if (savedPostsToRemove.Any())
+                {
+                    _context.SavedPosts.RemoveRange(savedPostsToRemove);
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation($"Removed {savedPostsToRemove.Count} saved posts from declined follower");
+                }
+            }
+
             _context.Follows.Remove(request);
             await _context.SaveChangesAsync();
 
@@ -553,23 +616,32 @@ namespace MicroSocialPlatform.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFollowersList(string? userId)
         {
+            var currentUser = await _userManager.GetUserAsync(User);
+            var isOwnProfile = currentUser?.Id == userId;
+
             var followers = await _context.Follows
                 .Where(f => f.FollowingId == userId && f.Status == FollowStatus.Accepted)
                 .Select(f => f.Follower)
                 .ToListAsync();
-            return PartialView("_UserListModal", followers);
+            ViewBag.IsOwnProfile = isOwnProfile;
+
+            return PartialView("_FollowersListModal", followers);
         }
 
         // get - vizualizare lista de utilizatori care urmaresc utilizatorul curent
         [HttpGet]
         public async Task<IActionResult> GetFollowingList(string? userId)
         {
+            var currentUser = await _userManager.GetUserAsync(User);
+            var isOwnProfile = currentUser?.Id == userId;
+
             var following = await _context.Follows
                 .Where(f => f.FollowerId == userId && f.Status == FollowStatus.Accepted)
                 .Select(f => f.Following)
                 .ToListAsync();
+            ViewBag.IsOwnProfile = isOwnProfile;
 
-            return PartialView("_UserListModal", following);
+            return PartialView("_FollowingListModal", following);
         }
 
         // metode de acceptare/respingere cereri de follow din pagina de profil
@@ -634,6 +706,112 @@ namespace MicroSocialPlatform.Controllers
                 return LocalRedirect(returnUrl);
             }
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unfollow(string userId)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Json(new { success = false, message = "Trebuie să fii autentificat!" });
+            }
+
+            var existingFollow = await _context.Follows
+                .Include(f => f.Following)
+                .FirstOrDefaultAsync(f => f.FollowerId == currentUser.Id && f.FollowingId == userId);
+
+            if (existingFollow == null)
+            {
+                TempData["ErrorMessage"] = "Nu urmărești acest utilizator!";
+                return RedirectToAction("Index", new { username = existingFollow?.Following?.CustomUsername ?? existingFollow?.Following?.UserName });
+            }
+
+            var targetUsername = existingFollow.Following?.CustomUsername ?? existingFollow.Following?.UserName;
+            var targetUser = existingFollow.Following;
+
+            _context.Follows.Remove(existingFollow);
+            await _context.SaveChangesAsync();
+
+            // daca userul are cont privat, sterg toate postarile salvate de la el
+            if (targetUser != null && !targetUser.IsPublic)
+            {
+                var savedPostsToRemove = await _context.SavedPosts
+                    .Where(sp => sp.UserId == currentUser.Id && sp.Post.UserId == userId)
+                    .ToListAsync();
+
+                if (savedPostsToRemove.Any())
+                {
+                    _context.SavedPosts.RemoveRange(savedPostsToRemove);
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation($"Removed {savedPostsToRemove.Count} saved posts from private user {userId}");
+                }
+            }
+
+            TempData["InfoMessage"] = "Ai încetat să urmărești utilizatorul!";
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                Request.ContentType?.Contains("application/json") == true)
+            {
+                var followersCount = await _context.Follows
+                    .CountAsync(f => f.FollowingId == userId && f.Status == FollowStatus.Accepted);
+
+                return Json(new
+                {
+                    success = true,
+                    isFollowing = false,
+                    followersCount = followersCount,
+                    message = "Ai încetat să urmărești utilizatorul!",
+                    reload = true
+                });
+            }
+            else
+            {
+                return RedirectToAction("Index", new { username = targetUsername });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFollower(string userId)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Json(new { success = false, message = "Trebuie să fii autentificat!" });
+            }
+
+            // gaseste relatia unde userId te urmareste
+            var follow = await _context.Follows
+                .FirstOrDefaultAsync(f => f.FollowerId == userId && f.FollowingId == currentUser.Id);
+
+            if (follow != null)
+            {
+                _context.Follows.Remove(follow);
+                await _context.SaveChangesAsync();
+
+                // daca am cont privat, sterg toate postarile salvate de la followerul eliminat
+                if (!currentUser.IsPublic)
+                {
+                    var savedPostsToRemove = await _context.SavedPosts
+                        .Where(sp => sp.UserId == userId && sp.Post.UserId == currentUser.Id)
+                        .ToListAsync();
+
+                    if (savedPostsToRemove.Any())
+                    {
+                        _context.SavedPosts.RemoveRange(savedPostsToRemove);
+                        await _context.SaveChangesAsync();
+
+                        _logger.LogInformation($"Removed {savedPostsToRemove.Count} saved posts from removed follower");
+                    }
+                }
+
+                return Json(new { success = true, message = "Urmăritor eliminat cu succes!" });
+            }
+
+            return Json(new { success = false, message = "Relația de follow nu există!" });
         }
     }
 }

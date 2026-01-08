@@ -376,16 +376,50 @@ namespace MicroSocialPlatform.Controllers
                 return Challenge();
             }
 
-            var group = await _context.Groups.FindAsync(id);
+            var group = await _context.Groups
+                .Include(g => g.Members)
+                    .ThenInclude(m => m.User)
+                .FirstOrDefaultAsync(g => g.Id == id);
             if (group == null)
             {
                 return NotFound();
             }
 
+            var isAdmin = User.IsInRole("Administrator");
+
             // doar proprietarul sau adminul platformei poate sterge grupul 
-            if (group.OwnerId != user.Id && !User.IsInRole("Administrator"))
+            if (group.OwnerId != user.Id && !isAdmin)
             {
                 return Forbid();
+            }
+
+            // salvez informatiile inainte de stergere
+            var groupName = group.Name;
+            var memberIds = group.Members
+                .Where(m => m.UserId != user.Id)
+                .Select(m => m.UserId)
+                .ToList();
+
+            // trimit notificare la toti membrii grupului, fara userului care il sterge
+            foreach (var memberId in memberIds)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = memberId,
+                    SenderId = user.Id,
+                    Type = NotificationType.GroupDeleted,
+                    Content = $"a șters grupul '{group.Name}' din care făceai parte.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    RelatedUrl = "/Groups/Index"
+                };
+                _context.Notifications.Add(notification);
+            }
+
+            // salvez modificarile inainte de stergere
+            if (memberIds.Any())
+            {
+                await _context.SaveChangesAsync();
             }
 
             _context.Groups.Remove(group);

@@ -29,16 +29,13 @@
             }
 
         @@keyframes pulse {
-            0%, 100%
+            0%, 100% {
+                transform: scale(1);
+            }
 
-        {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.1);
-        }
-
+            50% {
+                transform: scale(1.1);
+            }
         }
 
         /* alert overlay pt utilizatori neautentificati */
@@ -123,7 +120,7 @@
 </head>
 
 <script>
-    // functii pentru alert autentificare
+    // 1. Functii pentru alert autentificare
     function showAuthAlert() {
         const alert = document.getElementById('authRequiredAlert');
         if (alert) {
@@ -140,7 +137,7 @@
         }
     }
 
-    // inchide alert cand se da click pe fundal
+    // Inchide alert cand se da click pe fundal
     document.addEventListener('DOMContentLoaded', function() {
         const overlay = document.getElementById('authRequiredAlert');
         if (overlay) {
@@ -151,6 +148,131 @@
             });
         }
     });
+
+    // 2. Functii pentru alerte plutitoare (Toast)
+    function showFloatingAlert(message, type) {
+        const container = document.getElementById('ajax-alert-container');
+
+        let bgStyle = '';
+        let iconClass = '';
+
+        if (type === 'success') {
+            // Salvare - VERDE
+            bgStyle = 'background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;';
+            iconClass = 'bi-check-circle-fill';
+        } else {
+            // Stergere - ROSU
+            bgStyle = 'background-color: #ffffff; color: #dc3545; border: 1px solid #dc3545; border-left: 5px solid #dc3545;';
+            iconClass = 'bi-trash3-fill';
+        }
+
+        const html = `
+            <div class="alert alert-dismissible fade show shadow rounded-3 mb-2" role="alert" style="${bgStyle}">
+                <div class="d-flex align-items-center">
+                    <i class="bi ${iconClass} fs-4 me-2"></i>
+                    <div class="fw-bold">${message}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        setTimeout(() => {
+            const alertElement = container.querySelector('.alert');
+            if (alertElement) {
+                const bsAlert = new bootstrap.Alert(alertElement);
+                bsAlert.close();
+            }
+        }, 3000);
+    }
+
+    // 3. MODALA DE APRECIERI (LIKES) - VERSIUNEA CORECTA
+    function openLikesModal(postId) {
+        const modalElement = document.getElementById('likesModal');
+        const modalBody = document.getElementById('likesModalBody');
+
+        // Protectie: daca elementele nu exista in pagina, ne oprim
+        if (!modalElement || !modalBody) return;
+
+        const bsModal = new bootstrap.Modal(modalElement);
+
+        // Configurare Emoji Map
+        const emojiMap = {
+            1: '❤️', 2: '🥰', 3: '😂', 4: '😮', 5: '😢', 6: '😠'
+        };
+
+        modalBody.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>`;
+        bsModal.show();
+
+        // ATENTIE: Verifica ruta aici. Daca controllerul e "PostsController", pune "/Posts/". Daca e "PostController", pune "/Post/"
+        fetch(`/Post/GetPostLikes/${postId}`)
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(users => {
+                if (users.length === 0) {
+                    modalBody.innerHTML = `
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-heart fs-1 opacity-50"></i>
+                            <p class="mt-2 mb-0">Nimeni nu a apreciat încă.</p>
+                        </div>`;
+                    return;
+                }
+
+                let html = '<div class="list-group list-group-flush py-2">';
+
+                users.forEach(user => {
+                    let avatarHtml = '';
+                    if (user.profilePicture) {
+                        avatarHtml = `<img src="${user.profilePicture}" class="rounded-circle border" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    } else {
+                        let initials = (user.userName || "AN").substring(0, 2).toUpperCase();
+                        avatarHtml = `
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-light text-primary border fw-bold"
+                                 style="width: 100%; height: 100%;">
+                                ${initials}
+                            </div>`;
+                    }
+
+                    let reactionEmoji = emojiMap[user.reactionType] || '❤️';
+
+                    html += `
+                        <a href="/Profile?username=${user.userName}" class="list-group-item list-group-item-action border-0 px-4 py-2">
+                            <div class="d-flex align-items-center">
+                                <div class="position-relative me-3" style="width: 48px; height: 48px; flex-shrink: 0;">
+                                    ${avatarHtml}
+
+                                    <span class="position-absolute bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                          style="width: 22px; height: 22px; font-size: 14px; bottom: -2px; right: -2px; border: 2px solid white; z-index: 2;">
+                                        ${reactionEmoji}
+                                    </span>
+                                </div>
+
+                                <div class="overflow-hidden">
+                                    <h6 class="mb-0 fw-bold text-dark text-truncate">${user.fullName || user.userName}</h6>
+                                    <small class="text-muted">${user.userName}</small>
+                                </div>
+                                <div class="ms-auto ps-2">
+                                    <i class="bi bi-chevron-right text-muted opacity-50"></i>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                html += '</div>';
+                modalBody.innerHTML = html;
+            })
+            .catch(err => {
+                console.error(err);
+                modalBody.innerHTML = '<p class="text-danger text-center py-4">Eroare la încărcare. Verifică consola (F12).</p>';
+            });
+    }
 </script>
 
 <body>
@@ -159,7 +281,6 @@
     @inject SignInManager<ApplicationUser> SignInManager
     @inject UserManager<ApplicationUser> UserManager
 
-    <!-- alerta pentru utilizatorii neautentificati -->
     <div id="authRequiredAlert" class="auth-alert-overlay" style="display: none;">
         <div class="auth-alert-content">
             <button type="button" class="alert-close" onclick="closeAuthAlert()">
@@ -186,10 +307,8 @@
         </div>
     </div>
 
-    <!-- top navbar orizontal-->
     <nav class="top-navbar">
         <div class="top-navbar-content">
-            <!-- logo agora pe stanga -->
             <div class="navbar-logo">
                 <a asp-area="" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-chat-dots-fill"></i>
@@ -197,7 +316,6 @@
                 </a>
             </div>
 
-            <!-- search bar pe centru -->
             <div class="navbar-search">
                 <form method="get" action="@Url.Action("Index", "Search")" class="w-100">
                     <div class="search-box">
@@ -207,7 +325,6 @@
                 </form>
             </div>
 
-            <!-- user menu pe dreapta -->
             <div class="navbar-user">
                 <partial name="_LoginPartial" />
             </div>
@@ -215,7 +332,6 @@
     </nav>
 
 
-    <!-- sidebar vertical pe stanga -->
     <aside class="sidebar">
         <nav class="sidebar-nav">
             @if (SignInManager.IsSignedIn(User))
@@ -232,9 +348,19 @@
                         <span>Grupuri</span>
                     </a>
 
+                    <a asp-area="" asp-controller="Post" asp-action="Saved" class="sidebar-link">
+                        <i class="bi bi-bookmark-fill"></i>
+                        <span>Salvate</span>
+                    </a>
+
                     <a asp-area="" asp-controller="Admin" asp-action="Users" class="sidebar-link">
                         <i class="bi bi-shield-fill"></i>
                         <span>Utilizatori</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Admin" asp-action="Report" class="sidebar-link">
+                        <i class="bi bi-shield-fill"></i>
+                        <span>Raportări</span>
                     </a>
 
                     <a asp-area="" asp-controller="Admin" asp-action="Index" class="sidebar-link">
@@ -257,7 +383,6 @@
                 }
                 else
                 {
-                    <!-- menu pentru utilizatorii autentificati -->
                     <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
                         <i class="bi bi-house-door-fill"></i>
                         <span>Acasa</span>
@@ -266,6 +391,11 @@
                     <a asp-area="" asp-controller="Groups" asp-action="Index" class="sidebar-link">
                         <i class="bi bi-people-fill"></i>
                         <span>Grupuri</span>
+                    </a>
+
+                    <a asp-area="" asp-controller="Post" asp-action="Saved" class="sidebar-link">
+                        <i class="bi bi-bookmark-fill"></i>
+                        <span>Salvate</span>
                     </a>
 
                     <a asp-area="" asp-controller="Notification" asp-action="Index" class="sidebar-link position-relative">
@@ -289,7 +419,6 @@
             }
             else
             {
-                <!-- menu pentru vizitatori -->
                 <a asp-area="" asp-controller="Home" asp-action="Index" class="sidebar-link active">
                     <i class="bi bi-house-door-fill"></i>
                     <span>Acasă</span>
@@ -312,19 +441,32 @@
             }
         </nav>
 
-        <!-- footer sidebar -->
         <div class="sidebar-footer">
             <small>&copy; 2025 Agora</small>
         </div>
     </aside>
 
-    <!-- main content area -->
+    <div id="ajax-alert-container" style="position: fixed; top: 100px; right: 20px; z-index: 9999; min-width: 300px;"></div>
+
     <main class="main-content">
         <div class="content-wrapper">
             <partial name="_StatusMessages" />
             @RenderBody()
         </div>
     </main>
+
+    <div class="modal fade" id="likesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-4 shadow border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Aprecieri</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" id="likesModalBody">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

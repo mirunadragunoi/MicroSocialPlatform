@@ -143,6 +143,7 @@ namespace MicroSocialPlatform.Controllers
                 _context.Notifications.Add(notification);
             }
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Postarea a fost creată cu succes!";
 
             return RedirectToAction("Index", "Home");
         }
@@ -166,6 +167,43 @@ namespace MicroSocialPlatform.Controllers
             if (!User.IsInRole("Administrator") && post.UserId != user.Id)
             {
                 return Forbid(); // doar adminul sau proprietarul postarii poate sterge
+            }
+
+            // ✅ Salvează informații înainte de ștergere
+            var postOwnerId = post.UserId;
+            var postOwner = post.User;
+
+            // Dacă post.User e null, încarcă manual
+            if (postOwner == null)
+            {
+                postOwner = await _context.Users.FindAsync(postOwnerId);
+            }
+
+            var savedPosts = await _context.SavedPosts
+                .Where(sp => sp.PostId == id)
+                .ToListAsync();
+
+            if (savedPosts.Any())
+            {
+                _context.SavedPosts.RemoveRange(savedPosts);
+                await _context.SaveChangesAsync(); // Salvează înainte de a continua
+            }
+
+            // ✅ 2. Trimite notificare DOAR dacă altcineva șterge postarea
+            if (postOwnerId != user.Id && postOwner != null)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = postOwnerId,
+                    SenderId = user.Id,
+                    Type = NotificationType.PostDeleted,
+                    Content = "ți-a șters o postare.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    RelatedUrl = $"/Profile/Index?username={postOwner.CustomUsername ?? postOwner.UserName}"
+                };
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync(); // Salvează notificarea ÎNAINTE de ștergere
             }
 
             // sterg media asociata
@@ -322,10 +360,10 @@ namespace MicroSocialPlatform.Controllers
         {
             var publicPosts = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)  
+                .Include(p => p.Likes)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
-                .Include(p => p.PostMedias)  
+                .Include(p => p.PostMedias)
                 .Where(p => p.User.IsPublic)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(50)
@@ -369,8 +407,8 @@ namespace MicroSocialPlatform.Controllers
         {
             var post = await _context.Posts
                 .Include(p => p.User)
-                .Include(p => p.Likes)          
-                    .ThenInclude(l => l.User)   
+                .Include(p => p.Likes)
+                    .ThenInclude(l => l.User)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
                 .Include(p => p.PostMedias)
@@ -378,6 +416,7 @@ namespace MicroSocialPlatform.Controllers
 
             if (post == null)
             {
+                TempData["ErrorMessage"] = "Nu ai permisiunea să vezi această postare.";
                 return NotFound();
             }
 
@@ -437,5 +476,144 @@ namespace MicroSocialPlatform.Controllers
 
             return isFollowing;
         }
+
+        // actiune pentru butonul de salvare postare
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> ToggleSave(int postId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var existingSave = await _context.SavedPosts
+                .FirstOrDefaultAsync(sp => sp.PostId == postId && sp.UserId == user.Id);
+
+            bool isSaved = false;
+
+            if (existingSave != null)
+            {
+                // daca exista deja, sterg salvarea
+                _context.SavedPosts.Remove(existingSave);
+                isSaved = false;
+            }
+            else
+            {
+                // daca nu exista, creez o noua salvare
+                var savedPost = new SavedPost
+                {
+                    PostId = postId,
+                    UserId = user.Id,
+                    SavedAt = DateTime.UtcNow
+                };
+                _context.SavedPosts.Add(savedPost);
+                isSaved = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, isSaved = isSaved });
+        }
+
+        // GET - lista de postari salvate
+        [Authorize]
+        public async Task<IActionResult> Saved()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var savedPosts = await _context.SavedPosts
+                .Include(s => s.Post)
+                    .ThenInclude(p => p.User)
+                .Include(s => s.Post)
+                    .ThenInclude(p => p.Comments)
+                .Include(s => s.Post)
+                    .ThenInclude(p => p.Likes)
+                .Where(s => s.UserId == user.Id)
+                .OrderByDescending(s => s.SavedAt)
+                .Select(s => s.Post)
+                .ToListAsync();
+
+            return View(savedPosts);
+        }
+
+        // reactiile de la o postare pentru modala
+        [HttpGet]
+        public async Task<IActionResult> GetPostLikes(int id)
+        {
+            var post = await _context.Posts
+                .Include(p => p.Likes)
+                .ThenInclude(l => l.User)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (post == null)
+            {
+                return NotFound();
+            }
+
+            // Returnam un obiect anonim simplu, usor de citit de JS
+            var likers = post.Likes.Select(l => new
+            {
+                userId = l.UserId,
+                userName = l.User.UserName,
+                fullName = l.User.FullName,
+                profilePicture = l.User.ProfilePicture,
+                reactionType = (int)l.Type // Trimitem tipul reactiei ca numar (1, 2, 3...)
+            }).ToList();
+
+            return Json(likers);
+        }
+
+        // functie pentru unsaved post
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnsavePost(int postId)
+        {
+            try
+            {
+
+
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+
+                    return Json(new { success = false, message = "Trebuie să fii autentificat!" });
+                }
+
+
+
+                var savedPost = await _context.SavedPosts
+                    .FirstOrDefaultAsync(sp => sp.PostId == postId && sp.UserId == currentUser.Id);
+
+                if (savedPost == null)
+                {
+
+                    return Json(new { success = false, message = "Postarea nu este salvată!" });
+                }
+
+                _context.SavedPosts.Remove(savedPost);
+                await _context.SaveChangesAsync();
+
+
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Postarea a fost eliminată din salvate!"
+                });
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { success = false, message = "Eroare la eliminarea postării: " + ex.Message });
+            }
+        }
+
     }
 }

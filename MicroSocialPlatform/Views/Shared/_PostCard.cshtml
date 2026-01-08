@@ -1,123 +1,211 @@
 ﻿@model MicroSocialPlatform.Models.Post
 
-<div class="card mb-3 post-card border-0 shadow-sm rounded-4" style="overflow: visible;">
+<div class="card border-0 shadow-sm rounded-4 post-card mb-4" style="overflow: visible;">
+    @* Header - Click pentru profil *@
     <div class="card-body">
         <div class="d-flex gap-3 mb-3">
-            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
-               class="text-decoration-none" style="text-decoration: none !important;">
-                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User.CustomUsername ?? Model.User.UserName)" class="text-decoration-none">
-                    @if (!string.IsNullOrEmpty(Model.User.ProfilePicture))
-                    {
-                        <img src="@Model.User.ProfilePicture"
-                             alt="Profile Picture"
-                             class="rounded-circle border"
-                             style="width: 40px; height: 40px; object-fit: cover;">
-                    }
-                    else
-                    {
-                        <div class="user-avatar" style="width: 40px; height:40px; ... (stilurile tale existente) ...">
-                            <span>
-                                @(Model.User.UserName?.Substring(0, 2).ToUpper() ?? "AN")
-                            </span>
-                        </div>        
-                    }
-                </a>
+            <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)"
+               class="text-decoration-none"
+               onclick="event.stopPropagation();">
+                @if (!string.IsNullOrEmpty(Model.User.ProfilePicture))
+                {
+                    <img src="@Model.User.ProfilePicture" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;">
+                }
+                else
+                {
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span>@(Model.User.UserName?.Substring(0, 2).ToUpper() ?? "AN")</span>
+                    </div>
+                }
             </a>
 
-            <div class="flex-grow-1">
-                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)" 
-                   class="text-decoration-none text-dark">
-                    <h6 class="mb-0">@(Model.User?.FullName ?? Model.User?.UserName ?? "Anonim")</h6>
+            <div class="flex-grow-1" style="cursor: pointer;" onclick="openPost(@Model.Id, event)">
+                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(Model.User?.CustomUsername ?? Model.User?.UserName)"
+                   class="text-decoration-none text-dark"
+                   onclick="event.stopPropagation();">
+                    <h6 class="mb-0">@(Model.User?.FullName ?? Model.User?.UserName)</h6>
                 </a>
-                <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" 
-                   class="text-decoration-none text-muted" style="text-decoration: none !important;">
-                    <small class="text-muted" style="font-size: 0.8rem;">
-                        @Model.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")
-
-                        @if (Model.UpdatedAt != null && Model.UpdatedAt != Model.CreatedAt)
-                        {
-                            <span class="fst-italic ms-1" title="Editat la @Model.UpdatedAt.Value.ToLocalTime().ToString("g")">
-                                (editat)
-                            </span>
-                        }
-                    </small>
-                </a>
+                <small style="font-size: 0.8rem; color: #666;">@Model.CreatedAt.ToLocalTime().ToString("dd MMM HH:mm")</small>
             </div>
 
-            <div class="dropdown">
-                <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-three-dots"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-flag me-2"></i> Raportează</a></li>
-
-                    @{
-                        var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
-                        var isAdmin = User.IsInRole("Administrator");
-                    }
-
-                    @if (isOwner || isAdmin)
-                    {
-                        <li><hr class="dropdown-divider"></li>
-                    }
-
-                    @if (isOwner)
-                    {
+            @if (User.Identity.IsAuthenticated)
+            {
+                <div class="dropdown" onclick="event.stopPropagation();">
+                    <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                         <li>
-                            <a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item">
-                                <i class="bi bi-pencil-square me-2"></i> Editeaza Postarea
+                            <a class="dropdown-item" href="javascript:void(0);" onclick="toggleSavePost(@Model.Id, this)">
+                                <i class="bi bi-bookmark me-2"></i> Salvează
+                            </a>
+                            <a class="dropdown-item" href="javascript:void(0);" onclick="toggleReportPost(@Model.Id, this)">
+                                <i class="bi bi-flag me-2"></i> Raportează
                             </a>
                         </li>
-                    }
-
-                    @if (isOwner || isAdmin)
-                    {
-                        <li>
-                            <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
-                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ești sigur că vrei să ștergi această postare?');">
-                                    <i class="bi bi-trash3-fill me-2"></i> Șterge Postarea
-                                </button>
-                            </form>
-                        </li>
-                    }
-                </ul>
+                        @{
+                            var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
+                            var isAdmin = User.IsInRole("Administrator");
+                        }
+                        @if (isOwner || isAdmin)
+                        {
+                            <li><hr class="dropdown-divider"></li>
+                            @if (isOwner)
+                            {
+                                <li><a asp-controller="Post" asp-action="Edit" asp-route-id="@Model.Id" class="dropdown-item"><i class="bi bi-pencil-square me-2"></i> Editeaza</a></li>
+                            }
+                            <li>
+                                <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Ștergi postarea?');"><i class="bi bi-trash3-fill me-2"></i> Șterge</button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
             </div>
+            }
         </div>
 
-        <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none text-dark">
-            <p class="card-text">
-                @Model.Content
-            </p>
+        @* Content Text - Click deschide postarea *@
+        <div class="card-text mb-3" style="cursor: pointer;" onclick="openPost(@Model.Id, event)">
+            @Model.Content
+        </div>
+    </div>
 
-            @if (Model.PostMedias != null && Model.PostMedias.Any())
+    @* Media - Click deschide postarea *@
+    @if (Model.PostMedias != null && Model.PostMedias.Any())
+    {
+        <div class="post-media-container mb-3">
+            @foreach (var media in Model.PostMedias)
             {
-                <div class="row g-2 mb-3">
-                    @foreach (var media in Model.PostMedias)
-                    {
-                        <div class="col-md-6">
-                            @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
-                            {
-                                <img src="@media.Url" class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover; cursor: pointer;" alt="Post image">
-                            }
-                            else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
-                            {
-                                <video controls class="img-fluid rounded border w-100" style="height: 250px; object-fit: cover; cursor: pointer;">
-                                    <source src="@media.Url" type="video/mp4">
-                                </video>
-                            }
-                        </div>
-                    }
-                </div>
+                @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
+                {
+                    <div class="position-relative rounded-3 overflow-hidden"
+                         style="aspect-ratio: 1; cursor: pointer; background: #f8f9fa;"
+                         onclick="openPost(@Model.Id, event)">
+                        <img src="@media.Url"
+                             class="w-100 h-100 post-image"
+                             style="object-fit: cover; transition: transform 0.3s;"
+                             alt="Post image">
+                    </div>
+                }
+                else if (media.MediaType == MicroSocialPlatform.Models.MediaType.Video)
+                {
+                    <div class="position-relative rounded-3 overflow-hidden"
+                         style="aspect-ratio: 16/9; background: #000;">
+                        <video controls class="w-100 h-100" style="object-fit: contain;" onclick="event.stopPropagation();">
+                            <source src="@media.Url" type="video/mp4">
+                        </video>
+                    </div>
+                }
             }
-        </a>
+        </div>
+    }
 
-        <div class="post-actions d-flex gap-3 pt-2 border-top align-items-center">
-            <partial name="_LikePartial" model="Model" />
+    @* Buttons - NU deschid postarea *@
+    <div class="card-body pt-0">
+        <hr class="my-2 opacity-10">
 
-            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link text-muted text-decoration-none">
-                <i class="bi bi-chat"></i> Comentează <span class="badge bg-light text-dark">@Model.CommentsCount</span>
+        <div class="d-flex align-items-end gap-2 pt-2" onclick="event.stopPropagation();">
+            @* Buton Like *@
+            <div class="flex-fill">
+                <partial name="_LikePartial" model="Model" />
+            </div>
+
+            @* Buton Comentează - Deschide postarea *@
+            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id"
+               class="btn btn-light flex-fill rounded-pill fw-bold text-muted d-flex align-items-center justify-content-center gap-2"
+               style="height: 40px; border: 1px solid #e9ecef !important;"
+               onclick="event.stopPropagation();">
+                <i class="bi bi-chat"></i>
+                <span>Comentează</span>
+                @if ((Model.Comments?.Count ?? 0) > 0)
+                {
+                    <span class="badge bg-primary text-white rounded-pill">
+                        @Model.Comments.Count
+                    </span>
+                }
             </a>
         </div>
     </div>
 </div>
+
+<script>
+    function openPost(postId, event) {
+        // Verifică dacă click-ul a fost pe un element interactiv
+        const target = event.target;
+        const isInteractive = target.closest('button, a, .dropdown, input, video, .reaction-picker, .reaction-item, .like-count-badge');
+
+        if (!isInteractive) {
+            window.location.href = '/Post/Details/' + postId;
+        }
+    }
+
+    function toggleSavePost(postId, element) {
+        if(element.style.pointerEvents === 'none') return;
+        element.style.pointerEvents = 'none';
+
+        const icon = element.querySelector('i');
+        const originalIconClass = icon.className;
+
+        fetch('/Post/ToggleSave', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `postId=${postId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if(data.isSaved) {
+                    showFloatingAlert("Postare salvată în colecție! 📌", "success");
+                    if(icon) icon.className = "bi bi-bookmark-fill me-2 text-primary";
+                } else {
+                    showFloatingAlert("Postare ștearsă din colecție.", "danger");
+                    if(icon) icon.className = "bi bi-bookmark me-2";
+
+                    if (window.location.pathname.toLowerCase().includes('/saved')) {
+                        const cardColumn = element.closest('.col-md-6, .col-lg-4, .col-12');
+                        if (cardColumn) {
+                            cardColumn.style.transition = "all 0.5s ease";
+                            cardColumn.style.opacity = "0";
+                            cardColumn.style.transform = "scale(0.9)";
+
+                            setTimeout(() => {
+                                cardColumn.remove();
+                                const remainingPosts = document.querySelectorAll('.post-card');
+                                if(remainingPosts.length === 0) {
+                                    location.reload();
+                                }
+                            }, 500);
+                        }
+                    }
+                }
+            } else {
+                showFloatingAlert("Trebuie să fii autentificat!", "danger");
+                if(icon) icon.className = originalIconClass;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showFloatingAlert("A apărut o eroare.", "danger");
+        })
+        .finally(() => {
+            element.style.pointerEvents = 'auto';
+        });
+    }
+</script>
+
+<style>
+    .post-media-container {
+        position: relative;
+    }
+
+    .post-image {
+        transition: transform 0.3s ease;
+    }
+
+    .post-card:hover .post-image {
+        transform: scale(1.05);
+    }
+
+    .rounded-3 {
+        border-radius: 12px !important;
+    }
+</style>

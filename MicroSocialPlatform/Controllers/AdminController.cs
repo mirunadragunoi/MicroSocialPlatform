@@ -126,6 +126,12 @@ namespace MicroSocialPlatform.Controllers
             // 10. Acum șterge userul (nu mai are dependențe FK)
             var result = await _userManager.DeleteAsync(user);
 
+            // sterg rapoartele facute de utilizator
+            //var userReports = await _context.Reports
+                //.Where(r => r.UserId == userId)
+                //.ToListAsync();
+            //_context.Reports.RemoveRange(userReports);
+
             if (result.Succeeded)
             {
                 TempData["SuccessMessage"] = $"Utilizatorul {user.UserName} a fost șters cu succes!";
@@ -185,5 +191,6 @@ namespace MicroSocialPlatform.Controllers
 
             return View(model);
         }
+
     }
 }

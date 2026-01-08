@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Înregistrare";
-    Layout = null; // Fără layout pentru pagină full-screen
+    Layout = null; // fara layout pentru pagina full-screen
 }
 
 <!DOCTYPE html>
@@ -42,7 +42,7 @@
 
                     <!-- Email -->
                     <div class="form-floating mb-3">
-                        <input asp-for="Email" class="form-control" placeholder="Email" />
+                        <input asp-for="Email" class="form-control" placeholder="exemplu@email.com" />
                         <label asp-for="Email">Email</label>
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
@@ -106,3 +106,36 @@
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
 </body>
 </html>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        let emailCheckTimeout;
+        
+        document.getElementById('Email')?.addEventListener('input', function(e) {
+            clearTimeout(emailCheckTimeout);
+            const email = e.target.value;
+            const feedbackDiv = document.getElementById('email-feedback');
+            
+            if (!email || !email.includes('@@')) {
+                if (feedbackDiv) feedbackDiv.innerHTML = '';
+                return;
+            }
+            
+            emailCheckTimeout = setTimeout(() => {
+                fetch('/Account/CheckEmailAvailable?email=' + encodeURIComponent(email))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!feedbackDiv) return;
+                        
+                        if (data.available) {
+                            feedbackDiv.innerHTML = '<small class="text-success">✓ Email disponibil</small>';
+                        } else {
+                            feedbackDiv.innerHTML = '<small class="text-danger">✗ Acest email este deja folosit</small>';
+                        }
+                    });
+            }, 500);
+        });
+    </script>
+}

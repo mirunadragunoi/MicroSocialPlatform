@@ -91,6 +91,14 @@
                 if (notification.Type == NotificationType.Like) { iconClass = "bi-heart-fill"; gradient = "linear-gradient(135deg, #ff9a9e, #fecfef)"; }
                 else if (notification.Type == NotificationType.Comment) { iconClass = "bi-chat-dots-fill"; gradient = "linear-gradient(135deg, #a18cd1, #fbc2eb)"; }
                 else if (notification.Type == NotificationType.Follow) { iconClass = "bi-person-plus-fill"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+                else if (notification.Type == NotificationType.FollowRequest) { iconClass = "bi-person-fill-exclamation text-warning"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+                else if (notification.Type == NotificationType.FollowAccepted) { iconClass = "bi-check-circle-fill text-success"; gradient = "linear-gradient(135deg, #a18cd1, #fbc2eb)"; }
+                else if (notification.Type == NotificationType.GroupJoinRequest) { iconClass = "bi-people-fill text-primary"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+                else if (notification.Type == NotificationType.GroupJoinAccepted) { iconClass = "bi-check-circle-fill text-success"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+                else if (notification.Type == NotificationType.PostDeleted) { iconClass = "bi-trash-fill text-danger"; gradient = "linear-gradient(135deg, #a18cd1, #fbc2eb)"; }
+                else if (notification.Type == NotificationType.CommentDeleted) { iconClass = "bi-trash-fill text-warning"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+                else if (notification.Type == NotificationType.GroupDeleted) { iconClass = "bi-x-circle-fill text-danger"; gradient = "linear-gradient(135deg, #84fab0, #8fd3f4)"; }
+
 
                 <a href="@notification.RelatedUrl"
                    class="list-group-item list-group-item-action notification-item p-3 border-0 border-bottom @(isUnread ? "notification-unread" : "notification-read")"

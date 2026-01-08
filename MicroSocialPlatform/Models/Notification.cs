@@ -56,5 +56,8 @@ namespace MicroSocialPlatform.Models
         Mention = 8,            // ai fost mentionat undeva??? maybe
         GroupJoinRequest = 9,   // cerere de join pt un grup
         GroupJoinAccepted = 10, // cererea de join pt un grup a fost acceptata
+        PostDeleted = 11,       // daca o postare a mea a fost stearsa
+        CommentDeleted = 12,    // daca un comentariu lasat de mine a fost sters
+        GroupDeleted = 13,      // daca grupul din care fac parte a fost sters
     }
 }
