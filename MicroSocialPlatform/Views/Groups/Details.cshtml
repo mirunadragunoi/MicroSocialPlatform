@@ -161,6 +161,13 @@
                         }
                     }
                 }
+                else
+                {
+                    <button type="submit" class="btn btn-primary rounded-pill" onclick="showAuthAlert()">
+                        <i class="bi bi-person-plus me-2"></i>
+                        <span>Alătură-te</span>
+                    </button>
+                }
             </div>
         </div>
         <div class="px-4 pb-3">
@@ -200,7 +207,7 @@
                                             <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
                                                  style="width: 30px; height: 30px; font-size: 0.7rem;"
                                                  data-bs-toggle="tooltip" title="@msg.User.UserName">
-                                                 @msg.User.UserName.Substring(0, 2).ToUpper()
+                                                @msg.User.UserName.Substring(0, 2).ToUpper()
                                             </div>
                                         }
                                     </div>

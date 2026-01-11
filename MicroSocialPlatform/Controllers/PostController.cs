@@ -143,6 +143,7 @@ namespace MicroSocialPlatform.Controllers
                 _context.Notifications.Add(notification);
             }
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Postarea a fost creată cu succes!";
 
             return RedirectToAction("Index", "Home");
         }
@@ -166,6 +167,43 @@ namespace MicroSocialPlatform.Controllers
             if (!User.IsInRole("Administrator") && post.UserId != user.Id)
             {
                 return Forbid(); // doar adminul sau proprietarul postarii poate sterge
+            }
+
+            // ✅ Salvează informații înainte de ștergere
+            var postOwnerId = post.UserId;
+            var postOwner = post.User;
+
+            // Dacă post.User e null, încarcă manual
+            if (postOwner == null)
+            {
+                postOwner = await _context.Users.FindAsync(postOwnerId);
+            }
+
+            var savedPosts = await _context.SavedPosts
+                .Where(sp => sp.PostId == id)
+                .ToListAsync();
+
+            if (savedPosts.Any())
+            {
+                _context.SavedPosts.RemoveRange(savedPosts);
+                await _context.SaveChangesAsync(); // Salvează înainte de a continua
+            }
+
+            // ✅ 2. Trimite notificare DOAR dacă altcineva șterge postarea
+            if (postOwnerId != user.Id && postOwner != null)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = postOwnerId,
+                    SenderId = user.Id,
+                    Type = NotificationType.PostDeleted,
+                    Content = "ți-a șters o postare.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    RelatedUrl = $"/Profile/Index?username={postOwner.CustomUsername ?? postOwner.UserName}"
+                };
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync(); // Salvează notificarea ÎNAINTE de ștergere
             }
 
             // sterg media asociata
@@ -378,6 +416,7 @@ namespace MicroSocialPlatform.Controllers
 
             if (post == null)
             {
+                TempData["ErrorMessage"] = "Nu ai permisiunea să vezi această postare.";
                 return NotFound();
             }
 
@@ -518,7 +557,8 @@ namespace MicroSocialPlatform.Controllers
             }
 
             // Returnam un obiect anonim simplu, usor de citit de JS
-            var likers = post.Likes.Select(l => new {
+            var likers = post.Likes.Select(l => new
+            {
                 userId = l.UserId,
                 userName = l.User.UserName,
                 fullName = l.User.FullName,
@@ -528,5 +568,52 @@ namespace MicroSocialPlatform.Controllers
 
             return Json(likers);
         }
+
+        // functie pentru unsaved post
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnsavePost(int postId)
+        {
+            try
+            {
+
+
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+
+                    return Json(new { success = false, message = "Trebuie să fii autentificat!" });
+                }
+
+
+
+                var savedPost = await _context.SavedPosts
+                    .FirstOrDefaultAsync(sp => sp.PostId == postId && sp.UserId == currentUser.Id);
+
+                if (savedPost == null)
+                {
+
+                    return Json(new { success = false, message = "Postarea nu este salvată!" });
+                }
+
+                _context.SavedPosts.Remove(savedPost);
+                await _context.SaveChangesAsync();
+
+
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Postarea a fost eliminată din salvate!"
+                });
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { success = false, message = "Eroare la eliminarea postării: " + ex.Message });
+            }
+        }
+
     }
 }

@@ -124,39 +124,100 @@ namespace MicroSocialPlatform.Controllers
 
             if (ModelState.IsValid)
             {
-                // Creează utilizatorul
+                // VALIDARI!!!!
+                // daca emailul exista deja
+                var existingUserByEmail = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUserByEmail != null)
+                {
+                    ModelState.AddModelError("Email", "Acest email este deja înregistrat. Te rugăm să folosești alt email sau să te autentifici.");
+                    return View(model);
+                }
+
+                // verific username ul
+                var existingUserByUsername = await _userManager.FindByNameAsync(model.Email);
+                if (existingUserByUsername != null)
+                {
+                    ModelState.AddModelError("Email", "Acest email este deja folosit ca username în sistem.");
+                    return View(model);
+                }
+
+                // validare personalizata dupa nume
+                if (string.IsNullOrWhiteSpace(model.FullName))
+                {
+                    ModelState.AddModelError("FullName", "Numele complet este obligatoriu!");
+                    return View(model);
+                }
+
+                // validare personalizata pentru parola 
+                // minim 6 caractere
+                if (model.Password.Length < 6)
+                {
+                    ModelState.AddModelError("Password", "Parola trebuie să aibă cel puțin 6 caractere!");
+                    return View(model);
+                }
+
+                // cel putin o litera mare
+                if (!model.Password.Any(char.IsUpper))
+                {
+                    ModelState.AddModelError("Password", "Parola trebuie să conțină cel puțin o literă mare!");
+                    return View(model);
+                }
+
+                // cel putin o cifra
+                if (!model.Password.Any(char.IsDigit))
+                {
+                    ModelState.AddModelError("Password", "Parola trebuie să conțină cel puțin o cifră!");
+                    return View(model);
+                }
+
+                // creeaza utilizatorul
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
                     FullName = model.FullName,
                     Email = model.Email,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    IsPublic = true // cont public by default
                 };
 
-                // Creează contul
+                // creeaza contul
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    // Adaugă rolul "User" pentru utilizatorii noi
+                    // adauga rolul "User" pentru utilizatorii noi
                     await _userManager.AddToRoleAsync(user, "RegisteredUser");
 
-                     // Autentificare automată după înregistrare
+                     // autentificare automata dupa inregistrare
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return LocalRedirect(model.ReturnUrl);
                     
                 }
 
-                // Adaugă erorile în ModelState
+                // adaug erorile îin ModelState
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    // traduce erorile Identity in romana
+                    string errorMessage = error.Code switch
+                    {
+                        "DuplicateUserName" => "Acest email este deja folosit. Te rugăm să alegi altul.",
+                        "DuplicateEmail" => "Acest email este deja înregistrat în sistem.",
+                        "InvalidEmail" => "Adresa de email nu este validă.",
+                        "PasswordTooShort" => "Parola trebuie să aibă cel puțin 6 caractere.",
+                        "PasswordRequiresNonAlphanumeric" => "Parola trebuie să conțină cel puțin un caracter special (!@#$%^&*).",
+                        "PasswordRequiresDigit" => "Parola trebuie să conțină cel puțin o cifră.",
+                        "PasswordRequiresUpper" => "Parola trebuie să conțină cel puțin o literă mare.",
+                        "PasswordRequiresLower" => "Parola trebuie să conțină cel puțin o literă mică.",
+                        _ => error.Description // mesaj default daca nu e tradus
+                    };
+
+                    ModelState.AddModelError(string.Empty, errorMessage);
                 }
             }
 
-            // Dacă ajungem aici, ceva a eșuat
+            // daca ajungem aici, ceva a esuat
             return View(model);
         }
 
@@ -166,6 +227,19 @@ namespace MicroSocialPlatform.Controllers
         public IActionResult Lockout()
         {
             return View();
+        }
+
+        // verificare instantanee pentru email ul existent
+        [HttpGet]
+        public async Task<IActionResult> CheckEmailAvailable(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return Json(new { available = false });
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            return Json(new { available = user == null });
         }
     }
 }

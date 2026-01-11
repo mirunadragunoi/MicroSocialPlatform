@@ -29,8 +29,13 @@
             }
 
         @@keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
         }
 
         /* alert overlay pt utilizatori neautentificati */
@@ -152,7 +157,7 @@
         } else {
             // Stergere - ROSU
             bgStyle = 'background-color: #ffffff; color: #dc3545; border: 1px solid #dc3545; border-left: 5px solid #dc3545;';
-            iconClass = 'bi-trash3-fill'; 
+            iconClass = 'bi-trash3-fill';
         }
 
         const html = `
@@ -180,10 +185,10 @@
     function openLikesModal(postId) {
         const modalElement = document.getElementById('likesModal');
         const modalBody = document.getElementById('likesModalBody');
-        
+
         // Protectie: daca elementele nu exista in pagina, ne oprim
         if (!modalElement || !modalBody) return;
-        
+
         const bsModal = new bootstrap.Modal(modalElement);
 
         // Configurare Emoji Map
@@ -241,7 +246,7 @@
                                         ${reactionEmoji}
                                     </span>
                                 </div>
-                                
+
                                 <div class="overflow-hidden">
                                     <h6 class="mb-0 fw-bold text-dark text-truncate">${user.fullName || user.userName}</h6>
                                     <small class="text-muted">${user.userName}</small>
@@ -347,6 +352,11 @@
                         <span>Utilizatori</span>
                     </a>
 
+                    <a asp-area="" asp-controller="Admin" asp-action="Report" class="sidebar-link">
+                        <i class="bi bi-shield-fill"></i>
+                        <span>Raportări</span>
+                    </a>
+
                     <a asp-area="" asp-controller="Admin" asp-action="Index" class="sidebar-link">
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard Admin</span>
@@ -447,11 +457,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0" id="likesModalBody">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

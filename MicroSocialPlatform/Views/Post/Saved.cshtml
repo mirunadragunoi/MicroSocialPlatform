@@ -2,12 +2,30 @@
 
 @{
     ViewData["Title"] = "Postări Salvate";
+    var postsSaved = Model.Count();
 }
 
-<div class="container py-4">
-    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
-        <i class="bi bi-bookmark-fill text-warning fs-3 me-2"></i>
-        <h2 class="mb-0 fw-bold">Colecția mea</h2>
+@Html.AntiForgeryToken()
+<div class="container mt-4" style="max-width: 850px;">
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-2 fw-bold">
+                        <i class="bi bi-bookmark-fill text-warning fs-3 me-2" style="color: #a18cd1;"></i>Colecția mea
+                    </h2>
+
+                    <div class="d-flex gap-2">
+                        <span class="badge rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                              style="background-color: rgba(161, 140, 209, 0.15); color: #8e44ad; border: 1px solid rgba(161, 140, 209, 0.2);">
+                            <span class="badge rounded-pill px-3 py-2 text-muted bg-white border" style="width: 6px; height: 6px; background-color: #8e44ad;"></span>
+                            <span id="badgeUnread">@postsSaved</span> Total postări salvate
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     @if (!Model.Any())
@@ -27,9 +45,112 @@
             @foreach (var post in Model)
             {
                 <div class="col-md-6 col-lg-4">
-                    <partial name="_PostCard" model="post" />
+                    <partial name="_PostSavedCard" model="post" />
                 </div>
             }
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function unsavePost(postId, button) {
+            console.log('🔍 unsavePost called with postId:', postId);
+
+            // Dezactivează butonul
+            button.disabled = true;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            console.log('🔑 Token found:', !!token);
+
+            fetch('@Url.Action("UnsavePost", "Post")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: 'postId=' + postId
+            })
+            .then(response => {
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response ok:', response.ok);
+
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('❌ Error response:', text);
+                        throw new Error('Network error: ' + response.status);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Data received:', data);
+
+                if (data.success) {
+                    // Găsește card-ul
+                    const card = document.querySelector(`[data-post-id="${postId}"]`);
+                    console.log('🎴 Card found:', !!card);
+
+                    const cardParent = card?.closest('.col-md-6, .col-lg-4');
+                    console.log('📦 Card parent found:', !!cardParent);
+
+                    if (cardParent) {
+                        // Animație fade out
+                        cardParent.style.transition = 'all 0.4s';
+                        cardParent.style.opacity = '0';
+                        cardParent.style.transform = 'scale(0.95)';
+
+                        setTimeout(() => {
+                            cardParent.remove();
+
+                            // Update counter
+                            const badge = document.getElementById('badgeUnread');
+                            if (badge) {
+                                const currentCount = parseInt(badge.textContent) || 0;
+                                const newCount = Math.max(0, currentCount - 1);
+                                badge.textContent = newCount;
+                                console.log('🔢 Counter updated:', currentCount, '→', newCount);
+                            }
+
+                            // Verifică dacă mai sunt postări
+                            const remainingCards = document.querySelectorAll('.post-saved-card');
+                            console.log('📋 Remaining cards:', remainingCards.length);
+
+                            if (remainingCards.length === 0) {
+                                const container = document.querySelector('.row.g-4');
+                                if (container) {
+                                    container.parentElement.innerHTML = `
+                                        <div class="text-center py-5 rounded-4 bg-light shadow-sm">
+                                            <i class="bi bi-bookmark text-muted" style="font-size: 3rem;"></i>
+                                            <h4 class="mt-3 text-muted">Nu ai salvat nicio postare încă.</h4>
+                                            <p class="text-muted small">Postările pe care le salvezi vor apărea aici.</p>
+                                            <a href="/" class="btn btn-primary mt-2 rounded-pill px-4">
+                                                Explorează Feed-ul
+                                            </a>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }, 400);
+                    }
+
+                    // Mesaj succes
+                    if (typeof showFloatingAlert === 'function') {
+                        showFloatingAlert(data.message, 'info');
+                    } else {
+                        alert(data.message);
+                    }
+                } else {
+                    console.error('❌ Success false:', data.message);
+                    alert(data.message || 'A apărut o eroare.');
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('❌ Catch error:', error);
+                alert('A apărut o eroare: ' + error.message);
+                button.disabled = false;
+            });
+        }
+    </script>
+}

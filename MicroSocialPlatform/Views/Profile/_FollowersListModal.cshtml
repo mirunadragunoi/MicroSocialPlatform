@@ -1,0 +1,99 @@
+﻿@model IEnumerable<MicroSocialPlatform.Models.ApplicationUser>
+@{
+    var isOwnProfile = ViewBag.IsOwnProfile ?? false;
+}
+
+<style>
+    .user-item-buttons {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+        min-width: fit-content;
+    }
+
+    @@media (max-width: 768px) {
+        .user-item-buttons
+
+    {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .user-item-buttons .btn {
+        width: 100%;
+    }
+
+    .list-group-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+        .list-group-item > div:first-child {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+    }
+</style>
+
+<div class="list-group list-group-flush">
+    @if (!Model.Any())
+    {
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-people fs-1"></i>
+            <p class="mb-0">Niciun urmăritor încă.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var user in Model)
+        {
+            <div class="list-group-item d-flex align-items-center py-3 border-0">
+                <a asp-controller="Profile" asp-action="Index" asp-route-username="@(user.CustomUsername ?? user.UserName)" class="text-decoration-none me-3">
+                    @if (!string.IsNullOrEmpty(user.ProfilePicture))
+                    {
+                        <img src="@user.ProfilePicture" class="rounded-circle border"
+                             style="width: 45px; height: 45px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                             style="width: 45px; height: 45px; font-weight: bold;">
+                            @user.UserName.Substring(0, 1).ToUpper()
+                        </div>
+                    }
+                </a>
+                <div class="flex-grow-1 me-2" style="min-width: 0">
+                    <a asp-controller="Profile" asp-action="Index" asp-route-username="@(user.CustomUsername ?? user.UserName)" class="text-decoration-none text-dark fw-bold">
+                        @(user.FullName ?? user.UserName)
+                    </a>
+                    <div class="text-muted small">@@@(user.CustomUsername ?? user.UserName)</div>
+                </div>
+
+                @if (isOwnProfile)
+                {
+                    <div class="user-item-buttons">
+                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(user.CustomUsername ?? user.UserName)"
+                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            Vezi Profil
+                        </a>
+                        <button class="btn btn-sm btn-danger rounded-pill px-3" onclick="removeFollower('@user.Id', this)">
+                            Elimină
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="user-item-buttons">
+                        <a asp-controller="Profile" asp-action="Index" asp-route-username="@(user.CustomUsername ?? user.UserName)"
+                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            Vezi Profil
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>

@@ -154,6 +154,7 @@ namespace MicroSocialPlatform.Controllers
 
             var comment = await _context.Comments
                 .Include(c => c.Post)
+                .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (comment == null)
@@ -171,7 +172,37 @@ namespace MicroSocialPlatform.Controllers
                 return Json(new { success = false, message = "Nu ai permisiunea să ștergi acest comentariu!" });
             }
 
+            bool canDelete = comment.UserId == currentUser.Id ||
+                 comment.Post.UserId == currentUser.Id ||
+                 isAdmin;
+
+            // salvez informatiile inainte de stergere
+            var commentOwnerId = comment.UserId;
+            var commentOwner = comment.User;
             var postId = comment.PostId;
+
+            // daca comment.User e null, incarc manual
+            if (commentOwner == null)
+            {
+                commentOwner = await _context.Users.FindAsync(commentOwnerId);
+            }
+
+            // trimite notificare doar daca altcineva sterge comentariul
+            if (commentOwnerId != currentUser.Id && commentOwner != null)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = commentOwnerId,
+                    SenderId = currentUser.Id,
+                    Type = NotificationType.CommentDeleted,
+                    Content = "ți-a șters un comentariu.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    RelatedUrl = $"/Post/Details/{postId}"
+                };
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync(); // salveaza notificare inainte
+            }
 
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();

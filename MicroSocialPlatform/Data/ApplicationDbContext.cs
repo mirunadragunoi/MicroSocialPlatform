@@ -1,6 +1,7 @@
 ﻿using MicroSocialPlatform.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace MicroSocialPlatform.Data
 {
@@ -151,6 +152,18 @@ namespace MicroSocialPlatform.Data
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.Post)
+                .WithMany()
+                .HasForeignKey(sp => sp.PostId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            builder.Entity<SavedPost>()
+                .HasOne(sp => sp.User)
+                .WithMany()
+                .HasForeignKey(sp => sp.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // index pentru performanta
