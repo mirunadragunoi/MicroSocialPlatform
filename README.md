@@ -406,7 +406,7 @@ Panoul administrator cu statistici și gestionare utilizatori.
       </a><br />
       💻 🎨 
       <br/>
-      <sub>Backend & Frontend</sub>
+      <sub>Full-Stack</sub>
     </td>
     <td align="center">
       <a href="https://github.com/alexandra602">
@@ -415,7 +415,7 @@ Panoul administrator cu statistici și gestionare utilizatori.
       </a><br />
       💻 🎨
       <br/>
-      <sub>Backend & Testing</sub>
+      <sub>Full-Stack</sub>
     </td>
   </tr>
 </table>
@@ -442,8 +442,6 @@ GitHub: [@mirunadragunoi](https://github.com/mirunadragunoi)
 
 **Alexandra Panaet**  
 GitHub: [@alexandra602](https://github.com/alexandra602)  
-
-**Project Link**: [https://github.com/mirunadragunoi/MicroSocialPlatform](https://github.com/mirunadragunoi/MicroSocialPlatform)
 
 ---
 
