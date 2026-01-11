@@ -359,39 +359,39 @@ După prima rulare, un cont de administrator este creat automat.
 ### Home Feed
 Feed-ul principal cu postări de la utilizatori urmăriți și publici.
 
-<img src="Project_Documentation/feed_principal.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/feed_principal.png" width="400">
 
 ### Profile
 Profil utilizator cu cover photo, statistici, și grid de postări.
 
-<img src="Project_Documentation/profil_personal.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/profil_personal.png" width="400">
 
 ### Notifications
 Dropdown cu notificări în timp real + badge cu număr necitit.
 
-<img src="Project_Documentation/notificari.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/notificari.png" width="400">
 
 ### Groups
 Pagină cu lista de grupuri + buton "Creează Grup Nou".
 
-<img src="Project_Documentation/grupuri.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/grupuri.png" width="400">
 
 ### Groups - Details
 Pagina cu grupul, membrii grupului și mesajele dintre ei.
 
-<img src="Project_Documentation/grup_detaliat.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/grup_detaliat.png" width="400">
 
 ### Postări salvate - Colecție
 Pagină cu postările salvate de către un user.
 
-<img src="Project_Documentation/colectie_salvate.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/colectie_salvate.png" width="400">
 
 ### Admin Dashboard
 Panoul administrator cu statistici și gestionare utilizatori.
 
-<img src="Project_Documentation/gestionare_utilizatori.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/gestionare_utilizatori.png" width="400">
 
-<img src="Project_Documentation/dashboard.png" width="400">
+<img src="MicroSocialPlatform/Project_Documentation/dashboard.png" width="400">
 
 ---
 
