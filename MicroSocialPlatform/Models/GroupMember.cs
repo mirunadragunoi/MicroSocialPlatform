@@ -10,7 +10,7 @@ namespace MicroSocialPlatform.Models
         public int GroupId { get; set; }
         public virtual Group Group { get; set; }
 
-        // relația cu utilizatorul (M - 1)
+        // relatia cu utilizatorul (M - 1)
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }
 

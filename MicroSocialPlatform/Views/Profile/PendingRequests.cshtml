@@ -144,7 +144,7 @@
                 ? '@Url.Action("AcceptRequest", "Profile")'
                 : '@Url.Action("DeclineRequest", "Profile")';
 
-            // Dezactivează butoanele pentru a preveni click-uri multiple
+            // Dezactiveaza butoanele pentru a preveni click-uri multiple
             const buttons = card.querySelectorAll('button');
             buttons.forEach(btn => btn.disabled = true);
 
@@ -157,7 +157,7 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        // Animație de dispariție
+                        // Animatie de disparitie
                         card.style.transition = "all 0.5s ease";
                         card.style.opacity = "0";
                         card.style.transform = "translateX(50px)";
@@ -165,17 +165,17 @@
                         setTimeout(() => {
                             card.remove();
 
-                            // Verifică dacă mai sunt cereri
+                            // Verifica daca mai sunt cereri
                             const remainingRequests = document.querySelectorAll('.request-item');
                             if (remainingRequests.length === 0) {
                                 location.reload(); // Refresh pentru empty state
                             }
                         }, 500);
 
-                        // Afișează mesaj succes
+                        // Afiseaza mesaj succes
                         if (typeof showFloatingAlert === 'function') {
                             const message = action === 'accept'
-                                ? 'Cerere acceptată cu succes! ✓'
+                                ? 'Cerere acceptată cu succes!'
                                 : 'Cerere respinsă.';
                             showFloatingAlert(message, action === 'accept' ? 'success' : 'info');
                         }

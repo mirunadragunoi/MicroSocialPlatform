@@ -37,14 +37,12 @@ namespace MicroSocialPlatform.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                // === AICI E REPARATIA CRITICA ===
                 // Daca userul e null (adica baza s-a sters, dar browserul tine minte vechiul user)
                 if (user == null)
                 {
                     await _signInManager.SignOutAsync(); // Il delogam fortat
                     return RedirectToAction("Index"); // Dam refresh la pagina
                 }
-                // ================================
 
                 var isAdmin = User.IsInRole("Administrator");
 
@@ -62,7 +60,7 @@ namespace MicroSocialPlatform.Controllers
                 }
                 else
                 {
-                    // Utilizator normal -> feed personalizat (doar urmăriți)
+                    // Utilizator normal -> feed personalizat (doar urmariti)
                     // Mai intai luam lista de ID-uri pe care le urmarim
                     var followingIds = await _context.Follows
                         .Where(f => f.FollowerId == user.Id && f.Status == FollowStatus.Accepted)
@@ -79,7 +77,7 @@ namespace MicroSocialPlatform.Controllers
                         .Include(p => p.Comments)
                             .ThenInclude(c => c.User)
                         .Include(p => p.PostMedias)
-                        .Where(p => followingIds.Contains(p.UserId)) // <--- FILTRAREA
+                        .Where(p => followingIds.Contains(p.UserId)) // FILTRAREA
                         .OrderByDescending(p => p.CreatedAt)
                         .ToListAsync();
                 }

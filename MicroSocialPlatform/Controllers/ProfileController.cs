@@ -146,7 +146,7 @@ namespace MicroSocialPlatform.Controllers
         // metoda helper: verific daca cineva poate vedea un profil
         private async Task<bool> CanViewProfile(ApplicationUser profileUser, string? currentUserId)
         {
-            // ✅ 0. ADMINISTRATORUL poate vedea ORICE profil (public sau privat)
+            // ADMINISTRATORUL poate vedea ORICE profil (public sau privat)
             if (!string.IsNullOrEmpty(currentUserId))
             {
                 var currentUser = await _userManager.FindByIdAsync(currentUserId);
@@ -297,13 +297,13 @@ namespace MicroSocialPlatform.Controllers
                 // daca contul devine privat, sterg postarile salvate de non-followeri
                 if (wasPublic && willBePrivate)
                 {
-                    // Găsește toți followerii tăi activi
+                    // gaseste toti followerii tai activi
                     var followerIds = await _context.Follows
                         .Where(f => f.FollowingId == user.Id && f.Status == FollowStatus.Accepted)
                         .Select(f => f.FollowerId)
                         .ToListAsync();
 
-                    // Șterge postările tale salvate de oameni care NU te urmăresc
+                    // sterge postarile tale salvate de oameni care NU te urmăresc
                     var savedPostsToRemove = await _context.SavedPosts
                         .Where(sp => sp.Post.UserId == user.Id && !followerIds.Contains(sp.UserId))
                         .ToListAsync();

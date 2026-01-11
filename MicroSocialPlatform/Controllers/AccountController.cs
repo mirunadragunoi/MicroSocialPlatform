@@ -221,7 +221,7 @@ namespace MicroSocialPlatform.Controllers
             return View(model);
         }
 
-        // ==================== LOCKOUT ====================
+        // LOCKOUT
 
         [HttpGet]
         public IActionResult Lockout()

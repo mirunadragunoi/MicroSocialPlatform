@@ -37,9 +37,6 @@
                             <a class="dropdown-item" href="javascript:void(0);" onclick="toggleSavePost(@Model.Id, this)">
                                 <i class="bi bi-bookmark me-2"></i> Salvează
                             </a>
-                            <a class="dropdown-item" href="javascript:void(0);" onclick="toggleReportPost(@Model.Id, this)">
-                                <i class="bi bi-flag me-2"></i> Raportează
-                            </a>
                         </li>
                         @{
                             var isOwner = User.Identity.IsAuthenticated && (Model.User != null && User.Identity.Name == Model.User.UserName);
@@ -78,7 +75,7 @@
                 @if (media.MediaType == MicroSocialPlatform.Models.MediaType.Image)
                 {
                     <div class="position-relative rounded-3 overflow-hidden"
-                         style="aspect-ratio: 1; cursor: pointer; background: #f8f9fa;"
+                         style="spect-ration: 1; cursor: pointer; background: #f8f9fa;"
                          onclick="openPost(@Model.Id, event)">
                         <img src="@media.Url"
                              class="w-100 h-100 post-image"
@@ -109,7 +106,7 @@
                 <partial name="_LikePartial" model="Model" />
             </div>
 
-            @* Buton Comentează - Deschide postarea *@
+            @* Buton Comenteaza - Deschide postarea *@
             <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.Id"
                class="btn btn-light flex-fill rounded-pill fw-bold text-muted d-flex align-items-center justify-content-center gap-2"
                style="height: 40px; border: 1px solid #e9ecef !important;"
@@ -129,7 +126,7 @@
 
 <script>
     function openPost(postId, event) {
-        // Verifică dacă click-ul a fost pe un element interactiv
+        // Verifica daca click-ul a fost pe un element interactiv
         const target = event.target;
         const isInteractive = target.closest('button, a, .dropdown, input, video, .reaction-picker, .reaction-item, .like-count-badge');
 

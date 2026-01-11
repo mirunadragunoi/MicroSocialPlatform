@@ -37,15 +37,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdministrator", policy => 
         policy.RequireRole("Administrator"));
     
-    // Politica pentru utilizatori înregistrați (User sau Administrator)
+    // Politica pentru utilizatori inregistrati (User sau Administrator)
     options.AddPolicy("RequireRegisteredUser", policy => 
         policy.RequireRole("User", "Administrator"));
     
-    // Politica pentru vizitatori (permite și utilizatori neautentificați)
-    // Nu este nevoie de o politică specială, deoarece implicit toate rutele sunt accesibile
+    // Politica pentru vizitatori (permite si utilizatori neautentificati)
+    // Nu este nevoie de o politica speciala, deoarece implicit toate rutele sunt accesibile
 });
 
-// Serviciu de moderare a conținutului cu AI
+// Serviciu de moderare a continutului cu AI
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IContentModerationService, ContentModerationService>();
 

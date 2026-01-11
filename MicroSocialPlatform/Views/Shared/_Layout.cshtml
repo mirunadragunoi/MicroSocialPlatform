@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="~/MicroSocialPlatform.styles.css" asp-append-version="true" />
 
     <style>
-        /* Badge pentru notificări în sidebar */
+        /* Badge pentru notificari in sidebar */
         .notification-badge {
             background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
             color: white;
@@ -114,7 +114,7 @@
 </head>
 
 <script>
-    // 1. Functii pentru alert autentificare
+    // Functii pentru alert autentificare
     function showAuthAlert() {
         const alert = document.getElementById('authRequiredAlert');
         if (alert) {
@@ -143,7 +143,7 @@
         }
     });
 
-    // 2. Functii pentru alerte plutitoare (Toast)
+    // Functii pentru alerte plutitoare (Toast)
     function showFloatingAlert(message, type) {
         const container = document.getElementById('ajax-alert-container');
 
@@ -151,11 +151,11 @@
         let iconClass = '';
 
         if (type === 'success') {
-            // Salvare - VERDE
+            // Salvare 
             bgStyle = 'background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;';
             iconClass = 'bi-check-circle-fill';
         } else {
-            // Stergere - ROSU
+            // Stergere 
             bgStyle = 'background-color: #ffffff; color: #dc3545; border: 1px solid #dc3545; border-left: 5px solid #dc3545;';
             iconClass = 'bi-trash3-fill';
         }
@@ -181,17 +181,17 @@
         }, 3000);
     }
 
-    // 3. MODALA DE APRECIERI (LIKES) - VERSIUNEA CORECTA
+    // Modala de reactii
     function openLikesModal(postId) {
         const modalElement = document.getElementById('likesModal');
         const modalBody = document.getElementById('likesModalBody');
 
-        // Protectie: daca elementele nu exista in pagina, ne oprim
+        // daca elementele nu exista in pagina, ne oprim
         if (!modalElement || !modalBody) return;
 
         const bsModal = new bootstrap.Modal(modalElement);
 
-        // Configurare Emoji Map
+        // configurare Emoji Map
         const emojiMap = {
             1: '❤️', 2: '🥰', 3: '😂', 4: '😮', 5: '😢', 6: '😠'
         };
@@ -202,7 +202,6 @@
             </div>`;
         bsModal.show();
 
-        // ATENTIE: Verifica ruta aici. Daca controllerul e "PostsController", pune "/Posts/". Daca e "PostController", pune "/Post/"
         fetch(`/Post/GetPostLikes/${postId}`)
             .then(response => {
                 if (!response.ok) throw new Error("Network response was not ok");
@@ -350,11 +349,6 @@
                     <a asp-area="" asp-controller="Admin" asp-action="Users" class="sidebar-link">
                         <i class="bi bi-shield-fill"></i>
                         <span>Utilizatori</span>
-                    </a>
-
-                    <a asp-area="" asp-controller="Admin" asp-action="Report" class="sidebar-link">
-                        <i class="bi bi-shield-fill"></i>
-                        <span>Raportări</span>
                     </a>
 
                     <a asp-area="" asp-controller="Admin" asp-action="Index" class="sidebar-link">

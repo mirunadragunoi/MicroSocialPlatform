@@ -169,11 +169,11 @@ namespace MicroSocialPlatform.Controllers
                 return Forbid(); // doar adminul sau proprietarul postarii poate sterge
             }
 
-            // ✅ Salvează informații înainte de ștergere
+            // salvez informatiile inainte de stergere
             var postOwnerId = post.UserId;
             var postOwner = post.User;
 
-            // Dacă post.User e null, încarcă manual
+            // daca post.User e null, incarc manual
             if (postOwner == null)
             {
                 postOwner = await _context.Users.FindAsync(postOwnerId);
@@ -186,10 +186,10 @@ namespace MicroSocialPlatform.Controllers
             if (savedPosts.Any())
             {
                 _context.SavedPosts.RemoveRange(savedPosts);
-                await _context.SaveChangesAsync(); // Salvează înainte de a continua
+                await _context.SaveChangesAsync();
             }
 
-            // ✅ 2. Trimite notificare DOAR dacă altcineva șterge postarea
+            // trimite notificare doar daca altcineva sterge postarea
             if (postOwnerId != user.Id && postOwner != null)
             {
                 var notification = new Notification
@@ -203,7 +203,7 @@ namespace MicroSocialPlatform.Controllers
                     RelatedUrl = $"/Profile/Index?username={postOwner.CustomUsername ?? postOwner.UserName}"
                 };
                 _context.Notifications.Add(notification);
-                await _context.SaveChangesAsync(); // Salvează notificarea ÎNAINTE de ștergere
+                await _context.SaveChangesAsync(); 
             }
 
             // sterg media asociata
@@ -221,7 +221,6 @@ namespace MicroSocialPlatform.Controllers
 
             // mesaj de succes
             TempData["SuccessMessage"] = "Postarea a fost ștearsă cu succes. 🗑️";
-            // TempData["MessageType"] = "danger"; 
 
             return RedirectToAction("Index", "Home");
         }
@@ -348,8 +347,7 @@ namespace MicroSocialPlatform.Controllers
             await _context.SaveChangesAsync();
 
             // mesaj de succes
-            TempData["SuccessMessage"] = "Postarea a fost actualizată cu succes! ✨";
-            // TempData["MessageType"] = "success"; 
+            TempData["SuccessMessage"] = "Postarea a fost actualizată cu succes! ✨"; 
 
             return RedirectToAction("Index", "Home");
         }
@@ -388,7 +386,7 @@ namespace MicroSocialPlatform.Controllers
                 .ToListAsync();
 
             // obtine postarile de la utilizatorii urmariti
-            // NU mai verificam IsPublic pentru ca follow = ai acces
+            // nu mai verificam IsPublic pentru ca follow = ai acces
             var followingPosts = await _context.Posts
                 .Include(p => p.User)
                 .Include(p => p.Likes)
@@ -401,7 +399,7 @@ namespace MicroSocialPlatform.Controllers
             return View(followingPosts);
         }
 
-        // GET - detalii postare individuală (ca Instagram/Facebook)
+        // GET - detalii postare individuala 
         [AllowAnonymous]
         public async Task<IActionResult> Details(int id)
         {
@@ -556,14 +554,14 @@ namespace MicroSocialPlatform.Controllers
                 return NotFound();
             }
 
-            // Returnam un obiect anonim simplu, usor de citit de JS
+            // returnam un obiect anonim 
             var likers = post.Likes.Select(l => new
             {
                 userId = l.UserId,
                 userName = l.User.UserName,
                 fullName = l.User.FullName,
                 profilePicture = l.User.ProfilePicture,
-                reactionType = (int)l.Type // Trimitem tipul reactiei ca numar (1, 2, 3...)
+                reactionType = (int)l.Type // trimitem tipul reactiei ca numar (1, 2, 3...)
             }).ToList();
 
             return Json(likers);

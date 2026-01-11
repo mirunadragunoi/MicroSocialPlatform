@@ -21,7 +21,7 @@ namespace MicroSocialPlatform.Controllers
             _userManager = userManager;
         }
 
-        // GET: Notification/Index - Lista tuturor notificărilor
+        // GET: Notification/Index - Lista tuturor notificarilor
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -36,7 +36,7 @@ namespace MicroSocialPlatform.Controllers
             return View(notifications);
         }
 
-        // GET: Notification/GetUnreadCount - Numărul de notificări necitite (pentru badge)
+        // GET: Notification/GetUnreadCount - Numarul de notificari necitite (pentru badge)
         [HttpGet]
         public async Task<IActionResult> GetUnreadCount()
         {
@@ -48,7 +48,7 @@ namespace MicroSocialPlatform.Controllers
             return Json(new { count });
         }
 
-        // POST: Notification/MarkAsRead - Marchează o notificare ca citită
+        // POST: Notification/MarkAsRead - Marcheaza o notificare ca citita
         [HttpPost]
         public async Task<IActionResult> MarkAsRead(int id)
         {
@@ -66,7 +66,7 @@ namespace MicroSocialPlatform.Controllers
             return Json(new { success = true });
         }
 
-        // POST: Notification/MarkAllAsRead - Marchează toate notificările ca citite
+        // POST: Notification/MarkAllAsRead - Marcheaza toate notificarile ca citite
         [HttpPost]
         public async Task<IActionResult> MarkAllAsRead()
         {
@@ -86,7 +86,7 @@ namespace MicroSocialPlatform.Controllers
             return Json(new { success = true });
         }
 
-        // DELETE: Notification/Delete - Șterge o notificare
+        // DELETE: Notification/Delete - Sterge o notificare
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
@@ -104,7 +104,7 @@ namespace MicroSocialPlatform.Controllers
             return Json(new { success = true });
         }
 
-        // POST: Notification/DeleteAll - Șterge toate notificările
+        // POST: Notification/DeleteAll - Sterge toate notificarile
         [HttpPost]
         public async Task<IActionResult> DeleteAll()
         {

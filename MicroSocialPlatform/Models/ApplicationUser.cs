@@ -49,7 +49,7 @@ namespace MicroSocialPlatform.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // ======== RELATII ============
+        // RELATII
         // postari
         public virtual ICollection<Post>? Posts { get; set; }
 

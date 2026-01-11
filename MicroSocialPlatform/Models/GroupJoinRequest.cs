@@ -8,7 +8,7 @@
         public int GroupId { get; set; }
         public virtual Group Group { get; set; }
 
-        // id uk userului ce a trimis cererea de join
+        // id ul userului care a trimis cererea de join
         public string UserId { get; set; }
         public virtual ApplicationUser User { get; set; }
 

@@ -55,9 +55,9 @@
 @section Scripts {
     <script>
         function unsavePost(postId, button) {
-            console.log('🔍 unsavePost called with postId:', postId);
+            console.log('unsavePost called with postId:', postId);
 
-            // Dezactivează butonul
+            // Dezactivez butonul
             button.disabled = true;
 
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -72,30 +72,30 @@
                 body: 'postId=' + postId
             })
             .then(response => {
-                console.log('📡 Response status:', response.status);
-                console.log('📡 Response ok:', response.ok);
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
 
                 if (!response.ok) {
                     return response.text().then(text => {
-                        console.error('❌ Error response:', text);
+                        console.error('Error response:', text);
                         throw new Error('Network error: ' + response.status);
                     });
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Data received:', data);
+                console.log('Data received:', data);
 
                 if (data.success) {
-                    // Găsește card-ul
+                    // Gaseste card-ul
                     const card = document.querySelector(`[data-post-id="${postId}"]`);
-                    console.log('🎴 Card found:', !!card);
+                    console.log('Card found:', !!card);
 
                     const cardParent = card?.closest('.col-md-6, .col-lg-4');
-                    console.log('📦 Card parent found:', !!cardParent);
+                    console.log('Card parent found:', !!cardParent);
 
                     if (cardParent) {
-                        // Animație fade out
+                        // Animatie fade out
                         cardParent.style.transition = 'all 0.4s';
                         cardParent.style.opacity = '0';
                         cardParent.style.transform = 'scale(0.95)';
@@ -109,12 +109,12 @@
                                 const currentCount = parseInt(badge.textContent) || 0;
                                 const newCount = Math.max(0, currentCount - 1);
                                 badge.textContent = newCount;
-                                console.log('🔢 Counter updated:', currentCount, '→', newCount);
+                                console.log('Counter updated:', currentCount, '→', newCount);
                             }
 
-                            // Verifică dacă mai sunt postări
+                            // Verifica daca mai sunt postari
                             const remainingCards = document.querySelectorAll('.post-saved-card');
-                            console.log('📋 Remaining cards:', remainingCards.length);
+                            console.log('Remaining cards:', remainingCards.length);
 
                             if (remainingCards.length === 0) {
                                 const container = document.querySelector('.row.g-4');
@@ -141,13 +141,13 @@
                         alert(data.message);
                     }
                 } else {
-                    console.error('❌ Success false:', data.message);
+                    console.error('Success false:', data.message);
                     alert(data.message || 'A apărut o eroare.');
                     button.disabled = false;
                 }
             })
             .catch(error => {
-                console.error('❌ Catch error:', error);
+                console.error('Catch error:', error);
                 alert('A apărut o eroare: ' + error.message);
                 button.disabled = false;
             });

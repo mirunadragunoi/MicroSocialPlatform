@@ -21,14 +21,14 @@ namespace MicroSocialPlatform.Controllers
             _context = context;
         }
 
-        // Lista utilizatori
+        // lista utilizatori
         public async Task<IActionResult> Users()
         {
             var users = await _userManager.Users.ToListAsync();
             return View(users);
         }
 
-        // Ștergere utilizator
+        // stergere utilizator
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteUser(string userId)
@@ -46,39 +46,39 @@ namespace MicroSocialPlatform.Controllers
                 return RedirectToAction(nameof(Users));
             }
 
-            // ✅ IMPORTANT: Șterge în ORDINEA CORECTĂ pentru a evita conflicte FK!
+            // sterg in ordinea corecta
 
-            // 1. Șterge postări (cu cascade la media, likes, comments)
+            // sterg postari (cu cascade la media, likes, comments)
             var posts = await _context.Posts.Where(p => p.UserId == userId).ToListAsync();
             _context.Posts.RemoveRange(posts);
 
-            // 2. Șterge comentarii
+            // sterg comentarii
             var comments = await _context.Comments.Where(c => c.UserId == userId).ToListAsync();
             _context.Comments.RemoveRange(comments);
 
-            // 3. Șterge like-uri
+            // sterg like-uri
             var likes = await _context.Likes.Where(l => l.UserId == userId).ToListAsync();
             _context.Likes.RemoveRange(likes);
 
-            // 4. Șterge relații follow
+            // sterg relatii follow
             var follows = await _context.Follows
                 .Where(f => f.FollowerId == userId || f.FollowingId == userId)
                 .ToListAsync();
             _context.Follows.RemoveRange(follows);
 
-            // 5. ✅ Șterge cereri de join în grupuri (LIPSEA ASTA!)
+            // sterg cereri de join in grupuri 
             var groupJoinRequests = await _context.GroupJoinRequests
                 .Where(r => r.UserId == userId)
                 .ToListAsync();
             _context.GroupJoinRequests.RemoveRange(groupJoinRequests);
 
-            // 6. Șterge notificări
+            // sterg notificari
             var notifications = await _context.Notifications
                 .Where(n => n.RecipientId == userId || n.SenderId == userId)
                 .ToListAsync();
             _context.Notifications.RemoveRange(notifications);
 
-            // 7. Gestionare grupuri deținute
+            // gestionare grupuri detinute
             var ownedGroups = await _context.Groups
                 .Include(g => g.Members)
                 .Where(g => g.OwnerId == userId)
@@ -86,7 +86,7 @@ namespace MicroSocialPlatform.Controllers
 
             foreach (var group in ownedGroups)
             {
-                // Găsește succesor sau șterge grupul
+                // gaseste succesor sau sterge grupul
                 var successor = group.Members
                     .Where(m => m.UserId != userId)
                     .OrderByDescending(m => m.Role == GroupRole.Moderator)
@@ -95,7 +95,7 @@ namespace MicroSocialPlatform.Controllers
 
                 if (successor != null)
                 {
-                    // Transferă ownership
+                    // transfera ownership
                     group.OwnerId = successor.UserId;
                     successor.Role = GroupRole.Admin;
                     _context.Update(group);
@@ -103,34 +103,27 @@ namespace MicroSocialPlatform.Controllers
                 }
                 else
                 {
-                    // Nu există urmaș -> șterge grupul
+                    // nu exista urmas -> sterge grupul
                     _context.Groups.Remove(group);
                 }
             }
 
-            // 8. Șterge memberships în grupuri
+            // sterg memberships in grupuri
             var memberships = await _context.GroupMembers
                 .Where(m => m.UserId == userId)
                 .ToListAsync();
             _context.GroupMembers.RemoveRange(memberships);
 
-            // 9. Șterge mesaje în grupuri
+            // sterg mesaje in grupuri
             var groupMessages = await _context.GroupMessages
                 .Where(m => m.UserId == userId)
                 .ToListAsync();
             _context.GroupMessages.RemoveRange(groupMessages);
 
-            // Salvează toate modificările
             await _context.SaveChangesAsync();
 
-            // 10. Acum șterge userul (nu mai are dependențe FK)
+            // sterg userul
             var result = await _userManager.DeleteAsync(user);
-
-            // sterg rapoartele facute de utilizator
-            //var userReports = await _context.Reports
-                //.Where(r => r.UserId == userId)
-                //.ToListAsync();
-            //_context.Reports.RemoveRange(userReports);
 
             if (result.Succeeded)
             {

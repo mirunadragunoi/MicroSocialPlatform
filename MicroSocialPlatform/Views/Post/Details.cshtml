@@ -101,7 +101,6 @@
                                     else
                                     {
                                         <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Salvează</a></li>
-                                        <li><a class="dropdown-item" href="#"><i class="bi bi-bookmark me-2"></i> Raportează</a></li>
                                     }
                                 </ul>
                             </div>
@@ -340,7 +339,7 @@
 
 @section Scripts {
     <script>
-        // Funcție pentru afișarea alertei de eroare comentariu
+        // Functie pentru afisarea alertei de eroare comentariu
         function showCommentError(message) {
             const alertContainer = document.getElementById('commentErrorAlert');
             const alertMessage = document.getElementById('commentErrorMessage');
@@ -348,13 +347,13 @@
             alertMessage.textContent = message;
             alertContainer.style.display = 'block';
 
-            // Auto-hide după 5 secunde
+            // Auto-hide dupa 5 secunde
             setTimeout(() => {
                 closeCommentAlert();
             }, 5000);
         }
 
-        // Funcție pentru închiderea alertei
+        // Functie pentru inchiderea alertei
         function closeCommentAlert() {
             const alertContainer = document.getElementById('commentErrorAlert');
             alertContainer.style.animation = 'slideUp 0.3s ease-out';
@@ -372,14 +371,14 @@
             const commentsContainer = document.getElementById('comments-container-@Model.Id');
             const charCount = document.getElementById('char-count-' + postId);
 
-            // counter caractere
+            // Counter caractere
             if (commentInput && charCount) {
                 commentInput.addEventListener('input', function() {
                     charCount.textContent = this.value.length + '/500';
                 });
             }
 
-            // adaugare comentariu
+            // Adaugare comentariu
             if (commentForm) {
                 commentForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
@@ -390,7 +389,7 @@
                         return;
                     }
 
-                    // token CSRF pentru securitate
+                    // Token CSRF pentru securitate
                     const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
                     const token = tokenInput ? tokenInput.value : '';
 
@@ -476,7 +475,6 @@
                             updateCount(result.commentsCount);
                             attachHandlers();
                         } else {
-                            // ← AICI E FIX-UL IMPORTANT: Afișează alertul roșu
                             showCommentError(result.message || 'Eroare la adăugarea comentariului');
                         }
                     } catch (err) {
@@ -488,7 +486,7 @@
 
             // functii pentru editare si stergere
             function attachHandlers() {
-                // editare - abordare non-distructiva (Toggle)
+                // editare 
                 document.querySelectorAll('.edit-comment-btn:not(.bound)').forEach(btn => {
                     btn.classList.add('bound'); // marcare ca atasat
                     btn.addEventListener('click', function() {
@@ -604,7 +602,6 @@
             // helper pentru actualizare numar comentarii
             function updateCount(count) {
                 // Nu mai avem link de "Vezi toate..." deci doar ascundem containerul text
-                // Daca vrei sa arati numarul, trebuie sa il identifici cu un ID.
             }
 
             // helper xss protection

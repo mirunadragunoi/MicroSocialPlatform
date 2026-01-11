@@ -42,19 +42,19 @@ namespace MicroSocialPlatform.Controllers
                     return Json(new { success = false, message = "Postarea nu există" });
                 }
 
-                // Caută like-ul existent
+                // Cauta like-ul existent
                 var existingLike = await _context.Likes
                     .FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == user.Id);
 
                 if (existingLike != null)
                 {
-                    // Dacă e același tip de reacție, șterge-l (toggle off)
+                    // Daca e același tip de reactie -> sterge-l (toggle off)
                     if ((int)existingLike.Type == reactionType)
                     {
                         _context.Likes.Remove(existingLike);
                         post.LikesCount = Math.Max(0, post.LikesCount - 1);
 
-                        // sterg notificarea asociata
+                        // Sterg notificarea asociata
                         var notificationToDelete = await _context.Notifications
                             .FirstOrDefaultAsync(n => n.SenderId == user.Id &&
                                             n.RecipientId == post.UserId &&
@@ -67,14 +67,14 @@ namespace MicroSocialPlatform.Controllers
                     }
                     else
                     {
-                        // Schimbă tipul de reacție
+                        // Schimba tipul de reactie
                         existingLike.Type = (LikeType)reactionType;
                         existingLike.LikedAt = DateTime.UtcNow;
                     }
                 }
                 else
                 {
-                    // Creează like nou
+                    // Creeaza like nou
                     var newLike = new Like
                     {
                         PostId = postId,
@@ -85,7 +85,7 @@ namespace MicroSocialPlatform.Controllers
                     _context.Likes.Add(newLike);
                     post.LikesCount++;
 
-                    // creez notificarea
+                    // Creez notificarea
                     if (post.UserId != user.Id)
                     {
                         var notification = new Notification
@@ -105,7 +105,7 @@ namespace MicroSocialPlatform.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Returnează contoarele actualizate
+                // Returneaza contoarele actualizate
                 var counts = await _context.Likes
                     .Where(l => l.PostId == postId)
                     .GroupBy(l => l.Type)

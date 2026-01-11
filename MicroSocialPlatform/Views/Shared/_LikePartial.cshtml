@@ -4,7 +4,7 @@
 @model MicroSocialPlatform.Models.Post
 
 <div class="reaction-box" data-post-id="@Model.Id">
-    @* ✅ Rezumat Reacții - Aliniat la STÂNGA *@
+    @* Rezumat reactii *@
     @if (Model.Likes != null && Model.Likes.Any())
     {
         <div class="reaction-summary-container mb-2">
@@ -35,7 +35,7 @@
         }
     </button>
 
-    @* Picker pentru Reacții *@
+    @* Picker pentru Reactii *@
     <div class="reaction-picker" style="display: none;">
         <button class="reaction-item" data-type="1" title="Like">❤️</button>
         <button class="reaction-item" data-type="2" title="Love">🥰</button>
@@ -132,7 +132,7 @@
             transform: scale(1.1);
         }
 
-    /* ✅ Container pentru rezumat - ALINIAT LA STÂNGA */
+    /* Container pentru rezumat  */
     .reaction-summary-container {
         min-height: 25px;
         animation: fadeIn 0.3s ease;
@@ -200,7 +200,7 @@
         let currentUserReaction = null;
         let longPressTimer = null;
 
-        // Încarcă reacția curentă
+        // Incarca reactia curenta
         if (isAuthenticated) {
             fetch('/Reaction/GetUserReaction?postId=' + postId)
                 .then(response => response.json())
@@ -341,7 +341,7 @@
         }
 
         function updateBadgeAndSummary(data) {
-            // Actualizează badge-ul
+            // Actualizeaza badge-ul
             let badge = toggle.querySelector('.like-count-badge');
             if (data.totalCount > 0) {
                 if (!badge) {
@@ -360,7 +360,7 @@
                 badge.remove();
             }
 
-            // ✅ Actualizează rezumatul ALINIAT LA STÂNGA
+            // Actualizeaza rezumatul 
             const emojiMap = {
                 'Like': '❤️',
                 'Love': '🥰',
@@ -392,7 +392,7 @@
             }
         }
 
-        // Închide picker
+        // Inchide picker
         document.addEventListener('click', function(e) {
             if (!box.contains(e.target)) {
                 picker.style.display = 'none';

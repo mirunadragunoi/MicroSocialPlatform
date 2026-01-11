@@ -9,7 +9,7 @@ using AspNetCoreGeneratedDocument;
 
 namespace MicroSocialPlatform.Controllers
 {
-    [Authorize] // doar userii autentificați pot umbla la grupuri
+    [Authorize] // doar userii autentificati pot umbla la grupuri
     public class GroupsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -105,7 +105,6 @@ namespace MicroSocialPlatform.Controllers
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Grupul a fost creat cu succes!";
-                // TempData["MessageType"] = "success";
 
                 // redirect la pagina grupului
                 return RedirectToAction(nameof(Index));
@@ -134,7 +133,7 @@ namespace MicroSocialPlatform.Controllers
                 return NotFound();
             }
 
-            // verificam pentru userul curebtt daca este membru al grupului
+            // verificam pentru userul curent daca este membru al grupului
             var user = await _userManager.GetUserAsync(User);
             bool isMember = false;
             bool isAdmin = false;
@@ -209,7 +208,6 @@ namespace MicroSocialPlatform.Controllers
             if (group.Members.Any(m => m.UserId == user.Id))
             {
                 TempData["InfoMessage"] = "Esti deja membru al acestui grup.";
-                // TempData["MessageType"] = "info";
                 return RedirectToAction(nameof(Details), new { id = id, returnUrl = returnUrl });
             }
 
@@ -426,7 +424,6 @@ namespace MicroSocialPlatform.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Grupul a fost sters cu succes.";
-            // TempData["MessageType"] = "success";
 
             return RedirectToAction(nameof(Index));
         }
@@ -466,7 +463,6 @@ namespace MicroSocialPlatform.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Mesajul a fost sters cu succes.";
-            // TempData["MessageType"] = "success";
 
             return RedirectToAction(nameof(Details), new { id = message.GroupId });
         }
@@ -508,7 +504,6 @@ namespace MicroSocialPlatform.Controllers
             memberToPromote.Role = GroupRole.Moderator;
             await _context.SaveChangesAsync();
             TempData["InfoMessage"] = "Membrul a fost promovat la moderator.";
-            // TempData["MessageType"] = "success";
             return RedirectToAction(nameof(Details), new { id = groupId });
         }
 
@@ -549,7 +544,6 @@ namespace MicroSocialPlatform.Controllers
             memberToDemote.Role = GroupRole.Member;
             await _context.SaveChangesAsync();
             TempData["InfoMessage"] = "Membrul a fost retrogradat la membru simplu.";
-            // TempData["MessageType"] = "success";
             return RedirectToAction(nameof(Details), new { id = groupId });
         }
 
@@ -623,7 +617,6 @@ namespace MicroSocialPlatform.Controllers
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Grupul a fost actualizat cu succes!";
-                // TempData["MessageType"] = "success";
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -688,7 +681,7 @@ namespace MicroSocialPlatform.Controllers
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Grupul a fost șters automat deoarece ultimul membru a fost eliminat.";
-                return RedirectToAction(nameof(Index)); // Ne întoarcem la lista de grupuri, că grupul nu mai există
+                return RedirectToAction(nameof(Index)); // ne intoarcem la lista de grupuri
             }
 
             // daca dam afara proprietarul grupului (dar mai sunt altii)
@@ -717,7 +710,6 @@ namespace MicroSocialPlatform.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Membrul a fost dat afara cu succes.";
-            // TempData["MessageType"] = "warning";
 
             return RedirectToAction(nameof(Details), new { id = groupId });
         }
